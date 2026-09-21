@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.141.1",
     "numpy>=2.4.6",
     "psycopg[binary,pool]>=3.3.6",
+    "python-multipart>=0.0.32",
     "uvicorn>=0.53.0",
 ]
 

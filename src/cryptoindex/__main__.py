@@ -25,7 +25,7 @@ async def serve(
         runner = Runner(StageContext(pool=pool, settings=settings), stages)
         server = uvicorn.Server(
             uvicorn.Config(
-                create_app(runner),
+                create_app(runner, pool, settings),
                 host=settings.api_host,
                 port=settings.api_port,
                 log_config=None,

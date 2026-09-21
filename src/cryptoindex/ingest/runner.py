@@ -87,6 +87,13 @@ class Runner:
         if row is not None and (stage := Stage(row[0])) in self._queues:
             await self._queues[stage].put(work_id)
 
+    def notify(self, work_id: RevisionId) -> None:
+        """`enqueue` without waiting, for request handlers: a full channel
+        must not stall the request. Before `run()` starts this does nothing;
+        startup seeding picks the revision up instead."""
+        if self._tg is not None:
+            self._tg.create_task(self.enqueue(work_id))
+
     async def status(self) -> Status:
         async with self._ctx.pool.connection() as conn:
             cur = await conn.execute(
