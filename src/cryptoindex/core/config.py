@@ -47,6 +47,7 @@ class Settings:
     concurrency_embed: int
     max_attempts: int
     stale_lock_s: float
+    max_upload_mb: int
     api_host: str
     api_port: int
     log_level: str
@@ -113,6 +114,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         concurrency_embed=num("CI_CONCURRENCY_EMBED", "1", int, 1),
         max_attempts=num("CI_MAX_ATTEMPTS", "3", int, 1),
         stale_lock_s=num("CI_STALE_LOCK_S", "600", float, 0.0),
+        max_upload_mb=num("CI_MAX_UPLOAD_MB", "100", int, 1),
         api_host=opt("CI_API_HOST", "127.0.0.1"),
         api_port=num("CI_API_PORT", "8000", int, 0),  # 0: any free port
         log_level=opt("CI_LOG_LEVEL", "INFO"),
