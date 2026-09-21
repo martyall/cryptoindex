@@ -2,9 +2,11 @@ import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, Form, HTTPException, Response, UploadFile, status
+from fastapi.responses import FileResponse
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
@@ -14,6 +16,8 @@ from cryptoindex.ingest.importer import (
     import_document,
 )
 from cryptoindex.ingest.runner import Runner, Status
+
+UPLOAD_PAGE = Path(__file__).with_name("static") / "upload.html"
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +32,10 @@ class DocumentSummary:
 
 def create_app(runner: Runner, pool: Pool, settings: Settings) -> FastAPI:
     app = FastAPI(title="cryptoindex", version="0.1.0")
+
+    @app.get("/", include_in_schema=False)
+    async def upload_page() -> FileResponse:
+        return FileResponse(UPLOAD_PAGE)
 
     @app.get("/health")
     async def health() -> dict[str, str]:

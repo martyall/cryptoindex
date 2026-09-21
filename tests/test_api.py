@@ -32,6 +32,13 @@ async def client(runner: Runner, pool: Pool) -> AsyncIterator[httpx.AsyncClient]
         yield c
 
 
+async def test_upload_page_is_served(client: httpx.AsyncClient) -> None:
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert 'id="files"' in response.text
+
+
 async def test_health_and_ingest_status(
     client: httpx.AsyncClient, seed: Callable[[list[Stage]], list[int]]
 ) -> None:
