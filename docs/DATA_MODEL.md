@@ -25,14 +25,16 @@ One row per distinct PDF (or source bundle) of a paper. Pipeline state lives her
 | `stage` | `parse` → `segment` → `embed` → `ready`, or `failed` |
 | `is_current` | exactly one current revision per paper (partial unique index) |
 | `attempts`, `locked_at`, `last_error` | retry/claim bookkeeping |
+| `failed_stage` | the stage the revision was in when it went to `failed` |
+| `similar_paper_id`, `similarity` | near-duplicate warning: the document whose paragraphs this revision shares most, and the shared fraction |
 
 **Stage state machine.** A stage worker claims a row (`FOR UPDATE SKIP LOCKED`, sets `locked_at`), does its work in a transaction, sets the next stage, clears `locked_at`, commits, then signals. Errors increment `attempts` and record `last_error`; after N attempts the row goes to `failed`. Locks older than a timeout are treated as stale on startup.
 
 ## `docs.paragraphs`
 Base layer. One row per paragraph of a revision.
 
-- `position` (0-based within revision), `section_path` (e.g. `4 Security > 4.1 Unforgeability`), `text` (Markdown with LaTeX), `content_hash`, `block_kind` (nullable: `theorem`, `lemma`, `definition`, `proof`, `algorithm`, `game`, `equation`, …), `block_label` (nullable, e.g. `Theorem 3`).
-- `tsv` generated with the `simple` config; `latex_norm` (normalized LaTeX for trigram matching); `emb halfvec(1024)`.
+- `position` (0-based within revision, reading order), `page` (0-based) and `bbox` from the parser's layout, `section_path` (e.g. `4 Security > 4.1 Unforgeability`), `text` (Markdown with `$`-delimited math; LaTeX for equations; HTML for tables), `content_hash`, `block_kind` (nullable; only what a parser reports: `equation`, `algorithm`, `code`, `table`, `list_item`, `caption`, `footnote`, `figure`), `block_label` (nullable; formal-block labels such as `Theorem 3` are Phase 3 anchors).
+- `tsv` generated with the `simple` config; `latex_norm` (normalized LaTeX for trigram matching, filled in Phase 4 with a real LaTeX parser); `emb halfvec(1024)`.
 - Stability: re-parsing an unchanged revision must reproduce identical `(position, content_hash)` pairs and therefore keep IDs.
 
 ## `docs.units`
@@ -55,7 +57,7 @@ Append-only outbox: `kind` (`revision_ready`, `unit_changed`, `paper_revised`, `
 - Partial index on `revisions(stage)` where not `ready`/`failed`.
 
 ## Files on disk
-`CI_DATA_DIR/pdfs/<paper_id>/<sha256>.pdf`, plus `parsed/<parser>-<version>/<sha256>.md` (parser output, kept per parser version so a retry or re-segmentation never re-parses, and a parser change never reuses stale output).
+`CI_DATA_DIR/pdfs/<paper_id>/<sha256>.pdf`, plus `parsed/<parser>-<version>/<sha256>.json` (the parser's raw structured output, kept per parser version so a retry or re-segmentation never re-parses, and a parser change never reuses stale output).
 
 ## Identity summary
 - Paragraph: `(revision_id, position)` with `content_hash` guard.
