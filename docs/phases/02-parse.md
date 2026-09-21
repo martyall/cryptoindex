@@ -36,6 +36,8 @@ Uploaded PDFs become stable paragraphs (Markdown with LaTeX math, section paths,
 
    A `make` target runs this locally only.
 
+   **Review page.** The same target generates a static local HTML file, opened in the browser. Each box or diagram is shown as a row: the page-region image, Marker's output and PaddleOCR-VL's output, both rendered with KaTeX. Under each row is Claude's proposed score and note, with keyboard shortcuts to accept or change it. Progress is kept in the browser's local storage, and an Export button writes `parse-scores.csv`. The page is never published: some sources do not permit redistribution.
+
 6. **Near-duplicate warning** (deferred from Phase 1). After parsing, compare the document's set of paragraph `content_hash` values with those of existing documents. If the overlap is high, `GET /documents` and the upload page show "looks similar to <name>". It is only a warning, never a rejection.
 
 7. **Tests** (offline). The real parsers never run in `make test` or CI:
