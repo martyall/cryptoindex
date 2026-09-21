@@ -97,6 +97,27 @@ async def test_enqueue_signals_a_new_revision(
         await asyncio.gather(task, return_exceptions=True)
 
 
+async def test_notify_never_raises_or_stops_the_runner(
+    settings: Settings, pool: Pool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner = Runner(StageContext(pool=pool, settings=settings))
+    runner.notify(RevisionId(1))  # before run(): a no-op
+
+    async def broken_enqueue(work_id: RevisionId) -> None:
+        raise RuntimeError("database gone")
+
+    task = asyncio.create_task(runner.run())
+    await asyncio.sleep(0.1)
+    monkeypatch.setattr(runner, "enqueue", broken_enqueue)
+    runner.notify(RevisionId(1))
+    await asyncio.sleep(0.1)
+    assert not task.done(), "a failed notify stopped the runner"
+
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    runner.notify(RevisionId(1))  # after run(): a no-op, not RuntimeError
+
+
 def test_kill_mid_run_then_restart_does_no_duplicate_work(
     settings: Settings, test_env: dict[str, str], seed: SeedFn
 ) -> None:

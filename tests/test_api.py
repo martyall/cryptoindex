@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import logging
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
@@ -58,7 +59,7 @@ async def test_health_and_ingest_status(
 async def test_upload_defaults_name_and_reports_duplicates(
     client: httpx.AsyncClient,
 ) -> None:
-    first = await client.post("/documents", files={"file": ("Kyber.pdf", PDF)})
+    first = await client.post("/documents", files={"file": ("Kyber.Pdf", PDF)})
     assert first.status_code == 201
     assert first.json()["name"] == "Kyber" and not first.json()["duplicate"]
 
@@ -84,11 +85,17 @@ async def test_upload_rejects_non_pdf(client: httpx.AsyncClient) -> None:
 
 
 async def test_uploaded_document_reaches_ready_without_restart(
-    client: httpx.AsyncClient, runner: Runner
+    client: httpx.AsyncClient, runner: Runner, caplog: pytest.LogCaptureFixture
 ) -> None:
+    caplog.set_level(logging.INFO, logger="cryptoindex.ingest.runner")
     task = asyncio.create_task(runner.run())
     try:
-        await asyncio.sleep(0.2)  # startup seeding has found nothing
+        # Upload only after startup seeding, so notify() must deliver it.
+        for _ in range(100):
+            if "seeding revisions=0" in caplog.messages:
+                break
+            await asyncio.sleep(0.02)
+        assert "seeding revisions=0" in caplog.messages
         response = await client.post("/documents", files={"file": ("a.pdf", PDF)})
         assert response.status_code == 201
         for _ in range(100):

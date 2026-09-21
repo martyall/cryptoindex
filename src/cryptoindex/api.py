@@ -51,12 +51,17 @@ def create_app(runner: Runner, pool: Pool, settings: Settings) -> FastAPI:
         response: Response,
         name: Annotated[str | None, Form()] = None,
     ) -> ImportResult:
-        """Store the PDF and start it through the pipeline. `name` defaults to
-        the file name without `.pdf`. An identical file already stored is not
-        stored again: the response is 200 with `duplicate: true` and the
-        existing document."""
+        """Store the PDF and signal the pipeline. `name` defaults to the file
+        name without its `.pdf` suffix (any case).
+
+        201: new document. 200 with `duplicate: true`: this exact file is
+        already stored; the existing document is returned and not re-queued,
+        even if it failed. 400: blank name, not a PDF, or over CI_MAX_UPLOAD_MB.
+        """
         if name is None or not name.strip():
-            name = (file.filename or "").removesuffix(".pdf").removesuffix(".PDF")
+            filename = file.filename or ""
+            has_suffix = filename.lower().endswith(".pdf")
+            name = filename[: -len(".pdf")] if has_suffix else filename
         try:
             result = await import_document(
                 pool,

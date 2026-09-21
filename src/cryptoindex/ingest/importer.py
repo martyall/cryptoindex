@@ -20,7 +20,7 @@ PDF_MAGIC = b"%PDF-"
 
 
 class RejectedUploadError(ValueError):
-    pass
+    """The upload itself is unacceptable; the message is shown to the uploader."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,7 +28,7 @@ class ImportResult:
     paper_id: uuid.UUID
     name: str
     revision_id: RevisionId
-    duplicate: bool  # True: this file was already imported, as `name`
+    duplicate: bool  # the file was already stored; the fields describe that document
 
 
 async def import_document(
@@ -39,11 +39,13 @@ async def import_document(
     max_bytes: int,
 ) -> ImportResult:
     """Store a PDF as a new document with revision 1 at stage `parse`, or
-    return the existing document if this exact file was imported before.
+    return the existing document (with its own name, not `name`) if this exact
+    file was imported before; a duplicate needs no signal.
 
-    Commits before returning; the caller then signals the runner with
-    `revision_id` (Invariant 2). Raises RejectedUploadError for an empty name,
-    a file that is not a PDF, or one larger than `max_bytes`; nothing is kept.
+    `name` is stripped. Commits before returning; the caller then signals the
+    runner with `revision_id` (Invariant 2). Raises RejectedUploadError for a
+    blank name, a file that is not a PDF, or one larger than `max_bytes`. On any
+    error nothing is kept on disk or in the database.
     """
     name = name.strip()
     if not name:
@@ -62,9 +64,9 @@ async def import_document(
         paper_id = uuid.uuid4()
         rel_path = Path("pdfs") / str(paper_id) / f"{sha256}.pdf"
         final = data_dir / rel_path
-        final.parent.mkdir(parents=True)
-        tmp.replace(final)
         try:
+            final.parent.mkdir(parents=True)
+            tmp.replace(final)
             revision_id = await _insert(pool, paper_id, name, sha256, rel_path)
         except errors.UniqueViolation:
             # An identical upload committed between our lookup and insert.

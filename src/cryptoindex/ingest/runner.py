@@ -24,8 +24,8 @@ class Status:
 
 
 def pool_size(s: Settings) -> int:
-    """One connection per worker, plus two for seeding and API calls (status,
-    enqueue); further callers wait for a free connection."""
+    """One connection per worker, plus two shared by seeding and the API;
+    further callers wait for a free connection."""
     return s.concurrency_parse + s.concurrency_segment + s.concurrency_embed + 2
 
 
@@ -68,12 +68,15 @@ class Runner:
         a failure) escapes as an ExceptionGroup and stops the runner.
         """
         await self._recover_stale_locks()
-        async with asyncio.TaskGroup() as tg:
-            self._tg = tg
-            for stage in WORK_STAGES:
-                for _ in range(self._concurrency[stage]):
-                    tg.create_task(self._worker(stage))
-            tg.create_task(self._seed())
+        try:
+            async with asyncio.TaskGroup() as tg:
+                self._tg = tg
+                for stage in WORK_STAGES:
+                    for _ in range(self._concurrency[stage]):
+                        tg.create_task(self._worker(stage))
+                tg.create_task(self._seed())
+        finally:
+            self._tg = None
 
     async def enqueue(self, work_id: RevisionId) -> None:
         """Signal pending work for a revision. Its stage is read from the
@@ -88,11 +91,20 @@ class Runner:
             await self._queues[stage].put(work_id)
 
     def notify(self, work_id: RevisionId) -> None:
-        """`enqueue` without waiting, for request handlers: a full channel
-        must not stall the request. Before `run()` starts this does nothing;
-        startup seeding picks the revision up instead."""
+        """`enqueue` without waiting, for request handlers: a full channel must
+        not stall the request. A no-op when the runner is not running, and
+        never raises; either way the committed revision is seeded on the next
+        start."""
         if self._tg is not None:
-            self._tg.create_task(self.enqueue(work_id))
+            self._tg.create_task(self._enqueue_or_log(work_id))
+
+    async def _enqueue_or_log(self, work_id: RevisionId) -> None:
+        # Runs in the runner's TaskGroup, where an exception would stop every
+        # worker; a failed signal only delays this revision until next start.
+        try:
+            await self.enqueue(work_id)
+        except Exception:
+            log.exception("notify_failed work_id=%d", work_id)
 
     async def status(self) -> Status:
         async with self._ctx.pool.connection() as conn:
