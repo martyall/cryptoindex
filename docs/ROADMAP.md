@@ -5,7 +5,7 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 | # | Phase | Status |
 |---|---|---|
 | 0 | Skeleton | done |
-| 1 | Upload | todo |
+| 1 | Upload | done |
 | 2 | Parse | todo |
 | 3 | Segment and gloss | todo |
 | 4 | Embed and retrieve | todo |
@@ -45,7 +45,7 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 **Goal:** PDFs become stable paragraphs; the parser is chosen.
 
-**In scope:** Marker and PaddleOCR-VL adapters (out-of-process), Markdown → paragraphs with section paths and content hashes, arXiv LaTeX/HTML source path when available, formula render check (KaTeX pass/fail rate), the parser evaluation on `eval/parse-sample/`.
+**In scope:** Marker and PaddleOCR-VL adapters (out-of-process), Markdown → paragraphs with section paths and content hashes, formula render check (KaTeX pass/fail rate), the parser evaluation on `eval/parse-sample/`, near-duplicate warning (deferred from Phase 1). No arXiv sources (D18).
 
 **Acceptance:**
 - Both parsers run on the 20–30 sample PDFs; a report records formula render failure rate and manual pseudocode-box scores per `EVALUATION.md`.
