@@ -15,6 +15,7 @@
 - **Prompts are versioned files** in `prompts/`, never string literals in code. Their version feeds the input hash that decides what gets regenerated.
 - **Tests run offline.** Unit tests use a fake LLM backend that replays recorded responses, fixture PDFs/parsed paragraphs under `eval/`, and a local Postgres. No network, no API keys.
 - **Both LLM backends must keep working.** Anthropic (native SDK) and local OpenAI-format servers. Never add a feature that only one backend can use without a fallback.
+- **No string munging.** When a tool or source offers structured output (JSON, a Python API, typed results), use it. When data is in a format with a real parser (Markdown, HTML, dotenv, TOML/CSV/JSON, DSNs, paths), use that parser. Never extract structure with regexes, `split`, prefix checks, line scanning, scraped CLI output, or globbing a tool's output directory. If something truly has no structure (free prose that needs classifying), say so and leave it to the human or to the phase built for it (e.g. Phase 3's LLM segmentation) rather than writing a heuristic.
 - **Ingestion writes, queries read.** Use the `ci_ingest` role in ingestion code and `ci_query` in retrieval/agent code. Query code must not import ingestion modules.
 
 ## Conventions
