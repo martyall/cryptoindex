@@ -16,9 +16,10 @@ from psycopg.rows import TupleRow
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.model import RevisionId, Stage
+from cryptoindex.ingest.parsers import StubParser
 from cryptoindex.ingest.runner import Runner
 from cryptoindex.ingest.stages import (
-    DEFAULT_STAGES,
+    NOOP_STAGES,
     WORK_STAGES,
     StageContext,
     StageFn,
@@ -64,7 +65,11 @@ async def test_seeded_revisions_all_reach_ready(
     settings: Settings, pool: Pool, seed: SeedFn
 ) -> None:
     ids = seed(mixed_stages(20))
-    await run_until_idle(Runner(StageContext(pool=pool, settings=settings)))
+    await run_until_idle(
+        Runner(
+            StageContext(pool=pool, settings=settings, parser=StubParser()), NOOP_STAGES
+        )
+    )
 
     rows = query(settings, "SELECT stage, locked_at, attempts FROM docs.revisions")
     assert [r[0] for r in rows] == ["ready"] * len(ids)
@@ -81,7 +86,9 @@ async def test_seeded_revisions_all_reach_ready(
 async def test_enqueue_signals_a_new_revision(
     settings: Settings, pool: Pool, seed: SeedFn
 ) -> None:
-    runner = Runner(StageContext(pool=pool, settings=settings))
+    runner = Runner(
+        StageContext(pool=pool, settings=settings, parser=StubParser()), NOOP_STAGES
+    )
     task = asyncio.create_task(runner.run())
     try:
         await asyncio.sleep(0.2)  # startup seeding has found nothing
@@ -100,7 +107,7 @@ async def test_enqueue_signals_a_new_revision(
 async def test_notify_never_raises_or_stops_the_runner(
     settings: Settings, pool: Pool, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    runner = Runner(StageContext(pool=pool, settings=settings))
+    runner = Runner(StageContext(pool=pool, settings=settings, parser=StubParser()))
     runner.notify(RevisionId(1))  # before run(): a no-op
 
     async def broken_enqueue(work_id: RevisionId) -> None:
@@ -175,12 +182,14 @@ async def test_failing_stage_retries_then_fails(
     async def forgetful(work_id: RevisionId, ctx: StageContext) -> None:
         return None
 
-    stages: dict[Stage, StageFn] = dict(DEFAULT_STAGES)
+    stages: dict[Stage, StageFn] = dict(NOOP_STAGES)
     stages[Stage.PARSE] = broken
     stages[Stage.SEGMENT] = forgetful
     seed([Stage.PARSE, Stage.SEGMENT])
     ctx = StageContext(
-        pool=pool, settings=dataclasses.replace(settings, max_attempts=2)
+        pool=pool,
+        settings=dataclasses.replace(settings, max_attempts=2),
+        parser=StubParser(),
     )
     await run_until_idle(Runner(ctx, stages, retry_base_s=0))
 
@@ -202,11 +211,13 @@ async def test_cancel_releases_claims(
         started.set()
         await asyncio.Event().wait()
 
-    stages: dict[Stage, StageFn] = dict(DEFAULT_STAGES)
+    stages: dict[Stage, StageFn] = dict(NOOP_STAGES)
     stages[Stage.PARSE] = hang
     seed([Stage.PARSE])
     task = asyncio.create_task(
-        Runner(StageContext(pool=pool, settings=settings), stages).run()
+        Runner(
+            StageContext(pool=pool, settings=settings, parser=StubParser()), stages
+        ).run()
     )
     await asyncio.wait_for(started.wait(), 5)
     assert query(settings, "SELECT count(locked_at) FROM docs.revisions") == [(1,)]
@@ -228,7 +239,7 @@ async def test_stale_claim_counts_as_attempt(
             " attempts = %s WHERE id = %s",
             (attempts_before, work_id),
         )
-    runner = Runner(StageContext(pool=pool, settings=settings))
+    runner = Runner(StageContext(pool=pool, settings=settings, parser=StubParser()))
     await runner._recover_stale_locks()
     rows = query(settings, "SELECT stage, attempts, locked_at FROM docs.revisions")
     assert rows == [(expected, attempts_before + 1, None)]

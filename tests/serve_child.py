@@ -6,7 +6,8 @@ import asyncio
 from cryptoindex.__main__ import serve
 from cryptoindex.core import config
 from cryptoindex.core.model import RevisionId, Stage
-from cryptoindex.ingest.stages import DEFAULT_STAGES, StageContext
+from cryptoindex.ingest.pipeline import DEFAULT_STAGES
+from cryptoindex.ingest.stages import StageContext
 
 
 async def hang(work_id: RevisionId, ctx: StageContext) -> None:

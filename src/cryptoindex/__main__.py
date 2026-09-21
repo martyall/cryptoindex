@@ -10,8 +10,10 @@ from cryptoindex.core import config
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import open_pool
 from cryptoindex.core.model import Stage
+from cryptoindex.ingest.parsers import build_parser
+from cryptoindex.ingest.pipeline import DEFAULT_STAGES
 from cryptoindex.ingest.runner import Runner, pool_size
-from cryptoindex.ingest.stages import DEFAULT_STAGES, StageContext, StageFn
+from cryptoindex.ingest.stages import StageContext, StageFn
 
 
 async def serve(
@@ -22,7 +24,8 @@ async def serve(
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     pool = await open_pool(settings.ingest_dsn, pool_size(settings))
     try:
-        runner = Runner(StageContext(pool=pool, settings=settings), stages)
+        ctx = StageContext(pool=pool, settings=settings, parser=build_parser(settings))
+        runner = Runner(ctx, stages)
         server = uvicorn.Server(
             uvicorn.Config(
                 create_app(runner, pool, settings),

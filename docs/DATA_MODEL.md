@@ -55,7 +55,7 @@ Append-only outbox: `kind` (`revision_ready`, `unit_changed`, `paper_revised`, `
 - Partial index on `revisions(stage)` where not `ready`/`failed`.
 
 ## Files on disk
-`CI_DATA_DIR/pdfs/<paper_id>/<sha256>.pdf`, plus `parsed/<sha256>.md` (parser output kept for re-segmentation without re-parsing).
+`CI_DATA_DIR/pdfs/<paper_id>/<sha256>.pdf`, plus `parsed/<parser>-<version>/<sha256>.md` (parser output, kept per parser version so a retry or re-segmentation never re-parses, and a parser change never reuses stale output).
 
 ## Identity summary
 - Paragraph: `(revision_id, position)` with `content_hash` guard.

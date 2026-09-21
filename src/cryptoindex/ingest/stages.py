@@ -8,6 +8,7 @@ from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.events import EventKind, write_event
 from cryptoindex.core.model import RevisionId, Stage
+from cryptoindex.ingest.parsers import Parser
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ WORK_STAGES: tuple[Stage, ...] = tuple(NEXT_STAGE)
 class StageContext:
     pool: Pool  # ci_ingest
     settings: Settings
+    parser: Parser
 
 
 StageFn = Callable[[RevisionId, StageContext], Awaitable[None]]
@@ -105,23 +107,13 @@ async def _noop(stage: Stage, work_id: RevisionId, ctx: StageContext) -> None:
     log.info("stage_done work_id=%d stage=%s noop=true", work_id, stage)
 
 
-async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
-    """Placeholder: only commits the transition."""
-    await _noop(Stage.PARSE, work_id, ctx)
+def noop_stage(stage: Stage) -> StageFn:
+    """A placeholder stage that only commits the transition."""
+
+    async def run(work_id: RevisionId, ctx: StageContext) -> None:
+        await _noop(stage, work_id, ctx)
+
+    return run
 
 
-async def segment_stage(work_id: RevisionId, ctx: StageContext) -> None:
-    """Placeholder: only commits the transition."""
-    await _noop(Stage.SEGMENT, work_id, ctx)
-
-
-async def embed_stage(work_id: RevisionId, ctx: StageContext) -> None:
-    """Placeholder: only commits the transition."""
-    await _noop(Stage.EMBED, work_id, ctx)
-
-
-DEFAULT_STAGES: Mapping[Stage, StageFn] = {
-    Stage.PARSE: parse_stage,
-    Stage.SEGMENT: segment_stage,
-    Stage.EMBED: embed_stage,
-}
+NOOP_STAGES: Mapping[Stage, StageFn] = {s: noop_stage(s) for s in WORK_STAGES}

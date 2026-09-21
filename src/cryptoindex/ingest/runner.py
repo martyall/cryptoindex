@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.model import RevisionId, Stage
+from cryptoindex.ingest.pipeline import DEFAULT_STAGES
 from cryptoindex.ingest.stages import (
-    DEFAULT_STAGES,
     NEXT_STAGE,
     WORK_STAGES,
     StageContext,

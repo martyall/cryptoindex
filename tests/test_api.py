@@ -11,6 +11,7 @@ from cryptoindex.api import create_app
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.model import Stage
+from cryptoindex.ingest.parsers import StubParser
 from cryptoindex.ingest.runner import Runner
 from cryptoindex.ingest.stages import StageContext
 
@@ -20,7 +21,9 @@ PDF = b"%PDF-1.7\nhello\n%%EOF\n"
 @pytest.fixture
 def runner(settings: Settings, pool: Pool, tmp_path: Path) -> Runner:
     ctx = StageContext(
-        pool=pool, settings=dataclasses.replace(settings, data_dir=tmp_path)
+        pool=pool,
+        settings=dataclasses.replace(settings, data_dir=tmp_path),
+        parser=StubParser(),
     )
     return Runner(ctx)
 
