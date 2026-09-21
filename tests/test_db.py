@@ -16,7 +16,7 @@ def test_query_role_reads_but_cannot_write(settings: Settings) -> None:
     with psycopg.connect(settings.query_dsn) as conn:
         conn.execute("SELECT count(*) FROM docs.papers")
         with pytest.raises(errors.InsufficientPrivilege):
-            conn.execute("INSERT INTO docs.papers (id, title) VALUES ('x', 'x')")
+            conn.execute("INSERT INTO docs.papers (name) VALUES ('x')")
 
 
 @pytest.mark.parametrize(
@@ -35,7 +35,7 @@ def test_query_role_cannot_modify(settings: Settings, statement: LiteralString) 
 
 def test_ingest_role_writes_data_but_not_schema(settings: Settings) -> None:
     with psycopg.connect(settings.ingest_dsn) as conn:
-        conn.execute("INSERT INTO docs.papers (id, title) VALUES ('x', 'x')")
+        conn.execute("INSERT INTO docs.papers (name) VALUES ('x')")
         conn.rollback()
         with pytest.raises(errors.InsufficientPrivilege):
             conn.execute("CREATE TABLE docs.intruder (id int)")
@@ -53,7 +53,25 @@ def test_migrate_is_idempotent(settings: Settings) -> None:
         rows = conn.execute(
             "SELECT filename FROM docs.schema_migrations ORDER BY 1"
         ).fetchall()
-    assert rows == [("001_core.sql",), ("002_roles.sql",)]
+    assert rows == [(p.name,) for p in sorted(MIGRATIONS.glob("*.sql"))]
+
+
+def test_file_is_unique_across_documents(settings: Settings) -> None:
+    with psycopg.connect(settings.ingest_dsn) as conn:
+        a, b = (
+            conn.execute(
+                "INSERT INTO docs.papers (name) VALUES ('same name') RETURNING id"
+            ).fetchone()
+            for _ in range(2)
+        )
+        assert a is not None and b is not None and a != b
+        insert = (
+            "INSERT INTO docs.revisions (paper_id, revision, source_kind, pdf_sha256)"
+            " VALUES (%s, 1, 'pdf', 'abc')"
+        )
+        conn.execute(insert, (a[0],))
+        with pytest.raises(errors.UniqueViolation):
+            conn.execute(insert, (b[0],))
 
 
 def test_migrate_refuses_an_edited_migration(

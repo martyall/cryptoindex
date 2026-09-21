@@ -11,7 +11,7 @@ Schema `docs`. Migrations in `db/migrations/` are the precise spec; this documen
 Key/value settings. Required keys: `embed_model`, `embed_dims`, `schema_version`. The query layer checks `embed_model` against its configuration at startup.
 
 ## `docs.papers`
-One row per ePrint paper. `id` is the ePrint ID (`2024/1234`). Fields: title, authors[], abstract, subjects[], `license` (per-paper full-text license, must be respected), `arxiv_id` (nullable), `oai_datestamp` (last-modified per OAI-PMH), `fetched_datestamp` (datestamp at last PDF fetch). Harvest is incremental: re-fetch when `oai_datestamp > fetched_datestamp`.
+One row per uploaded document (D18). `id` is a UUID; `name` is chosen by the uploader and need not be unique. Optional fields: title (a parser may fill it), authors[], abstract, subjects[], `license` (if known, must be respected). `arxiv_id`, `oai_datestamp` and `fetched_datestamp` are reserved for a future remote source and unused.
 
 ## `docs.revisions`
 One row per distinct PDF (or source bundle) of a paper. Pipeline state lives here.
@@ -20,7 +20,7 @@ One row per distinct PDF (or source bundle) of a paper. Pipeline state lives her
 |---|---|
 | `paper_id`, `revision` | unique; revision increments per new hash |
 | `source_kind` | `pdf` · `arxiv_latex` · `arxiv_html` |
-| `pdf_sha256`, `pdf_path` | file identity and location under `CI_DATA_DIR` |
+| `pdf_sha256`, `pdf_path` | file identity and location under `CI_DATA_DIR`; `pdf_sha256` is unique across all documents, so a file is indexed once |
 | `parser`, `parser_version` | what produced the paragraphs |
 | `stage` | `parse` → `segment` → `embed` → `ready`, or `failed` |
 | `is_current` | exactly one current revision per paper (partial unique index) |
@@ -55,7 +55,7 @@ Append-only outbox: `kind` (`revision_ready`, `unit_changed`, `paper_revised`, `
 - Partial index on `revisions(stage)` where not `ready`/`failed`.
 
 ## Files on disk
-`CI_DATA_DIR/pdfs/<paper_id with slash replaced>/<sha256>.pdf`, plus `parsed/<sha256>.md` (parser output kept for re-segmentation without re-parsing).
+`CI_DATA_DIR/pdfs/<paper_id>/<sha256>.pdf`, plus `parsed/<sha256>.md` (parser output kept for re-segmentation without re-parsing).
 
 ## Identity summary
 - Paragraph: `(revision_id, position)` with `content_hash` guard.

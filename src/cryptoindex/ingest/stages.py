@@ -92,7 +92,7 @@ async def _make_ready(conn: AsyncConnection, work_id: RevisionId) -> None:
         EventKind.REVISION_READY,
         {
             "revision_id": work_id,
-            "paper_id": paper_id,
+            "paper_id": str(paper_id),
             "revision": revision,
             "is_current": bool(newest),
         },

@@ -81,12 +81,13 @@ def seed(settings: Settings) -> SeedFn:
         ids: list[int] = []
         with psycopg.connect(settings.admin_dsn, autocommit=True) as conn:
             for i, stage in enumerate(stages):
-                paper_id = f"2024/{i // 2:04d}"
-                conn.execute(
-                    "INSERT INTO docs.papers (id, title) VALUES (%s, %s)"
-                    " ON CONFLICT DO NOTHING",
-                    (paper_id, f"Paper {paper_id}"),
-                )
+                if i % 2 == 0:
+                    paper = conn.execute(
+                        "INSERT INTO docs.papers (name) VALUES (%s) RETURNING id",
+                        (f"Paper {i // 2}",),
+                    ).fetchone()
+                    assert paper is not None
+                    paper_id = paper[0]
                 row = conn.execute(
                     "INSERT INTO docs.revisions"
                     " (paper_id, revision, source_kind, pdf_sha256, stage)"

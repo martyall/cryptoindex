@@ -73,7 +73,7 @@ class Citation:
 class CitationSource(Protocol):
     source_type: str
     def fetch(self, source_id: str, version: str, locator: str) -> str
-    def render(self, c: Citation) -> str   # 'ePrint 2024/1234 v2, Theorem 3'
+    def render(self, c: Citation) -> str   # '<document name> v2, Theorem 3'
 ```
 Checker: quote must appear in `fetch(...)` after normalization (whitespace, LaTeX spacing, Unicode dashes/quotes); source must have been returned by a tool call in the same session; unknown `source_type` ⇒ unverifiable ⇒ dropped.
 
