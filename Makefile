@@ -1,7 +1,7 @@
 UV_RUN := uv run --env-file .env
 
 .PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval \
-	parse-reconcile parse-report
+	parse-review parse-reconcile parse-report
 
 .env:
 	cp .env.example .env
@@ -41,6 +41,11 @@ paddle-server:
 parse-eval: .env
 	cd tools/katex-check && npm ci --no-audit --no-fund
 	$(UV_RUN) python -m cryptoindex.evaluation.parse_eval
+
+# Serves the review page on this machine only (Ctrl-C to stop).
+parse-review:
+	@echo "review page: http://127.0.0.1:8009/review.html"
+	uv run python -m http.server 8009 --bind 127.0.0.1 --directory eval/parse-sample/local
 
 # After the blind pass: compare your exported scores with Claude's proposals
 # and rewrite the review page with only the disagreements.
