@@ -195,11 +195,15 @@ async def test_failing_stage_retries_then_fails(
 
     rows = query(
         settings,
-        "SELECT stage, attempts, locked_at, last_error FROM docs.revisions ORDER BY id",
+        "SELECT stage, failed_stage, attempts, locked_at, last_error"
+        " FROM docs.revisions ORDER BY id",
     )
-    assert [r[:3] for r in rows] == [("failed", 2, None), ("failed", 2, None)]
-    assert rows[0][3] == "parse: RuntimeError('boom')"
-    assert "without advancing" in rows[1][3]
+    assert [r[:4] for r in rows] == [
+        ("failed", "parse", 2, None),
+        ("failed", "segment", 2, None),
+    ]
+    assert rows[0][4] == "RuntimeError('boom')"
+    assert rows[1][4] == "RuntimeError('stage returned without advancing the revision')"
 
 
 async def test_cancel_releases_claims(
@@ -228,9 +232,16 @@ async def test_cancel_releases_claims(
     ]
 
 
-@pytest.mark.parametrize("attempts_before, expected", [(0, "parse"), (2, "failed")])
+@pytest.mark.parametrize(
+    "attempts_before, expected",
+    [(0, ("parse", None)), (2, ("failed", "parse"))],
+)
 async def test_stale_claim_counts_as_attempt(
-    settings: Settings, pool: Pool, seed: SeedFn, attempts_before: int, expected: str
+    settings: Settings,
+    pool: Pool,
+    seed: SeedFn,
+    attempts_before: int,
+    expected: tuple[str, str | None],
 ) -> None:
     (work_id,) = seed([Stage.PARSE])
     with psycopg.connect(settings.admin_dsn, autocommit=True) as conn:
@@ -241,5 +252,9 @@ async def test_stale_claim_counts_as_attempt(
         )
     runner = Runner(StageContext(pool=pool, settings=settings, parser=StubParser()))
     await runner._recover_stale_locks()
-    rows = query(settings, "SELECT stage, attempts, locked_at FROM docs.revisions")
-    assert rows == [(expected, attempts_before + 1, None)]
+    rows = query(
+        settings,
+        "SELECT stage, failed_stage, attempts, locked_at, last_error"
+        " FROM docs.revisions",
+    )
+    assert rows == [(*expected, attempts_before + 1, None, "claim went stale")]

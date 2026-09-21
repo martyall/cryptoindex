@@ -15,6 +15,13 @@ from cryptoindex.ingest.stages import (
 
 log = logging.getLogger(__name__)
 
+# Shared by both failure paths. Right-hand sides see the old row, so
+# failed_stage records the stage the revision was in.
+_FAIL_AT_LIMIT = (
+    "failed_stage = CASE WHEN attempts + 1 >= %(limit)s THEN stage END,"
+    " stage = CASE WHEN attempts + 1 >= %(limit)s THEN 'failed' ELSE stage END"
+)
+
 
 @dataclass(frozen=True, slots=True)
 class Status:
@@ -127,11 +134,14 @@ class Runner:
             cur = await conn.execute(
                 "UPDATE docs.revisions"
                 " SET locked_at = NULL, attempts = attempts + 1, updated_at = now(),"
-                "     last_error = stage || ': claim went stale',"
-                "     stage = CASE WHEN attempts + 1 >= %s THEN 'failed' ELSE stage END"
-                " WHERE locked_at < now() - make_interval(secs => %s)"
+                "     last_error = 'claim went stale',"
+                f"    {_FAIL_AT_LIMIT}"
+                " WHERE locked_at < now() - make_interval(secs => %(stale_s)s)"
                 " RETURNING id, stage",
-                (self._ctx.settings.max_attempts, self._ctx.settings.stale_lock_s),
+                {
+                    "limit": self._ctx.settings.max_attempts,
+                    "stale_s": self._ctx.settings.stale_lock_s,
+                },
             )
             for work_id, stage in await cur.fetchall():
                 log.warning("stale_claim_released work_id=%d stage=%s", work_id, stage)
@@ -212,17 +222,17 @@ class Runner:
         async with self._ctx.pool.connection() as conn:
             cur = await conn.execute(
                 "UPDATE docs.revisions"
-                " SET attempts = attempts + 1, last_error = %s, locked_at = NULL,"
-                "     updated_at = now(),"
-                "     stage = CASE WHEN attempts + 1 >= %s THEN 'failed' ELSE stage END"
-                " WHERE id = %s AND stage = %s AND locked_at IS NOT NULL"
+                " SET attempts = attempts + 1, last_error = %(error)s,"
+                "     locked_at = NULL, updated_at = now(),"
+                f"    {_FAIL_AT_LIMIT}"
+                " WHERE id = %(id)s AND stage = %(stage)s AND locked_at IS NOT NULL"
                 " RETURNING stage, attempts",
-                (
-                    f"{stage}: {exc!r}",
-                    self._ctx.settings.max_attempts,
-                    work_id,
-                    stage.value,
-                ),
+                {
+                    "error": repr(exc),
+                    "limit": self._ctx.settings.max_attempts,
+                    "id": work_id,
+                    "stage": stage.value,
+                },
             )
             row = await cur.fetchone()
         if row is None:
