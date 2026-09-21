@@ -61,7 +61,8 @@ filesInput.addEventListener("change", () => {
     const tr = document.createElement("tr");
     const nameInput = document.createElement("input");
     nameInput.type = "text";
-    nameInput.value = file.name.replace(/\.pdf$/i, "");
+    // Left blank, the server names the document after the file.
+    nameInput.placeholder = file.name;
     const nameCell = document.createElement("td");
     nameCell.append(nameInput);
     const result = cell("", "muted");

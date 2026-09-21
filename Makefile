@@ -18,11 +18,8 @@ migrate: db-up
 # Deletes the database volume and CI_DATA_DIR (uploaded PDFs), then starts over
 # with an empty, migrated database. Asks first; .env is kept.
 reset: .env
-	@dir=$$(sed -n 's/^CI_DATA_DIR=//p' .env); \
-	case "$$dir" in ""|/|/*/..|..|../*) echo "refusing: CI_DATA_DIR='$$dir'"; exit 1;; esac; \
-	printf "Delete the database and everything in '%s'? [y/N] " "$$dir"; read ans; \
-	[ "$$ans" = y ] || { echo aborted; exit 1; }; \
-	docker compose down -v && rm -rf "$$dir"
+	$(UV_RUN) python -m cryptoindex.core.reset
+	docker compose down -v
 	$(MAKE) migrate
 
 # Uses a separate cryptoindex_test database, recreated on every run.

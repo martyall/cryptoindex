@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from psycopg import errors
+from pypdf import PdfReader
+from pypdf.errors import PyPdfError
 
 from cryptoindex.core.db import Pool
 from cryptoindex.core.model import RevisionId
 
 log = logging.getLogger(__name__)
-
-PDF_MAGIC = b"%PDF-"
 
 
 class RejectedUploadError(ValueError):
@@ -92,21 +92,25 @@ async def _receive(
 ) -> tuple[str, int]:
     digest = hashlib.sha256()
     size = 0
-    head = b""
     with dest.open("wb") as f:
         async for chunk in chunks:
             size += len(chunk)
             if size > max_bytes:
                 raise RejectedUploadError(f"file is larger than {max_bytes} bytes")
-            if len(head) < len(PDF_MAGIC):
-                head += chunk[: len(PDF_MAGIC) - len(head)]
-                if not PDF_MAGIC.startswith(head):
-                    raise RejectedUploadError("file is not a PDF")
             digest.update(chunk)
             await asyncio.to_thread(f.write, chunk)
-    if head != PDF_MAGIC:
-        raise RejectedUploadError("file is not a PDF")
+    await asyncio.to_thread(_check_pdf, dest)
     return digest.hexdigest(), size
+
+
+def _check_pdf(path: Path) -> None:
+    """Accept the file only if a PDF parser can read its page tree."""
+    try:
+        pages = len(PdfReader(path).pages)
+    except PyPdfError as exc:
+        raise RejectedUploadError(f"file is not a readable PDF: {exc}") from exc
+    if pages == 0:
+        raise RejectedUploadError("PDF has no pages")
 
 
 async def _find_by_hash(pool: Pool, sha256: str) -> ImportResult | None:

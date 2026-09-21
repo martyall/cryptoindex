@@ -1,11 +1,13 @@
 import asyncio
 import dataclasses
+import io
 import logging
 from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 
 import httpx
 import pytest
+from pypdf import PdfWriter
 
 from cryptoindex.api import create_app
 from cryptoindex.core.config import Settings
@@ -15,7 +17,16 @@ from cryptoindex.ingest.parsers import StubParser
 from cryptoindex.ingest.runner import Runner
 from cryptoindex.ingest.stages import StageContext
 
-PDF = b"%PDF-1.7\nhello\n%%EOF\n"
+
+def _one_page_pdf() -> bytes:
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    out = io.BytesIO()
+    writer.write(out)
+    return out.getvalue()
+
+
+PDF = _one_page_pdf()
 
 
 @pytest.fixture
@@ -84,7 +95,7 @@ async def test_upload_rejects_non_pdf(client: httpx.AsyncClient) -> None:
         "/documents", files={"file": ("x.pdf", b"not a pdf")}, data={"name": "x"}
     )
     assert response.status_code == 400
-    assert "not a PDF" in response.json()["detail"]
+    assert "not a readable PDF" in response.json()["detail"]
 
 
 async def test_uploaded_document_reaches_ready_without_restart(

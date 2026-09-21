@@ -1,9 +1,11 @@
 import asyncio
+import io
 from collections.abc import AsyncIterator
 from pathlib import Path
 
 import psycopg
 import pytest
+from pypdf import PdfWriter
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
@@ -13,14 +15,21 @@ from cryptoindex.ingest.importer import (
     import_document,
 )
 
-MAX = 1024
+MAX = 4096
 
 
-def pdf(body: str) -> bytes:
-    return b"%PDF-1.7\n" + body.encode() + b"\n%%EOF\n"
+def pdf(title: str, pages: int = 1) -> bytes:
+    """A real PDF; the title makes each one's bytes distinct."""
+    writer = PdfWriter()
+    for _ in range(pages):
+        writer.add_blank_page(72, 72)
+    writer.add_metadata({"/Title": title})
+    out = io.BytesIO()
+    writer.write(out)
+    return out.getvalue()
 
 
-async def chunked(data: bytes, size: int = 3) -> AsyncIterator[bytes]:
+async def chunked(data: bytes, size: int = 64) -> AsyncIterator[bytes]:
     for i in range(0, len(data), size):
         yield data[i : i + size]
 
@@ -92,9 +101,11 @@ async def test_concurrent_identical_uploads_make_one_document(
 @pytest.mark.parametrize(
     "name, data, message",
     [
-        ("doc", b"<html>not a pdf</html>", "not a PDF"),
-        ("doc", b"%PD", "not a PDF"),
-        ("doc", b"", "not a PDF"),
+        ("doc", b"<html>not a pdf</html>", "not a readable PDF"),
+        ("doc", b"%PDF-1.7\nonly a header\n%%EOF\n", "not a readable PDF"),
+        ("doc", pdf("x")[:200], "not a readable PDF"),
+        ("doc", b"", "not a readable PDF"),
+        ("doc", pdf("x", pages=0), "has no pages"),
         ("doc", pdf("x" * MAX), "larger than"),
         ("   ", pdf("x"), "name must not be empty"),
     ],

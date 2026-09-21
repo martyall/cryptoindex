@@ -2,7 +2,7 @@ import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Annotated
 
 from fastapi import FastAPI, Form, HTTPException, Response, UploadFile, status
@@ -59,9 +59,8 @@ def create_app(runner: Runner, pool: Pool, settings: Settings) -> FastAPI:
         even if it failed. 400: blank name, not a PDF, or over CI_MAX_UPLOAD_MB.
         """
         if name is None or not name.strip():
-            filename = file.filename or ""
-            has_suffix = filename.lower().endswith(".pdf")
-            name = filename[: -len(".pdf")] if has_suffix else filename
+            filename = PurePath(file.filename or "")
+            name = filename.stem if filename.suffix.lower() == ".pdf" else filename.name
         try:
             result = await import_document(
                 pool,
