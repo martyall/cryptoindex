@@ -5,7 +5,7 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 | # | Phase | Status |
 |---|---|---|
 | 0 | Skeleton | done |
-| 1 | Harvest and fetch | todo |
+| 1 | Upload | todo |
 | 2 | Parse | todo |
 | 3 | Segment and gloss | todo |
 | 4 | Embed and retrieve | todo |
@@ -29,16 +29,17 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 - `make test` passes offline.
 - A test inserts revisions in various stages, starts the runner, kills it mid-run, restarts it, and shows every revision reaches `ready` via no-op stages with no duplicate work.
 
-## Phase 1 — Harvest and fetch
+## Phase 1 — Upload
 
-**Goal:** papers and PDFs flow in, revisions are detected.
+**Goal:** a person uploads named PDFs; each becomes a document and a revision that the running pipeline picks up (D18).
 
-**In scope:** OAI-PMH harvester (incremental, resumable by datestamp), category filter, polite PDF fetcher (delay, user agent, retry/backoff), per-paper license stored, revision creation on hash change, arXiv cross-match by title (record arXiv ID; source download is Phase 2).
+**In scope:** migration keying documents by UUID with a user-chosen, non-unique name; one importer function (name + file stream), which keeps its own copy of each PDF under `CI_DATA_DIR`; `POST /documents` and `GET /documents`; a single static upload page served by the app.
 
 **Acceptance:**
-- Harvest of one category for one month populates `docs.papers` with correct metadata and licenses (tested against recorded OAI responses).
-- Re-running harvest is a no-op except for changed datestamps.
-- Fetching the same PDF twice creates one revision; a changed PDF creates a second revision and leaves the first intact.
+- An uploaded PDF becomes a document and a revision and reaches `ready` without restarting the process.
+- Same name twice gives two documents; the same file twice gives one.
+
+A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferred until it is wanted; it becomes another caller of the importer.
 
 ## Phase 2 — Parse
 

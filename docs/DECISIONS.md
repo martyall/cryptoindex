@@ -54,3 +54,6 @@ See Invariant 10.
 
 ### D17. Deferred: reranker, section summaries, cross-refs, notation extraction, HyDE
 All are additive. HyDE is lowest priority: in cryptography, a hypothetical answer can bias retrieval toward what the model expects rather than what the papers say.
+
+### D18. Documents are uploaded by a person; nothing is scraped (for now)
+A person uploads PDFs and gives each a name of their choosing. The ingestion pipeline makes no network requests to ePrint, arXiv, or anywhere else. Documents are keyed by UUID, so names need not be unique, and no external identifier (ePrint ID, arXiv ID) is required. Every import goes through one function taking a name and a file stream, so a remote source (OAI-PMH harvest plus PDF fetch) can be added later as another caller. This supersedes the harvest-and-fetch scope of roadmap Phase 1; data flow steps 1–2 in `ARCHITECTURE.md` describe that later remote source.
