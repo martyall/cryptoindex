@@ -3,7 +3,8 @@ runs the real parsers, which CI never does. `make parse-eval`.
 
 For each excerpt in eval/parse-sample/ids.toml it cuts the pages out of the
 source, runs both parsers (caching their raw JSON), counts formulas KaTeX
-cannot render, renders page images, and writes a review page for scoring.
+cannot render, and renders page images for the review page
+(`make parse-review`).
 Everything it writes goes under eval/parse-sample/local/, which is not in git.
 """
 
@@ -30,8 +31,7 @@ from cryptoindex.ingest.parsers import MarkerParser, PaddleVLParser, Parser
 SAMPLE = Path("eval/parse-sample")
 LOCAL = SAMPLE / "local"
 KATEX_TOOL = Path("tools/katex-check")
-REVIEW_TEMPLATE = Path(__file__).with_name("review.html")
-ITEMS = LOCAL / "review-items.json"  # every page, for the reconcile pass
+ITEMS = LOCAL / "review-items.json"  # every page, served by review_server
 
 
 class Source(BaseModel):
@@ -248,19 +248,8 @@ def main() -> None:
             )
     (LOCAL / "formulas.json").write_text(json.dumps(summary, indent=2))
     ITEMS.write_text(json.dumps(review))
-    write_review_page({"mode": "blind", "items": review})
     print(json.dumps(summary, indent=2))
-    print(f"review page: {(LOCAL / 'review.html').resolve()}")
-
-
-def write_review_page(data: dict[str, object]) -> None:
-    """Write the review page with `data` (see review.html for the modes). The
-    blind page's data holds no proposals, so none can be seen early."""
-    katex_dist = (KATEX_TOOL / "node_modules" / "katex" / "dist").resolve()
-    (LOCAL / "katex").unlink(missing_ok=True)
-    (LOCAL / "katex").symlink_to(katex_dist, target_is_directory=True)
-    (LOCAL / "review-data.js").write_text(f"window.REVIEW = {json.dumps(data)};\n")
-    (LOCAL / "review.html").write_text(REVIEW_TEMPLATE.read_text())
+    print("review: make parse-review")
 
 
 if __name__ == "__main__":

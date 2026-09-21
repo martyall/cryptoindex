@@ -1,7 +1,7 @@
 UV_RUN := uv run --env-file .env
 
 .PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval \
-	parse-review parse-reconcile parse-report
+	parse-review parse-report
 
 .env:
 	cp .env.example .env
@@ -42,20 +42,16 @@ parse-eval: .env
 	cd tools/katex-check && npm ci --no-audit --no-fund
 	$(UV_RUN) python -m cryptoindex.evaluation.parse_eval
 
-# Serves the review page on this machine only (Ctrl-C to stop).
-parse-review:
-	@echo "review page: http://127.0.0.1:8009/review.html"
-	uv run python -m http.server 8009 --bind 127.0.0.1 --directory eval/parse-sample/local
-
-# After the blind pass: compare your exported scores with Claude's proposals
-# and rewrite the review page with only the disagreements.
-parse-reconcile: .env
-	$(UV_RUN) python -m cryptoindex.evaluation.parse_scores reconcile "$(SCORES)"
+# The review page, one page at a time, every judgement saved to
+# eval/parse-sample/scores/ as it is made: blind first, then only the
+# disagreements with Claude's proposals. Binds 127.0.0.1; Ctrl-C to stop.
+parse-review: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.review_server
 
 # Final scores (blind, overridden by reconciled) and formula counts, to
-# eval/parse-report.md. RECONCILED is optional if nothing needed reconciling.
+# eval/parse-report.md.
 parse-report: .env
-	$(UV_RUN) python -m cryptoindex.evaluation.parse_scores report "$(RECONCILED)"
+	$(UV_RUN) python -m cryptoindex.evaluation.parse_scores
 
 # Read-only: safe for CI and pre-commit.
 check:

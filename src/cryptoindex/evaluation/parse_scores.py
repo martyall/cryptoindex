@@ -1,186 +1,91 @@
-"""The human's parser scores (Phase 2): the reconcile pass and the final report.
+"""The parser evaluation report (Phase 2), from the human's saved judgements:
+the blind scores, overridden by the reconciled ones. `make parse-report`."""
 
-Scoring is blind first (review page without Claude's proposals), then only
-disagreements are reconciled:
-
-    make parse-reconcile SCORES=<exported parse-scores.csv>
-    make parse-report RECONCILED=<exported parse-scores-reconciled.csv>
-"""
-
-import csv
 import json
-import shutil
-import sys
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 from statistics import mean
-from typing import Literal
 
-from pydantic import BaseModel, Field, TypeAdapter
+from cryptoindex.evaluation.parse_eval import LOCAL
+from cryptoindex.evaluation.review_server import (
+    BLIND,
+    PARSERS,
+    PROPOSALS,
+    RECONCILED,
+    Judgement,
+    Key,
+    Proposal,
+    disagreements,
+    read_judgements,
+    read_proposals,
+)
 
-from cryptoindex.evaluation.parse_eval import ITEMS, LOCAL, SAMPLE, write_review_page
-
-ParserName = Literal["marker", "paddle"]
-Key = str  # "<excerpt>/<page>/<parser>", as the review page keys scores
-
-BLIND = SAMPLE / "parse-scores.csv"
-RECONCILED = SAMPLE / "parse-scores-reconciled.csv"
-PROPOSALS = LOCAL / "proposals"
 REPORT = Path("eval/parse-report.md")
 
 
-class ScoreRow(BaseModel):
-    excerpt: str
-    page: int
-    pdf_page: int
-    parser: ParserName
-    score: int = Field(ge=0, le=2)
-    note: str = ""
-
-    @property
-    def key(self) -> Key:
-        return f"{self.excerpt}/{self.page}/{self.parser}"
-
-
-class Proposal(BaseModel):
-    score: int = Field(ge=0, le=2)
-    note: str = ""
-
-
-_PROPOSAL_FILE = TypeAdapter(dict[Key, Proposal])
-
-
-def read_scores(path: Path) -> dict[Key, ScoreRow]:
-    """Rows of an exported scores CSV, validated, keyed by excerpt/page/parser."""
-    with path.open(newline="") as f:
-        rows = [ScoreRow.model_validate(row) for row in csv.DictReader(f)]
-    return {row.key: row for row in rows}
-
-
-def read_proposals(directory: Path) -> dict[Key, Proposal]:
-    """Claude's proposals, one JSON file per excerpt."""
-    merged: dict[Key, Proposal] = {}
-    for path in sorted(directory.glob("*.json")):
-        merged |= _PROPOSAL_FILE.validate_json(path.read_bytes())
-    return merged
-
-
-def disagreements(
-    blind: dict[Key, ScoreRow], proposals: dict[Key, Proposal]
-) -> set[Key]:
-    return {
-        k
-        for k, row in blind.items()
-        if k in proposals and proposals[k].score != row.score
-    }
-
-
 def final_scores(
-    blind: dict[Key, ScoreRow], reconciled: dict[Key, ScoreRow]
-) -> dict[Key, ScoreRow]:
-    """The blind scores, with reconciled rows taking precedence."""
+    blind: dict[Key, Judgement], reconciled: dict[Key, Judgement]
+) -> dict[Key, Judgement]:
+    """The blind scores, with reconciled ones taking precedence."""
     return blind | reconciled
 
 
-def reconcile(scores_csv: Path) -> None:
-    shutil.copyfile(scores_csv, BLIND)
-    blind = read_scores(BLIND)
-    proposals = read_proposals(PROPOSALS)
-    missing = sorted(set(proposals) - set(blind))
-    if missing:
-        sys.exit(f"{len(missing)} scores missing from {scores_csv}, e.g. {missing[0]}")
-    differ = disagreements(blind, proposals)
-    items = json.loads(ITEMS.read_text())
-    subset = [
-        item
-        for item in items
-        if any(
-            f"{item['excerpt']}/{item['page']}/{p}" in differ
-            for p in ("marker", "paddle")
-        )
-    ]
-    write_review_page(
-        {
-            "mode": "reconcile",
-            "items": subset,
-            "proposals": {k: p.model_dump() for k, p in proposals.items()},
-            "first_pass": {
-                k: {"score": r.score, "note": r.note} for k, r in blind.items()
-            },
-        }
-    )
-    print(
-        f"{len(differ)} of {len(blind)} scores differ from Claude's, on {len(subset)} "
-        f"pages. Reload {(LOCAL / 'review.html').resolve()}"
-    )
-
-
-def report(reconciled_csv: Path | None) -> None:
-    blind = read_scores(BLIND)
-    reconciled: dict[Key, ScoreRow] = {}
-    if reconciled_csv is not None:
-        shutil.copyfile(reconciled_csv, RECONCILED)
-        reconciled = read_scores(RECONCILED)
-    proposals = read_proposals(PROPOSALS)
-    final = final_scores(blind, reconciled)
-    formulas = json.loads((LOCAL / "formulas.json").read_text())
-    REPORT.write_text(render_report(final, blind, proposals, formulas))
-    print(f"wrote {REPORT}")
-
-
 def render_report(
-    final: dict[Key, ScoreRow],
-    blind: dict[Key, ScoreRow],
+    blind: dict[Key, Judgement],
+    reconciled: dict[Key, Judgement],
     proposals: dict[Key, Proposal],
     formulas: dict[str, dict[str, dict[str, int]]],
 ) -> str:
+    final = final_scores(blind, reconciled)
     by_excerpt: dict[str, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
-    for row in final.values():
-        by_excerpt[row.excerpt][row.parser].append(row.score)
-    parsers: tuple[ParserName, ...] = ("marker", "paddle")
+    for judgement in final.values():
+        by_excerpt[judgement.excerpt][judgement.parser].append(judgement.score)
     lines = [
         "# Parser evaluation report (Phase 2)",
         "",
-        "Scores are the human's: blind first, then reconciled where they differed "
-        "from Claude's proposal. 0 scrambled, 1 partially intact, 2 faithful, per "
-        "page (EVALUATION.md §1). Formulas: math each parser recognized as math, "
-        "and how many KaTeX could not render (undelimited equations count as "
-        "failures).",
+        "Scores are the human's, per page: blind first, then reconciled where they "
+        "differed from Claude's independent proposal. 0 scrambled, 1 partially "
+        "intact, 2 faithful (EVALUATION.md §1). Formulas: math each parser "
+        "recognized as math, and how many KaTeX could not render (undelimited "
+        "equations count as failures). A parser that emits math as plain text has "
+        "fewer formulas to fail, so read the two columns together.",
         "",
         "| Excerpt | Marker score | PaddleOCR-VL score | Marker formulas (failed) "
         "| PaddleOCR-VL formulas (failed) |",
         "|---|---|---|---|---|",
     ]
     for excerpt, scores in by_excerpt.items():
-        f = formulas.get(excerpt, {})
+        counts = formulas.get(excerpt, {})
         lines.append(
             f"| {excerpt} | "
-            + " | ".join(f"{mean(scores[p]):.2f}" for p in parsers)
+            + " | ".join(f"{_mean(scores[p]):.2f}" for p in PARSERS)
             + " | "
             + " | ".join(
-                f"{f[p]['formulas']} ({f[p]['failed']})" if p in f else "—"
-                for p in parsers
+                f"{counts[p]['formulas']} ({counts[p]['failed']})"
+                if p in counts
+                else "—"
+                for p in PARSERS
             )
             + " |"
         )
-    overall = {
-        p: _mean(r.score for r in final.values() if r.parser == p) for p in parsers
-    }
     totals = {
         p: (
-            sum(f[p]["formulas"] for f in formulas.values()),
-            sum(f[p]["failed"] for f in formulas.values()),
+            sum(f[p]["formulas"] for f in formulas.values() if p in f),
+            sum(f[p]["failed"] for f in formulas.values() if p in f),
         )
-        for p in parsers
+        for p in PARSERS
     }
     lines.append(
         "| **all** | "
-        + " | ".join(f"**{overall[p]:.2f}**" for p in parsers)
+        + " | ".join(
+            f"**{_mean(s for e in by_excerpt.values() for s in e[p]):.2f}**"
+            for p in PARSERS
+        )
         + " | "
         + " | ".join(
-            f"**{totals[p][0]} ({totals[p][1]}, {totals[p][1] / totals[p][0]:.1%})**"
-            for p in parsers
+            f"**{found} ({failed}, {failed / found:.1%})**" if found else "**0**"
+            for found, failed in totals.values()
         )
         + " |"
     )
@@ -189,8 +94,8 @@ def render_report(
     lines += [
         "",
         f"Claude's proposals differed from the blind score on {len(differ)} of "
-        f"{len(blind)} page scores; the human changed {changed} of those on "
-        "reconciling.",
+        f"{len(blind)} page scores; on reconciling, the human changed {changed} "
+        "of them.",
         "",
     ]
     return "\n".join(lines)
@@ -202,13 +107,17 @@ def _mean(values: Iterable[int]) -> float:
 
 
 def main() -> None:
-    command, *rest = sys.argv[1:]
-    if command == "reconcile":
-        reconcile(Path(rest[0]).expanduser())
-    elif command == "report":
-        report(Path(rest[0]).expanduser() if rest and rest[0] else None)
-    else:
-        sys.exit("usage: parse_scores reconcile SCORES.csv | report [RECONCILED.csv]")
+    blind = read_judgements(BLIND)
+    if not blind:
+        raise SystemExit(f"no blind scores in {BLIND}; run make parse-review first")
+    report = render_report(
+        blind,
+        read_judgements(RECONCILED),
+        read_proposals(PROPOSALS),
+        json.loads((LOCAL / "formulas.json").read_text()),
+    )
+    REPORT.write_text(report)
+    print(f"wrote {REPORT}")
 
 
 if __name__ == "__main__":

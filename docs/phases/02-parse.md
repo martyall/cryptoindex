@@ -42,11 +42,13 @@ Uploaded PDFs become stable paragraphs, read from each parser's structured outpu
    - It writes a review page (below).
    - Results: `eval/parse-report.md` and `eval/parse-sample/parse-scores.csv`.
 
-   **Review page.** A static local page, never published, because some sources do not permit redistribution. For each excerpt page it shows the page image, then Marker's and PaddleOCR-VL's blocks side by side, rendered with KaTeX from the local install. Scoring is **blind, then reconciled** (human decision), so Claude's proposals cannot anchor the human's scores:
-   1. **Blind pass.** The human scores every page and parser 0/1/2 and exports `parse-scores.csv`. The page's data contains no proposals.
-   2. **Proposals.** Meanwhile, Claude writes independent proposals from the page images and parser output, kept in `local/proposals/`.
-   3. **Reconcile.** `make parse-reconcile SCORES=…` rewrites the page with only the pages where the two disagree, showing both scores and Claude's note, with the blind score preselected. The human settles each one and exports `parse-scores-reconciled.csv`.
-   4. **Report.** `make parse-report RECONCILED=…` writes `eval/parse-report.md` from the final scores (the blind ones, overridden by the reconciled ones) and the formula counts.
+   **Review page.** `make parse-review` runs a small local server on 127.0.0.1:8009. It is never published, because some sources do not permit redistribution. It shows one excerpt page at a time: the page image, then Marker's and PaddleOCR-VL's blocks side by side, rendered with KaTeX from the local install. Every judgement is saved to `eval/parse-sample/scores/` as soon as it is made, and the page moves to the next unscored page once both parsers are scored.
+
+   Scoring is **blind, then reconciled** (human decision), so Claude's proposals cannot anchor the human's scores:
+   1. **Blind pass.** The human scores every page and parser 0/1/2 into `scores/blind.json`. The server never sends a proposal in this mode.
+   2. **Proposals.** Claude writes independent proposals from the page images and parser output, kept in `local/proposals/`.
+   3. **Reconcile.** Once every page has a blind score, the same page shows only the pages where the two disagree, with both scores and Claude's note. The human's decisions go to `scores/reconciled.json`.
+   4. **Report.** `make parse-report` writes `eval/parse-report.md` from the final scores (the blind ones, overridden by the reconciled ones) and the formula counts.
 
    The formula counts report math *recognized* next to KaTeX failures, because a parser that emits math as plain text cannot fail KaTeX: the failure rate alone would reward it.
 
