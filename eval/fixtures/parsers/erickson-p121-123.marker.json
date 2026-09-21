@@ -1,0 +1,1328 @@
+{
+  "children": [
+    {
+      "id": "/page/0/Page/450",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/0/PageHeader/0'></content-ref><content-ref src='/page/0/Text/1'></content-ref><content-ref src='/page/0/Text/2'></content-ref><content-ref src='/page/0/SectionHeader/3'></content-ref><content-ref src='/page/0/Text/4'></content-ref><content-ref src='/page/0/Equation/5'></content-ref><content-ref src='/page/0/Text/6'></content-ref><content-ref src='/page/0/Equation/7'></content-ref><content-ref src='/page/0/Text/8'></content-ref><content-ref src='/page/0/Text/9'></content-ref><content-ref src='/page/0/Equation/10'></content-ref><content-ref src='/page/0/PageFooter/12'></content-ref><content-ref src='/page/0/Footnote/11'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          482.0,
+          0.0
+        ],
+        [
+          482.0,
+          692.0
+        ],
+        [
+          0.0,
+          692.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        482.0,
+        692.0
+      ],
+      "children": [
+        {
+          "id": "/page/0/PageHeader/0",
+          "block_type": "PageHeader",
+          "html": "",
+          "polygon": [
+            [
+              281.0403970151815,
+              29.30036870061641
+            ],
+            [
+              459.5277690027216,
+              29.30036870061641
+            ],
+            [
+              459.5277690027216,
+              42.43231201171875
+            ],
+            [
+              281.0403970151815,
+              42.43231201171875
+            ]
+          ],
+          "bbox": [
+            281.0403970151815,
+            29.30036870061641,
+            459.5277690027216,
+            42.43231201171875
+          ],
+          "children": null,
+          "section_hierarchy": {},
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/1",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">IterFibo2(<i>n</i>): <i>prev</i> ← 1 <i>curr</i> ← 0 for <i>i</i> ← 1 to <i>n</i> <i>next</i> <sup>←</sup> <i>curr</i> + <i>prev</i> <i>prev</i> ← <i>curr</i> <i>curr</i> ← <i>next</i> return <i>curr</i></p>",
+          "polygon": [
+            [
+              193.92822341562984,
+              69.88190391598388
+            ],
+            [
+              304.322403927057,
+              69.88190391598388
+            ],
+            [
+              304.322403927057,
+              165.30476295082696
+            ],
+            [
+              193.92822341562984,
+              165.30476295082696
+            ]
+          ],
+          "bbox": [
+            193.92822341562984,
+            69.88190391598388,
+            304.322403927057,
+            165.30476295082696
+          ],
+          "children": null,
+          "section_hierarchy": {},
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/2",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">(This algorithm uses the non-standard but consistent base case <i>F</i><sup>−</sup><sup>1</sup> = 1 so that IterFibo2(0) returns the correct value 0.) Although saving space can be absolutely crucial in practice, we won't focus on space issues in this book.</p>",
+          "polygon": [
+            [
+              69.35494624919505,
+              175.17461034045317
+            ],
+            [
+              428.49553997223705,
+              175.17461034045317
+            ],
+            [
+              428.49553997223705,
+              216.1365966796875
+            ],
+            [
+              69.35494624919505,
+              216.1365966796875
+            ]
+          ],
+          "bbox": [
+            69.35494624919505,
+            175.17461034045317,
+            428.49553997223705,
+            216.1365966796875
+          ],
+          "children": null,
+          "section_hierarchy": {},
+          "images": {}
+        },
+        {
+          "id": "/page/0/SectionHeader/3",
+          "block_type": "SectionHeader",
+          "html": "<h2>♥<b>3.2 Aside: Even Faster Fibonacci Numbers</b></h2>",
+          "polygon": [
+            [
+              63.37820498642988,
+              234.6174717135445
+            ],
+            [
+              326.2532958984375,
+              234.6174717135445
+            ],
+            [
+              326.2532958984375,
+              250.2630615234375
+            ],
+            [
+              63.37820498642988,
+              250.2630615234375
+            ]
+          ],
+          "bbox": [
+            63.37820498642988,
+            234.6174717135445,
+            326.2532958984375,
+            250.2630615234375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/4",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Although the previous algorithm is simple and attractive, it is <i>not</i> the fastest algorithm to compute Fibonacci numbers. We can derive a faster algorithm by exploiting the following matrix reformulation of the Fibonacci recurrence:</p>",
+          "polygon": [
+            [
+              69.35089714085889,
+              260.3703291904371
+            ],
+            [
+              429.0454866637709,
+              260.3703291904371
+            ],
+            [
+              429.0454866637709,
+              301.78057861328125
+            ],
+            [
+              69.35089714085889,
+              301.78057861328125
+            ]
+          ],
+          "bbox": [
+            69.35089714085889,
+            260.3703291904371,
+            429.0454866637709,
+            301.78057861328125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/5",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\begin{bmatrix} 0 &amp; 1 \\\\ 1 &amp; 1 \\end{bmatrix} \\begin{bmatrix} x \\\\ y \\end{bmatrix} = \\begin{bmatrix} y \\\\ x+y \\end{bmatrix}</math></p>",
+          "polygon": [
+            [
+              195.18619215803605,
+              308.51370295465705
+            ],
+            [
+              302.91505282625997,
+              308.51370295465705
+            ],
+            [
+              302.91505282625997,
+              341.56817626953125
+            ],
+            [
+              195.18619215803605,
+              341.56817626953125
+            ]
+          ],
+          "bbox": [
+            195.18619215803605,
+            308.51370295465705,
+            302.91505282625997,
+            341.56817626953125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/6",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">In other words, multiplying a two-dimensional vector by the matrix -0 1 1 1 has exactly the same effect as one iteration of the inner loop of IterFibo2. It follows that multiplying by the matrix <i>n</i> times is the same as iterating the loop <i>n</i> times:</p>",
+          "polygon": [
+            [
+              69.83800258606811,
+              348.46096395077194
+            ],
+            [
+              429.2715504410478,
+              348.46096395077194
+            ],
+            [
+              429.2715504410478,
+              391.46002197265625
+            ],
+            [
+              69.83800258606811,
+              391.46002197265625
+            ]
+          ],
+          "bbox": [
+            69.83800258606811,
+            348.46096395077194,
+            429.2715504410478,
+            391.46002197265625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/7",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">\\begin{bmatrix} 0 &amp; 1 \\\\ 1 &amp; 1 \\end{bmatrix}^n \\begin{bmatrix} 1 \\\\ 0 \\end{bmatrix} = \\begin{bmatrix} F_{n-1} \\\\ F_n \\end{bmatrix}.</math></p>",
+          "polygon": [
+            [
+              193.63872360775295,
+              398.5235509738116
+            ],
+            [
+              303.00146484375,
+              398.5235509738116
+            ],
+            [
+              303.00146484375,
+              430.75604248046875
+            ],
+            [
+              193.63872360775295,
+              430.75604248046875
+            ]
+          ],
+          "bbox": [
+            193.63872360775295,
+            398.5235509738116,
+            303.00146484375,
+            430.75604248046875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/8",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">So if we want the <i>n</i>th Fibonacci number, we only need to compute the <i>n</i>th power of the matrix -0 1 1 1 . If we use repeated squaring,<sup>9</sup> computing the <i>n</i>th power of something requires only <i>O</i>(log <i>n</i>) multiplications. Here, because \"something\" is <sup>a</sup> 2 <sup>×</sup> 2 matrix, that means <i>O</i>(log <i>n</i>) 2 <sup>×</sup> 2 matrix multiplications, each of which reduces to a constant number of integer multiplications and additions. Thus, we can compute <i>F</i><i><sup>n</sup></i> in only <i>O</i><b>(</b><b>log</b><i>n</i><b>)</b> <i>integer arithmetic operations</i>.</p>",
+          "polygon": [
+            [
+              69.44178475339898,
+              438.4394893625576
+            ],
+            [
+              429.9038976310386,
+              438.4394893625576
+            ],
+            [
+              429.9038976310386,
+              522.9741516113281
+            ],
+            [
+              69.44178475339898,
+              522.9741516113281
+            ]
+          ],
+          "bbox": [
+            69.44178475339898,
+            438.4394893625576,
+            429.9038976310386,
+            522.9741516113281
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Text/9",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">We can achieve the same speedup using the identity <i>F</i><i><sup>n</sup></i> = <i>F</i><i>m</i><i>F</i><i>n</i>−<i>m</i>−<sup>1</sup> + <i>F</i><i>m</i>+1<i>F</i><i>n</i>−<i>m</i>, which holds (by induction!) for all integers <i>m</i> and <i>n</i>. In particular, this identity implies the following mutual recurrence for pairs of adjacent Fibonacci numbers, first proposed by Édouard Lucas in 1898:</p>",
+          "polygon": [
+            [
+              69.79537256694692,
+              520.2879563287175
+            ],
+            [
+              429.6175776314031,
+              520.2879563287175
+            ],
+            [
+              429.6175776314031,
+              574.9395980834961
+            ],
+            [
+              69.79537256694692,
+              574.9395980834961
+            ]
+          ],
+          "bbox": [
+            69.79537256694692,
+            520.2879563287175,
+            429.6175776314031,
+            574.9395980834961
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Equation/10",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">F_{2n-1} = F_{n-1}^2 + F_n^2</math>\n<math display=\"block\">F_{2n} = F_n(F_{n-1} + F_{n+1}) = F_n(2F_{n-1} + F_n)</math></p>",
+          "polygon": [
+            [
+              151.49020523379787,
+              582.2646198706664
+            ],
+            [
+              345.7559916020181,
+              582.2646198706664
+            ],
+            [
+              345.7559916020181,
+              621.4018402099609
+            ],
+            [
+              151.49020523379787,
+              621.4018402099609
+            ]
+          ],
+          "bbox": [
+            151.49020523379787,
+            582.2646198706664,
+            345.7559916020181,
+            621.4018402099609
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/PageFooter/12",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              443.13153389416067,
+              656.6948226317037
+            ],
+            [
+              459.4342506135789,
+              656.6948226317037
+            ],
+            [
+              459.4342506135789,
+              667.169303894043
+            ],
+            [
+              443.13153389416067,
+              667.169303894043
+            ]
+          ],
+          "bbox": [
+            443.13153389416067,
+            656.6948226317037,
+            459.4342506135789,
+            667.169303894043
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/0/Footnote/11",
+          "block_type": "Footnote",
+          "html": "<p>as suggested by Pingala for powers of ˙ 2 elsewhere in <i>Chandah.</i> <i>śastra</i> <i>¯</i></p>",
+          "polygon": [
+            [
+              85.84333288688126,
+              628.2848287894434
+            ],
+            [
+              346.0472986390394,
+              628.2848287894434
+            ],
+            [
+              346.0472986390394,
+              640.6394309997559
+            ],
+            [
+              85.84333288688126,
+              640.6394309997559
+            ]
+          ],
+          "bbox": [
+            85.84333288688126,
+            628.2848287894434,
+            346.0472986390394,
+            640.6394309997559
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "2": "/page/0/SectionHeader/3"
+      },
+      "images": null
+    },
+    {
+      "id": "/page/1/Page/413",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/1/PageHeader/0'></content-ref><content-ref src='/page/1/Text/1'></content-ref><content-ref src='/page/1/Text/2'></content-ref><content-ref src='/page/1/Text/3'></content-ref><content-ref src='/page/1/Text/4'></content-ref><content-ref src='/page/1/SectionHeader/5'></content-ref><content-ref src='/page/1/Text/6'></content-ref><content-ref src='/page/1/Text/7'></content-ref><content-ref src='/page/1/Text/8'></content-ref><content-ref src='/page/1/Text/9'></content-ref><content-ref src='/page/1/PageFooter/10'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          482.0,
+          0.0
+        ],
+        [
+          482.0,
+          692.0
+        ],
+        [
+          0.0,
+          692.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        482.0,
+        692.0
+      ],
+      "children": [
+        {
+          "id": "/page/1/PageHeader/0",
+          "block_type": "PageHeader",
+          "html": "",
+          "polygon": [
+            [
+              20.73860783673371,
+              30.622590566120582
+            ],
+            [
+              128.64193331657634,
+              30.622590566120582
+            ],
+            [
+              128.64193331657634,
+              42.43231201171875
+            ],
+            [
+              20.73860783673371,
+              42.43231201171875
+            ]
+          ],
+          "bbox": [
+            20.73860783673371,
+            30.622590566120582,
+            128.64193331657634,
+            42.43231201171875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/1",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">(We can also derive this mutual recurrence directly from the matrix-squaring algorithm.) These recurrences translate directly into the following algorithm:</p>",
+          "polygon": [
+            [
+              51.79553042303533,
+              72.72382421689845
+            ],
+            [
+              411.8655088908194,
+              72.72382421689845
+            ],
+            [
+              411.8655088908194,
+              98.901611328125
+            ],
+            [
+              51.79553042303533,
+              98.901611328125
+            ]
+          ],
+          "bbox": [
+            51.79553042303533,
+            72.72382421689845,
+            411.8655088908194,
+            98.901611328125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/2",
+          "block_type": "Text",
+          "html": "<blockquote><p block-type=\"Text\">〈〈<i>Compute the pair</i> <i>F</i><i>n</i>−<sup>1</sup> <i>,</i> <i>F</i><i><sup>n</sup></i> 〉〉 FastRecFibo(<i>n</i>) : if <i>n</i> = 1 return 0, 1 <i>m</i> ← b<i>n</i><i>/</i>2c <i>hprv</i>, <i>hcur</i> <sup>←</sup> FastRecFibo(<i>m</i>) 〈〈<i>F</i><i>m</i>−<sup>1</sup> <i>,</i> <i>F</i><i>m</i>〉〉 <i>prev</i> <sup>←</sup> <i>hprv</i><sup>2</sup> + <i>hcur</i><sup>2</sup> 〈〈<i>F</i>2<i>m</i>−<sup>1</sup> <i>curr</i> <sup>←</sup> <i>hcur</i>·(2 · <i>hprv</i> + <i>hcur</i>) 〈〈<i>F</i>2<i>m</i>〉〉 <i>next</i> <sup>←</sup> <i>prev</i> + <i>curr</i> 〈〈<i>F</i>2<i>m</i>+<sup>1</sup> 〉〉 if <i>n</i> is even return <i>prev</i>,<i>curr</i> else return <i>curr</i>, <i>next</i></p></blockquote>",
+          "polygon": [
+            [
+              131.71098586300482,
+              110.02359845294725
+            ],
+            [
+              329.1522682866264,
+              110.02359845294725
+            ],
+            [
+              329.1522682866264,
+              273.83245849609375
+            ],
+            [
+              131.71098586300482,
+              273.83245849609375
+            ]
+          ],
+          "bbox": [
+            131.71098586300482,
+            110.02359845294725,
+            329.1522682866264,
+            273.83245849609375
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/3",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Our standard recursion tree technique implies that this algorithm performs only <i>O</i>(log <i>n</i>) integer arithmetic operations.</p>",
+          "polygon": [
+            [
+              51.421039373655894,
+              285.0902956614386
+            ],
+            [
+              411.2268478369824,
+              285.0902956614386
+            ],
+            [
+              411.2268478369824,
+              315.34014892578125
+            ],
+            [
+              51.421039373655894,
+              315.34014892578125
+            ]
+          ],
+          "bbox": [
+            51.421039373655894,
+            285.0902956614386,
+            411.2268478369824,
+            315.34014892578125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/4",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">This is an exponential speedup over the standard iterative algorithm, which was already an exponential speedup over our original recursive algorithm. Right?</p>",
+          "polygon": [
+            [
+              51.481015361115496,
+              312.59456508053734
+            ],
+            [
+              411.80882137411305,
+              312.59456508053734
+            ],
+            [
+              411.80882137411305,
+              354.19659423828125
+            ],
+            [
+              51.481015361115496,
+              354.19659423828125
+            ]
+          ],
+          "bbox": [
+            51.481015361115496,
+            312.59456508053734,
+            411.80882137411305,
+            354.19659423828125
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/0/SectionHeader/3"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/SectionHeader/5",
+          "block_type": "SectionHeader",
+          "html": "<h2><b>Whoa! Not so fast!</b></h2>",
+          "polygon": [
+            [
+              51.60859658818222,
+              371.7698114959287
+            ],
+            [
+              143.91624514756268,
+              371.7698114959287
+            ],
+            [
+              143.91624514756268,
+              384.99232186992145
+            ],
+            [
+              51.60859658818222,
+              384.99232186992145
+            ]
+          ],
+          "bbox": [
+            51.60859658818222,
+            371.7698114959287,
+            143.91624514756268,
+            384.99232186992145
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/6",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Well, not exactly. Fibonacci numbers grow exponentially fast. The <i>n</i>th Fibonacci number is approximately <i>n</i> log<sup>10</sup> <i>φ</i> <sup>≈</sup> <i>n</i><i>/</i>5 decimal digits long, or <i>n</i> log<sup>2</sup> <i>φ</i> <sup>≈</sup> 2<i>n</i><i>/</i>3 bits. So we can't possibly compute <i>F</i><i><sup>n</sup></i> in logarithmic <i>time</i> — we need <i>Ω</i>(<i>n</i>) time just to write down the answer!</p>",
+          "polygon": [
+            [
+              51.536444680316265,
+              393.11135219520247
+            ],
+            [
+              411.8048866473683,
+              393.11135219520247
+            ],
+            [
+              411.8048866473683,
+              447.6976013183594
+            ],
+            [
+              51.536444680316265,
+              447.6976013183594
+            ]
+          ],
+          "bbox": [
+            51.536444680316265,
+            393.11135219520247,
+            411.8048866473683,
+            447.6976013183594
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/7",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">The way out of this apparent paradox is to observe that <i>we can't perform</i> <i>arbitrary-precision arithmetic in constant time</i>. Let <i>M</i>(<i>n</i>) denote the time required to multiply two <i>n</i>-digit numbers. The running time of FastRecFibo satisfies the recurrence <i>T</i>(<i>n</i>) = <i>T</i>(b<i>n</i><i>/</i>2c) + <i>M</i>(<i>n</i>), which solves to <i>T</i>(<i>n</i>) = <i>O</i><b>(</b><i>M</i><b>(</b><i>n</i><b>))</b> via recursion trees. The fastest integer multiplication algorithm known (as of 2019) runs in <i>O</i>(<i>n</i> log <i>n</i>) time, so that is also the running time of the fastest algorithm known (as of 2019) to compute Fibonacci numbers.</p>",
+          "polygon": [
+            [
+              51.56539466110395,
+              448.2692511363252
+            ],
+            [
+              412.14565228451835,
+              448.2692511363252
+            ],
+            [
+              412.14565228451835,
+              543.7866058349609
+            ],
+            [
+              51.56539466110395,
+              543.7866058349609
+            ]
+          ],
+          "bbox": [
+            51.56539466110395,
+            448.2692511363252,
+            412.14565228451835,
+            543.7866058349609
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/8",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Is this algorithm slower than our \"linear-time\" iterative algorithms? Actually, no—addition isn't free, either! Adding two <i>n</i>-digit numbers requires <i>O</i>(<i>n</i>) time, so the iterative algorithms IterFibo and IterFibo2 actually run in <i>O</i><b>(</b><i>n</i> <b>2</b> <b>)</b> <i>time</i>. (Do you see why?) So FastRecFibo is significantly faster than the iterative algorithms, just not <i>exponentially</i> faster.</p>",
+          "polygon": [
+            [
+              51.67538399941072,
+              544.020700109612
+            ],
+            [
+              412.7307827535721,
+              544.020700109612
+            ],
+            [
+              412.7307827535721,
+              612.6935958862305
+            ],
+            [
+              51.67538399941072,
+              612.6935958862305
+            ]
+          ],
+          "bbox": [
+            51.67538399941072,
+            544.020700109612,
+            412.7307827535721,
+            612.6935958862305
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/Text/9",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\" class=\"has-continuation\">In the original recursive algorithm, the extra cost of arbitrary-precision arithmetic is overwhelmed by the huge number of recursive calls. The correct</p>",
+          "polygon": [
+            [
+              51.48018037549815,
+              613.2346934672942
+            ],
+            [
+              412.1273512298916,
+              613.2346934672942
+            ],
+            [
+              412.1273512298916,
+              640.8285980224609
+            ],
+            [
+              51.48018037549815,
+              640.8285980224609
+            ]
+          ],
+          "bbox": [
+            51.48018037549815,
+            613.2346934672942,
+            412.1273512298916,
+            640.8285980224609
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/1/PageFooter/10",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              21.04544217478988,
+              655.5187033408383
+            ],
+            [
+              38.34831295932989,
+              655.5187033408383
+            ],
+            [
+              38.34831295932989,
+              667.0886077880859
+            ],
+            [
+              21.04544217478988,
+              667.0886077880859
+            ]
+          ],
+          "bbox": [
+            21.04544217478988,
+            655.5187033408383,
+            38.34831295932989,
+            667.0886077880859
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "2": "/page/1/SectionHeader/5"
+      },
+      "images": null
+    },
+    {
+      "id": "/page/2/Page/433",
+      "block_type": "Page",
+      "html": "<content-ref src='/page/2/PageHeader/0'></content-ref><content-ref src='/page/2/Text/1'></content-ref><content-ref src='/page/2/SectionHeader/2'></content-ref><content-ref src='/page/2/Text/3'></content-ref><content-ref src='/page/2/Text/4'></content-ref><content-ref src='/page/2/Equation/5'></content-ref><content-ref src='/page/2/Text/6'></content-ref><content-ref src='/page/2/Text/7'></content-ref><content-ref src='/page/2/Text/8'></content-ref><content-ref src='/page/2/SectionHeader/9'></content-ref><content-ref src='/page/2/Text/10'></content-ref><content-ref src='/page/2/PageFooter/11'></content-ref>",
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          482.0,
+          0.0
+        ],
+        [
+          482.0,
+          692.0
+        ],
+        [
+          0.0,
+          692.0
+        ]
+      ],
+      "bbox": [
+        0.0,
+        0.0,
+        482.0,
+        692.0
+      ],
+      "children": [
+        {
+          "id": "/page/2/PageHeader/0",
+          "block_type": "PageHeader",
+          "html": "",
+          "polygon": [
+            [
+              324.3357052246853,
+              30.73052371801044
+            ],
+            [
+              459.97751742017397,
+              30.73052371801044
+            ],
+            [
+              459.97751742017397,
+              42.72821044921875
+            ],
+            [
+              324.3357052246853,
+              42.72821044921875
+            ]
+          ],
+          "bbox": [
+            324.3357052246853,
+            30.73052371801044,
+            459.97751742017397,
+            42.72821044921875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/1",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">recurrence is <i>T</i>(<i>n</i>) = <i>T</i>(<i>n</i> <sup>−</sup> 1) + <i>T</i>(<i>n</i> <sup>−</sup> 2) + <i>O</i>(<i>n</i>), which still has the solution <i>T</i>(<i>n</i>) = <i>O</i>(<i>φ</i> <i>n</i> ).</p>",
+          "polygon": [
+            [
+              69.95904118610578,
+              71.71051842058209
+            ],
+            [
+              429.3604935665338,
+              71.71051842058209
+            ],
+            [
+              429.3604935665338,
+              101.78814697265625
+            ],
+            [
+              69.95904118610578,
+              101.78814697265625
+            ]
+          ],
+          "bbox": [
+            69.95904118610578,
+            71.71051842058209,
+            429.3604935665338,
+            101.78814697265625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/1/SectionHeader/5"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/SectionHeader/2",
+          "block_type": "SectionHeader",
+          "html": "<h2><b>3.3</b> <i>Interpunctio Verborum Redux</i></h2>",
+          "polygon": [
+            [
+              69.5283887753405,
+              121.35547258536194
+            ],
+            [
+              270.8113885526524,
+              121.35547258536194
+            ],
+            [
+              270.8113885526524,
+              136.59967041015625
+            ],
+            [
+              69.5283887753405,
+              136.59967041015625
+            ]
+          ],
+          "bbox": [
+            69.5283887753405,
+            121.35547258536194,
+            270.8113885526524,
+            136.59967041015625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/3",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">For our next dynamic programming algorithm, let's consider the text segmentation problem from the previous chapter. We are given a string <i>A</i>[1 .. <i>n</i>] and a subroutine IsWord that determines whether a given string is a word (whatever that means), and we want to know whether <i>A</i> can be partitioned into a sequence of words.</p>",
+          "polygon": [
+            [
+              69.35826903442572,
+              147.39921389628336
+            ],
+            [
+              430.04618833076154,
+              147.39921389628336
+            ],
+            [
+              430.04618833076154,
+              213.70822417981447
+            ],
+            [
+              69.35826903442572,
+              213.70822417981447
+            ]
+          ],
+          "bbox": [
+            69.35826903442572,
+            147.39921389628336,
+            430.04618833076154,
+            213.70822417981447
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/4",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">We solved this problem by defining a function <i>Splittable</i>(<i>i</i>) that returns True if and only if the suffix <i>A</i>[<i>i</i> .. <i>n</i>] can be partitioned into a sequence of words. We need to compute <i>Splittable</i>(1). This function satisfies the recurrence</p>",
+          "polygon": [
+            [
+              69.79103178555265,
+              215.8375208432083
+            ],
+            [
+              429.9100284843385,
+              215.8375208432083
+            ],
+            [
+              429.9100284843385,
+              260.16015625
+            ],
+            [
+              69.79103178555265,
+              260.16015625
+            ]
+          ],
+          "bbox": [
+            69.79103178555265,
+            215.8375208432083,
+            429.9100284843385,
+            260.16015625
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Equation/5",
+          "block_type": "Equation",
+          "html": "<p block-type=\"Equation\"><math display=\"block\">Splittable(i) = \\begin{cases} \\text{TRUE} &amp; \\text{if } i &gt; n \\\\ \\bigvee_{j=i}^n (IsWord(i, j) \\wedge Splittable(j+1)) &amp; \\text{otherwise} \\end{cases}</math></p>",
+          "polygon": [
+            [
+              97.40751194694364,
+              267.0886509524394
+            ],
+            [
+              397.6419292349096,
+              267.0886509524394
+            ],
+            [
+              397.6419292349096,
+              322.1638488769531
+            ],
+            [
+              97.40751194694364,
+              322.1638488769531
+            ]
+          ],
+          "bbox": [
+            97.40751194694364,
+            267.0886509524394,
+            397.6419292349096,
+            322.1638488769531
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/6",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">where <i>IsWord</i>(<i>i</i>, <i>j</i>) is shorthand for <i>IsWord</i>(<i>A</i>[<i>i</i> .. <i>j</i>]). This recurrence translates directly into a recursive backtracking algorithm that calls the IsWord subroutine <i>O</i>(2 <i>n</i> ) times in the worst case.</p>",
+          "polygon": [
+            [
+              69.32828961931529,
+              331.14331438223695
+            ],
+            [
+              429.5974007186771,
+              331.14331438223695
+            ],
+            [
+              429.5974007186771,
+              375.4381408691406
+            ],
+            [
+              69.32828961931529,
+              375.4381408691406
+            ]
+          ],
+          "bbox": [
+            69.32828961931529,
+            331.14331438223695,
+            429.5974007186771,
+            375.4381408691406
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/7",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">But for any fixed string <i>A</i>[1 .. <i>n</i>], there are only <i>n</i> different ways to call the recursive function <i>Splittable</i>(<i>i</i>)—one for each value of <i>i</i> between 1 and <i>n</i> + 1—and only <i>O</i>(<i>n</i> 2 ) different ways to call IsWord(<i>i</i>, <i>j</i>)—one for each pair (<i>i</i>, <i>j</i>) such that 1 <sup>≤</sup> <i>i</i> <sup>≤</sup> <i>j</i> <sup>≤</sup> <i>n</i>. Why are we spending exponential time computing only a polynomial amount of stuff?</p>",
+          "polygon": [
+            [
+              69.42068134978251,
+              372.545577986398
+            ],
+            [
+              429.82245793794954,
+              372.545577986398
+            ],
+            [
+              429.82245793794954,
+              441.6365966796875
+            ],
+            [
+              69.42068134978251,
+              441.6365966796875
+            ]
+          ],
+          "bbox": [
+            69.42068134978251,
+            372.545577986398,
+            429.82245793794954,
+            441.6365966796875
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/8",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">Each recursive subproblem is specified by an integer between 1 and <i>n</i>+1, so we can memoize the function <i>Splittable</i> into an array <i>SplitTable</i>[1 .. <i>n</i> + 1]. Each subproblem <i>Splittable</i>(<i>i</i>) depends only on results of subproblems <i>Splittable</i>(<i>j</i>) where <i>j</i> <i>&gt;</i> <i>i</i>, so the memoized recursive algorithm fills the array in <i>decreasing</i> index order. If we fill the array in this order deliberately, we obtain the dynamic programming algorithm shown in Figure 3.3. The algorithm makes <i>O</i>(<i>n</i> 2 ) calls to IsWord, an exponential improvement over our earlier backtracking algorithm.</p>",
+          "polygon": [
+            [
+              69.29023486385078,
+              442.1429243656047
+            ],
+            [
+              430.45709275976867,
+              442.1429243656047
+            ],
+            [
+              430.45709275976867,
+              551.5245971679688
+            ],
+            [
+              69.29023486385078,
+              551.5245971679688
+            ]
+          ],
+          "bbox": [
+            69.29023486385078,
+            442.1429243656047,
+            430.45709275976867,
+            551.5245971679688
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/2"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/SectionHeader/9",
+          "block_type": "SectionHeader",
+          "html": "<h2><b>3.4 The Pattern: Smart Recursion</b></h2>",
+          "polygon": [
+            [
+              69.37117127793758,
+              573.2884163076416
+            ],
+            [
+              275.9992571366519,
+              573.2884163076416
+            ],
+            [
+              275.9992571366519,
+              588.5730438232422
+            ],
+            [
+              69.37117127793758,
+              588.5730438232422
+            ]
+          ],
+          "bbox": [
+            69.37117127793758,
+            573.2884163076416,
+            275.9992571366519,
+            588.5730438232422
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/9"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/Text/10",
+          "block_type": "Text",
+          "html": "<p block-type=\"Text\">In a nutshell, dynamic programming is <i>recursion without repetition</i>. Dynamic programming algorithms store the solutions of intermediate subproblems, often <i>but not always</i> in some kind of array or table. Many algorithms students</p>",
+          "polygon": [
+            [
+              69.40072748115978,
+              599.0481377598524
+            ],
+            [
+              430.3973398164123,
+              599.0481377598524
+            ],
+            [
+              430.3973398164123,
+              640.8285980224609
+            ],
+            [
+              69.40072748115978,
+              640.8285980224609
+            ]
+          ],
+          "bbox": [
+            69.40072748115978,
+            599.0481377598524,
+            430.3973398164123,
+            640.8285980224609
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/9"
+          },
+          "images": {}
+        },
+        {
+          "id": "/page/2/PageFooter/11",
+          "block_type": "PageFooter",
+          "html": "",
+          "polygon": [
+            [
+              442.48875510303264,
+              655.7458551640372
+            ],
+            [
+              460.5639747156882,
+              655.7458551640372
+            ],
+            [
+              460.5639747156882,
+              667.1872367858887
+            ],
+            [
+              442.48875510303264,
+              667.1872367858887
+            ]
+          ],
+          "bbox": [
+            442.48875510303264,
+            655.7458551640372,
+            460.5639747156882,
+            667.1872367858887
+          ],
+          "children": null,
+          "section_hierarchy": {
+            "2": "/page/2/SectionHeader/9"
+          },
+          "images": {}
+        }
+      ],
+      "section_hierarchy": {
+        "2": "/page/2/SectionHeader/9"
+      },
+      "images": null
+    }
+  ],
+  "block_type": "Document"
+}

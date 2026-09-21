@@ -4,48 +4,55 @@ from pathlib import Path
 
 import psycopg
 import pytest
+from psycopg.rows import TupleRow
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.model import RevisionId, Stage
+from cryptoindex.ingest.document import Block, ParsedDocument
 from cryptoindex.ingest.parse import parse_stage
 from cryptoindex.ingest.parsers import ParserError
 from cryptoindex.ingest.stages import StageContext
 
-MD = """# Groups
-
-A group is a set.
-
-**Theorem 1.** Every subgroup of a cyclic group is cyclic.
-
-*Proof.* Take the least positive exponent.
-"""
+BOX = (10.0, 20.0, 30.0, 40.0)
+BLOCKS = (
+    Block("heading", 0, BOX, "Groups", heading_level=1),
+    Block("text", 0, BOX, "A group is a set.", section_path=("Groups",)),
+    Block("equation", 0, BOX, "ab = ba", section_path=("Groups",)),
+    Block("text", 1, BOX, "Every subgroup is normal here.", section_path=("Groups",)),
+)
 
 
 class FakeParser:
+    """Its "raw output" is just the index of the block list to return, so the
+    stage's caching of raw output is observable."""
+
     name = "fake"
 
-    def __init__(self, markdown: str, version: str = "1") -> None:
-        self.markdown = markdown
+    def __init__(self, *versions: tuple[Block, ...], version: str = "1") -> None:
+        self.outputs = versions
         self.version = version
-        self.calls = 0
+        self.runs = 0
 
-    def parse(self, pdf_path: Path) -> str:
-        self.calls += 1
-        if self.markdown == "boom":
+    def run(self, pdf_path: Path) -> bytes:
+        self.runs += 1
+        if not self.outputs:
             raise ParserError("parser crashed")
-        return self.markdown
+        return str(self.runs - 1).encode()
+
+    def read(self, raw: bytes) -> ParsedDocument:
+        blocks = self.outputs[min(int(raw), len(self.outputs) - 1)]
+        return ParsedDocument(page_count=2, blocks=blocks)
 
 
 @pytest.fixture
-def claimed(
+def claim(
     settings: Settings, seed: Callable[[list[Stage]], list[int]]
 ) -> Callable[[], RevisionId]:
-    """Seed one revision at `parse` with a pdf_path, and return a function
-    that (re)claims it at `parse`, as the runner would."""
+    """(Re)claims one seeded revision at `parse`, as the runner would."""
     (work_id,) = seed([Stage.PARSE])
 
-    def claim() -> RevisionId:
+    def again() -> RevisionId:
         with psycopg.connect(settings.admin_dsn, autocommit=True) as conn:
             conn.execute(
                 "UPDATE docs.revisions SET stage = 'parse', locked_at = now(),"
@@ -54,7 +61,7 @@ def claimed(
             )
         return RevisionId(work_id)
 
-    return claim
+    return again
 
 
 def ctx(
@@ -67,63 +74,65 @@ def ctx(
     )
 
 
-def paragraphs(settings: Settings) -> list[tuple]:
+def paragraphs(settings: Settings) -> list[TupleRow]:
     with psycopg.connect(settings.admin_dsn) as conn:
         return conn.execute(
-            "SELECT id, position, content_hash, block_kind, block_label, section_path"
+            "SELECT id, position, page, bbox, section_path, block_kind, text"
             " FROM docs.paragraphs ORDER BY position"
         ).fetchall()
 
 
-def revision(settings: Settings) -> tuple:
+def revision(settings: Settings) -> TupleRow:
     with psycopg.connect(settings.admin_dsn) as conn:
         row = conn.execute(
             "SELECT r.stage, r.locked_at, r.parser, r.parser_version, p.title"
             " FROM docs.revisions r JOIN docs.papers p ON p.id = r.paper_id"
         ).fetchone()
     assert row is not None
-    return tuple(row)
+    return row
 
 
 async def test_parse_stores_paragraphs_and_advances(
-    settings: Settings, pool: Pool, tmp_path: Path, claimed: Callable[[], RevisionId]
+    settings: Settings, pool: Pool, tmp_path: Path, claim: Callable[[], RevisionId]
 ) -> None:
-    parser = FakeParser(MD)
-    await parse_stage(claimed(), ctx(pool, settings, tmp_path, parser))
+    await parse_stage(claim(), ctx(pool, settings, tmp_path, FakeParser(BLOCKS)))
 
-    rows = paragraphs(settings)
-    assert [(r[1], r[3], r[4], r[5]) for r in rows] == [
-        (0, None, None, "Groups"),
-        (1, "theorem", "Theorem 1", "Groups"),
-        (2, "proof", "Proof", "Groups"),
+    assert [row[1:] for row in paragraphs(settings)] == [
+        (0, 0, [10, 20, 30, 40], "Groups", None, "A group is a set."),
+        (1, 0, [10, 20, 30, 40], "Groups", "equation", "ab = ba"),
+        (2, 1, [10, 20, 30, 40], "Groups", None, "Every subgroup is normal here."),
     ]
-    assert revision(settings) == ("segment", None, "fake", "1", "Groups")
-    assert list((tmp_path / "parsed" / "fake-1").glob("*.md"))
+    assert tuple(revision(settings)) == ("segment", None, "fake", "1", "Groups")
+    assert list((tmp_path / "parsed" / "fake-1").glob("*.json"))
 
 
-async def test_reparse_unchanged_keeps_ids_without_calling_parser(
-    settings: Settings, pool: Pool, tmp_path: Path, claimed: Callable[[], RevisionId]
+async def test_reparse_keeps_ids_without_rerunning_parser(
+    settings: Settings, pool: Pool, tmp_path: Path, claim: Callable[[], RevisionId]
 ) -> None:
-    parser = FakeParser(MD)
-    await parse_stage(claimed(), ctx(pool, settings, tmp_path, parser))
+    parser = FakeParser(BLOCKS)
+    await parse_stage(claim(), ctx(pool, settings, tmp_path, parser))
     before = paragraphs(settings)
 
-    await parse_stage(claimed(), ctx(pool, settings, tmp_path, parser))
+    await parse_stage(claim(), ctx(pool, settings, tmp_path, parser))
 
     assert paragraphs(settings) == before
-    assert parser.calls == 1  # the second run used the cached Markdown
+    assert parser.runs == 1  # the second parse read the cached output
 
 
-async def test_changed_output_keeps_ids_only_for_unchanged_paragraphs(
-    settings: Settings, pool: Pool, tmp_path: Path, claimed: Callable[[], RevisionId]
+async def test_new_parser_version_keeps_ids_only_for_unchanged_paragraphs(
+    settings: Settings, pool: Pool, tmp_path: Path, claim: Callable[[], RevisionId]
 ) -> None:
-    await parse_stage(claimed(), ctx(pool, settings, tmp_path, FakeParser(MD)))
+    await parse_stage(claim(), ctx(pool, settings, tmp_path, FakeParser(BLOCKS)))
     before = paragraphs(settings)
 
-    edited = MD.replace("A group is a set.", "A group is a set with an operation.")
-    shorter = edited.rsplit("*Proof.*", 1)[0]
-    new_version = FakeParser(shorter, version="2")
-    await parse_stage(claimed(), ctx(pool, settings, tmp_path, new_version))
+    changed = (
+        BLOCKS[0],
+        dataclasses.replace(BLOCKS[1], text="A group is a set with an operation."),
+        BLOCKS[2],
+    )
+    await parse_stage(
+        claim(), ctx(pool, settings, tmp_path, FakeParser(changed, version="2"))
+    )
     after = paragraphs(settings)
 
     assert len(after) == 2
@@ -132,13 +141,11 @@ async def test_changed_output_keeps_ids_only_for_unchanged_paragraphs(
     assert revision(settings)[3] == "2"
 
 
-async def test_parser_failure_leaves_nothing_and_raises(
-    settings: Settings, pool: Pool, tmp_path: Path, claimed: Callable[[], RevisionId]
+async def test_parser_failure_stores_nothing(
+    settings: Settings, pool: Pool, tmp_path: Path, claim: Callable[[], RevisionId]
 ) -> None:
     with pytest.raises(ParserError, match="crashed"):
-        await parse_stage(claimed(), ctx(pool, settings, tmp_path, FakeParser("boom")))
+        await parse_stage(claim(), ctx(pool, settings, tmp_path, FakeParser()))
     assert paragraphs(settings) == []
     assert revision(settings)[0] == "parse"
-    assert not (tmp_path / "parsed").exists() or not any(
-        (tmp_path / "parsed").rglob("*.md")
-    )
+    assert not list(tmp_path.rglob("*.json"))

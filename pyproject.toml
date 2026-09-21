@@ -8,8 +8,12 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.141.1",
+    "markdown-it-py>=4.2.0",
+    "mdit-py-plugins>=0.6.1",
     "numpy>=2.4.6",
     "psycopg[binary,pool]>=3.3.6",
+    "pydantic>=2.13.5",
+    "pypdf>=6.19.0",
     "python-multipart>=0.0.32",
     "uvicorn>=0.53.0",
 ]
@@ -24,6 +28,8 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "pillow>=12.3.0",
+    "pypdfium2>=5.13.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.8",

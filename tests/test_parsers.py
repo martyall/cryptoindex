@@ -3,49 +3,55 @@ from pathlib import Path
 
 import pytest
 
-from cryptoindex.ingest.parsers import MarkerParser, ParserError
+from cryptoindex.ingest.parsers import MarkerParser, PaddleVLParser, ParserError
 
-# Stands in for `marker_single PDF --output_dir DIR ...`: writes DIR/<stem>/<stem>.md.
-FAKE_MARKER = """
-import sys, pathlib
-args = sys.argv[1:]
-pdf = pathlib.Path(args[0])
-out = pathlib.Path(args[args.index("--output_dir") + 1]) / pdf.stem
+FIXTURES = Path(__file__).resolve().parents[1] / "eval" / "fixtures" / "parsers"
+
+# Stands in for tools/*_parse.py: `script PDF OUT_JSON [...]` copies a
+# recorded result to OUT_JSON, or fails the way a crashing parser would.
+FAKE_TOOL = """
+import shutil, sys, pathlib
+pdf, out = pathlib.Path(sys.argv[1]), sys.argv[2]
 if pdf.stem == "crash":
     print("Traceback: boom", file=sys.stderr)
     sys.exit(3)
-out.mkdir(parents=True)
-if pdf.stem != "empty":
-    (out / f"{pdf.stem}.md").write_text("# " + pdf.stem + "\\n\\nBody.\\n")
+if pdf.stem != "silent":
+    shutil.copy({fixture!r}, out)
 """
 
 
-@pytest.fixture
-def fake_marker(tmp_path: Path) -> MarkerParser:
-    script = tmp_path / "fake_marker.py"
-    script.write_text(FAKE_MARKER)
-    return MarkerParser(command=[sys.executable, str(script)], timeout_s=30)
+def tool(tmp_path: Path, parser: str) -> list[str]:
+    script = tmp_path / f"fake_{parser}.py"
+    fixture = FIXTURES / f"erickson-p121-123.{parser}.json"
+    script.write_text(FAKE_TOOL.format(fixture=str(fixture)))
+    return [sys.executable, str(script)]
 
 
-def test_marker_returns_its_markdown(fake_marker: MarkerParser, tmp_path: Path) -> None:
-    assert fake_marker.parse(tmp_path / "groups.pdf") == "# groups\n\nBody.\n"
+def test_marker_adapter_runs_and_reads(tmp_path: Path) -> None:
+    parser = MarkerParser(command=tool(tmp_path, "marker"), timeout_s=30)
+    doc = parser.read(parser.run(tmp_path / "book.pdf"))
+    assert doc.page_count == 3
 
 
-def test_marker_failure_carries_stderr(
-    fake_marker: MarkerParser, tmp_path: Path
-) -> None:
+def test_paddle_adapter_passes_server_and_model(tmp_path: Path) -> None:
+    parser = PaddleVLParser("http://127.0.0.1:1/", command=tool(tmp_path, "paddle"))
+    doc = parser.read(parser.run(tmp_path / "book.pdf"))
+    assert doc.page_count == 3
+
+
+def test_failure_carries_stderr(tmp_path: Path) -> None:
+    parser = MarkerParser(command=tool(tmp_path, "marker"), timeout_s=30)
     with pytest.raises(ParserError, match="exited 3: Traceback: boom"):
-        fake_marker.parse(tmp_path / "crash.pdf")
+        parser.run(tmp_path / "crash.pdf")
 
 
-def test_marker_without_output_is_an_error(
-    fake_marker: MarkerParser, tmp_path: Path
-) -> None:
-    with pytest.raises(ParserError, match="found 0"):
-        fake_marker.parse(tmp_path / "empty.pdf")
+def test_clean_exit_without_result_is_an_error(tmp_path: Path) -> None:
+    parser = MarkerParser(command=tool(tmp_path, "marker"), timeout_s=30)
+    with pytest.raises(ParserError, match="wrote no result"):
+        parser.run(tmp_path / "silent.pdf")
 
 
 def test_missing_executable_is_an_error(tmp_path: Path) -> None:
-    parser = MarkerParser(command=["/nonexistent/marker"], timeout_s=5)
+    parser = MarkerParser(command=["/nonexistent/uvx"], timeout_s=5)
     with pytest.raises(ParserError, match="not found"):
-        parser.parse(tmp_path / "x.pdf")
+        parser.run(tmp_path / "x.pdf")
