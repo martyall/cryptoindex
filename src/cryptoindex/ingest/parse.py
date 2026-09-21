@@ -37,6 +37,7 @@ async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
 
     async with ctx.pool.connection() as conn, conn.transaction():
         await _store_paragraphs(conn, work_id, paragraphs)
+        await _record_similarity(conn, work_id)
         await conn.execute(
             "UPDATE docs.revisions SET parser = %s, parser_version = %s WHERE id = %s",
             (ctx.parser.name, ctx.parser.version, work_id),
@@ -70,6 +71,32 @@ async def _raw_output(ctx: StageContext, pdf: Path, sha256: str) -> bytes:
     await asyncio.to_thread(partial.write_bytes, raw)
     partial.replace(cached)
     return raw
+
+
+# Paragraphs shorter than this ("Proof.", "Exercises", a lone equation) are
+# shared by unrelated documents and would make them look alike.
+SIMILARITY_MIN_CHARS = 80
+
+
+async def _record_similarity(conn: AsyncConnection, work_id: RevisionId) -> None:
+    """The other document sharing the largest fraction of this revision's
+    paragraphs (by content hash), or NULL if none shares any."""
+    await conn.execute(
+        "WITH mine AS ("
+        "   SELECT DISTINCT content_hash FROM docs.paragraphs"
+        "   WHERE revision_id = %(id)s AND length(text) >= %(min)s),"
+        " best AS ("
+        "   SELECT r.paper_id, count(DISTINCT p.content_hash) AS shared"
+        "   FROM docs.paragraphs p JOIN docs.revisions r ON r.id = p.revision_id"
+        "   WHERE p.content_hash IN (SELECT content_hash FROM mine)"
+        "     AND r.paper_id <> (SELECT paper_id FROM docs.revisions WHERE id = %(id)s)"
+        "   GROUP BY r.paper_id ORDER BY shared DESC, r.paper_id LIMIT 1)"
+        " UPDATE docs.revisions SET"
+        "   similar_paper_id = (SELECT paper_id FROM best),"
+        "   similarity = (SELECT shared::real / (SELECT count(*) FROM mine) FROM best)"
+        " WHERE id = %(id)s",
+        {"id": work_id, "min": SIMILARITY_MIN_CHARS},
+    )
 
 
 async def _store_paragraphs(

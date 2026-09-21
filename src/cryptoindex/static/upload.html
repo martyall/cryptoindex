@@ -54,6 +54,10 @@ function cell(text, className) {
   return td;
 }
 
+function element(tag, props) {
+  return Object.assign(document.createElement(tag), props);
+}
+
 filesInput.addEventListener("change", () => {
   const body = pending.querySelector("tbody");
   body.replaceChildren();
@@ -118,8 +122,16 @@ async function refresh() {
       const tr = document.createElement("tr");
       const stage = d.stage === "failed" && d.error ? `failed: ${d.error}` : d.stage;
       const cls = d.stage === "ready" ? "ok" : d.stage === "failed" ? "bad" : "muted";
+      const name = cell(d.revision > 1 ? `${d.name} (v${d.revision})` : d.name);
+      if (d.similar_to) {
+        const pct = Math.round(d.similarity * 100);
+        name.append(element("div", {
+          className: "muted",
+          textContent: `looks similar to “${d.similar_to}” (${pct}% of paragraphs shared)`,
+        }));
+      }
       tr.append(
-        cell(d.revision > 1 ? `${d.name} (v${d.revision})` : d.name),
+        name,
         cell(stage, cls),
         cell(new Date(d.uploaded_at).toLocaleString(), "muted"),
       );

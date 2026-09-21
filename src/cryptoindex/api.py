@@ -28,6 +28,13 @@ class DocumentSummary:
     revision: int
     stage: str
     error: str | None
+    similar_to: str | None  # name of a near-duplicate, if at SIMILARITY_WARNING
+    similarity: float | None
+
+
+# Share of a document's paragraphs found in another one before the page
+# warns "looks similar to …". A warning only; nothing is rejected.
+SIMILARITY_WARNING = 0.5
 
 
 def create_app(runner: Runner, pool: Pool, settings: Settings) -> FastAPI:
@@ -79,17 +86,22 @@ def create_app(runner: Runner, pool: Pool, settings: Settings) -> FastAPI:
 
     @app.get("/documents")
     async def list_documents() -> list[DocumentSummary]:
-        """Newest first, each with the stage of its latest revision."""
+        """Newest first, each with the stage of its latest revision and, if its
+        paragraphs largely appear in another document, that document's name."""
         async with pool.connection() as conn:
             cur = await conn.execute(
                 "SELECT p.id, p.name, p.created_at, r.revision, r.stage,"
-                "       r.last_error"
+                "       r.last_error, s.name, r.similarity"
                 " FROM docs.papers p"
                 " JOIN LATERAL ("
-                "   SELECT revision, stage, last_error FROM docs.revisions"
+                "   SELECT revision, stage, last_error, similar_paper_id, similarity"
+                "   FROM docs.revisions"
                 "   WHERE paper_id = p.id ORDER BY revision DESC LIMIT 1"
                 " ) r ON true"
-                " ORDER BY p.created_at DESC, p.name"
+                " LEFT JOIN docs.papers s"
+                "   ON s.id = r.similar_paper_id AND r.similarity >= %s"
+                " ORDER BY p.created_at DESC, p.name",
+                (SIMILARITY_WARNING,),
             )
             return [DocumentSummary(*row) for row in await cur.fetchall()]
 

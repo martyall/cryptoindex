@@ -141,6 +141,43 @@ async def test_new_parser_version_keeps_ids_only_for_unchanged_paragraphs(
     assert revision(settings)[3] == "2"
 
 
+async def test_near_duplicate_is_recorded(
+    settings: Settings,
+    pool: Pool,
+    tmp_path: Path,
+    seed: Callable[[list[Stage]], list[int]],
+) -> None:
+    # seed pairs revisions by document: 0 and 1 belong to A, 2 to B.
+    a, _, b = seed([Stage.PARSE, Stage.PARSE, Stage.PARSE])
+    long = [f"{word} " * 20 for word in ("alpha", "beta", "gamma", "delta")]
+
+    def blocks(*texts: str) -> tuple[Block, ...]:
+        return tuple(Block("text", 0, BOX, t) for t in texts)
+
+    for work_id, parser in (
+        (a, FakeParser(blocks(long[0], long[1], long[2], "Proof."))),
+        (b, FakeParser(blocks(long[0], long[3], "Proof."))),
+    ):
+        with psycopg.connect(settings.admin_dsn, autocommit=True) as conn:
+            conn.execute(
+                "UPDATE docs.revisions SET locked_at = now(), pdf_path = 'x.pdf'"
+                " WHERE id = %s",
+                (work_id,),
+            )
+        await parse_stage(RevisionId(work_id), ctx(pool, settings, tmp_path, parser))
+
+    with psycopg.connect(settings.admin_dsn) as conn:
+        rows = conn.execute(
+            "SELECT r.id, s.name, r.similarity FROM docs.revisions r"
+            " LEFT JOIN docs.papers s ON s.id = r.similar_paper_id"
+            " WHERE r.id = ANY(%s) ORDER BY r.id",
+            ([a, b],),
+        ).fetchall()
+    # A was parsed first, with nothing to compare against. B shares one of its
+    # two substantial paragraphs with A; the short "Proof." is not counted.
+    assert rows == [(a, None, None), (b, "Paper 0", 0.5)]
+
+
 async def test_parser_failure_stores_nothing(
     settings: Settings, pool: Pool, tmp_path: Path, claim: Callable[[], RevisionId]
 ) -> None:

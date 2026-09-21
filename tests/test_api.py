@@ -88,6 +88,7 @@ async def test_upload_defaults_name_and_reports_duplicates(
     assert [(d["name"], d["revision"], d["stage"]) for d in listed] == [
         ("Kyber", 1, "parse")
     ]
+    assert listed[0]["similar_to"] is None
 
 
 async def test_upload_rejects_non_pdf(client: httpx.AsyncClient) -> None:
