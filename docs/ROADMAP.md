@@ -1,0 +1,107 @@
+# Roadmap
+
+Each phase ends with something runnable and testable. Detailed specs go in `docs/phases/NN-name.md`, written just before the phase starts. Status: `todo` · `in progress` · `done`.
+
+| # | Phase | Status |
+|---|---|---|
+| 0 | Skeleton | done |
+| 1 | Harvest and fetch | todo |
+| 2 | Parse | todo |
+| 3 | Segment and gloss | todo |
+| 4 | Embed and retrieve | todo |
+| 5 | Agent and citation checker | todo |
+| 6 | HTTP API | todo |
+| 7 | Operations and backfill | todo |
+| 8+ | Plugins (code first) | todo |
+
+---
+
+## Phase 0 — Skeleton
+
+**Goal:** a runnable empty pipeline and the contracts everything else plugs into.
+
+**In scope:** repo layout, `pyproject.toml`, config from env, docker-compose Postgres, migrations `001_core.sql` and `002_roles.sql` per `DATA_MODEL.md`, the pipeline runner (stages, bounded channels, DB re-seeding on startup), the stage function interface, the fake LLM backend, embedder and parser interfaces (stub implementations), test harness, `Makefile`.
+
+**Out of scope:** any real parsing, glossing, embedding, or retrieval.
+
+**Acceptance:**
+- `make db-up && make migrate` creates the schema; both roles work with the intended privileges (a test asserts `ci_query` cannot INSERT).
+- `make test` passes offline.
+- A test inserts revisions in various stages, starts the runner, kills it mid-run, restarts it, and shows every revision reaches `ready` via no-op stages with no duplicate work.
+
+## Phase 1 — Harvest and fetch
+
+**Goal:** papers and PDFs flow in, revisions are detected.
+
+**In scope:** OAI-PMH harvester (incremental, resumable by datestamp), category filter, polite PDF fetcher (delay, user agent, retry/backoff), per-paper license stored, revision creation on hash change, arXiv cross-match by title (record arXiv ID; source download is Phase 2).
+
+**Acceptance:**
+- Harvest of one category for one month populates `docs.papers` with correct metadata and licenses (tested against recorded OAI responses).
+- Re-running harvest is a no-op except for changed datestamps.
+- Fetching the same PDF twice creates one revision; a changed PDF creates a second revision and leaves the first intact.
+
+## Phase 2 — Parse
+
+**Goal:** PDFs become stable paragraphs; the parser is chosen.
+
+**In scope:** Marker and PaddleOCR-VL adapters (out-of-process), Markdown → paragraphs with section paths and content hashes, arXiv LaTeX/HTML source path when available, formula render check (KaTeX pass/fail rate), the parser evaluation on `eval/parse-sample/`.
+
+**Acceptance:**
+- Both parsers run on the 20–30 sample PDFs; a report records formula render failure rate and manual pseudocode-box scores per `EVALUATION.md`.
+- Parser chosen and recorded in `DECISIONS.md`.
+- Re-parsing an unchanged revision changes no paragraph IDs.
+
+## Phase 3 — Segment and gloss
+
+**Goal:** argument units with glosses, terms, and questions.
+
+**In scope:** segmentation+glossing prompt (`prompts/gloss-v1.md`), per-section batched calls with paper context, Anthropic batch API + prompt caching, local backend fallback, JSON validation, input hashing, anchor detection for formal blocks, gloss quality checks (empty/too long/invented terms), the 50–100 unit spot-check.
+
+**Acceptance:**
+- Spot-check set glossed and reviewed; prompt frozen at v1 with reviewer approval.
+- Re-running on unchanged input makes zero LLM calls.
+- Works end-to-end with the fake backend in tests and with both real backends manually.
+
+## Phase 4 — Embed and retrieve
+
+**Goal:** searchable index, measured.
+
+**In scope:** local embedding (Qwen3-Embedding-0.6B, `mps`), model registry in `docs.meta`, HNSW indexes, hybrid search (paragraph/gloss/question vectors + full-text + trigram) with RRF, expansion to enclosing unit, the retrieval evaluation harness, 0.6B vs 8B comparison.
+
+**Acceptance:**
+- `eval/questions.jsonl` (≥30 questions) run through the harness; recall@10 of the expected unit/paragraph is reported, with and without gloss/question channels.
+- Embedding model choice recorded in `DECISIONS.md`.
+- Query layer refuses to start when `docs.meta` model differs from configured model.
+
+## Phase 5 — Agent and citation checker
+
+**Goal:** cited answers or abstention.
+
+**In scope:** tools (`search`, `get_unit`, `get_paragraphs`, `get_paper`), tool-use loop for both backends, structured claim output, citation checker (in-session source, normalized quote match), abstention path, step streaming (as an async iterator; the API consumes it in Phase 6), agent system prompt `prompts/agent-v1.md`.
+
+**Acceptance:**
+- Tests with the fake backend: a fabricated quote is dropped; a claim citing a unit not retrieved in-session is dropped; an all-dropped answer becomes an abstention listing nearest units.
+- Manual run on 10 evaluation questions with each backend produces verified citations that a human confirms.
+
+## Phase 6 — HTTP API
+
+**Goal:** the UI's contract.
+
+**In scope:** FastAPI on the same event loop; endpoints for ingest control (enqueue papers, retry failed, re-gloss with new prompt version), pipeline status, search, agent (SSE streaming of steps and final claims), OpenAPI spec exported; optional MCP adapter.
+
+**Acceptance:**
+- All endpoints covered by tests; a long-running agent request does not block status endpoints.
+- `openapi.json` committed; `openapi-typescript` generates types without errors.
+
+## Phase 7 — Operations and backfill
+
+**Goal:** the full archive, kept current.
+
+**In scope:** backfill plan (categories/years first), throughput measurement, optional remote-GPU parsing with pinned model versions, retry policy and `failed` triage, daily harvest schedule, status reporting, disk layout for PDFs.
+
+**Acceptance:**
+- Chosen scope backfilled; pipeline stage counts reported; daily incremental run completes unattended.
+
+## Phase 8+ — Plugins
+
+Code plugin per the earlier design: own schema, release-tag snapshots, tree-sitter symbols, glosses embedded with the core's text model, `spec_links` with a verification lifecycle, findings, release review reports. Needs Phase 3's anchors (algorithm steps, checks, assumptions) to be good link targets; refine those first if they aren't.

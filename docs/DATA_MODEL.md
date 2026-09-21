@@ -1,0 +1,63 @@
+# Data model
+
+Schema `docs`. Migrations in `db/migrations/` are the precise spec; this document explains meaning. Plugins use their own schemas and may reference `docs.*` one way only.
+
+## Roles
+
+- `ci_ingest`: SELECT/INSERT/UPDATE/DELETE on `docs.*`, sequences.
+- `ci_query`: SELECT only on `docs.*`.
+
+## `docs.meta`
+Key/value settings. Required keys: `embed_model`, `embed_dims`, `schema_version`. The query layer checks `embed_model` against its configuration at startup.
+
+## `docs.papers`
+One row per ePrint paper. `id` is the ePrint ID (`2024/1234`). Fields: title, authors[], abstract, subjects[], `license` (per-paper full-text license, must be respected), `arxiv_id` (nullable), `oai_datestamp` (last-modified per OAI-PMH), `fetched_datestamp` (datestamp at last PDF fetch). Harvest is incremental: re-fetch when `oai_datestamp > fetched_datestamp`.
+
+## `docs.revisions`
+One row per distinct PDF (or source bundle) of a paper. Pipeline state lives here.
+
+| column | meaning |
+|---|---|
+| `paper_id`, `revision` | unique; revision increments per new hash |
+| `source_kind` | `pdf` · `arxiv_latex` · `arxiv_html` |
+| `pdf_sha256`, `pdf_path` | file identity and location under `CI_DATA_DIR` |
+| `parser`, `parser_version` | what produced the paragraphs |
+| `stage` | `parse` → `segment` → `embed` → `ready`, or `failed` |
+| `is_current` | exactly one current revision per paper (partial unique index) |
+| `attempts`, `locked_at`, `last_error` | retry/claim bookkeeping |
+
+**Stage state machine.** A stage worker claims a row (`FOR UPDATE SKIP LOCKED`, sets `locked_at`), does its work in a transaction, sets the next stage, clears `locked_at`, commits, then signals. Errors increment `attempts` and record `last_error`; after N attempts the row goes to `failed`. Locks older than a timeout are treated as stale on startup.
+
+## `docs.paragraphs`
+Base layer. One row per paragraph of a revision.
+
+- `position` (0-based within revision), `section_path` (e.g. `4 Security > 4.1 Unforgeability`), `text` (Markdown with LaTeX), `content_hash`, `block_kind` (nullable: `theorem`, `lemma`, `definition`, `proof`, `algorithm`, `game`, `equation`, …), `block_label` (nullable, e.g. `Theorem 3`).
+- `tsv` generated with the `simple` config; `latex_norm` (normalized LaTeX for trigram matching); `emb halfvec(1024)`.
+- Stability: re-parsing an unchanged revision must reproduce identical `(position, content_hash)` pairs and therefore keep IDs.
+
+## `docs.units`
+Argument units: spans `[first_pos, last_pos]` of paragraphs within a revision.
+
+- `anchor_label` (nullable) — the formal block that anchors the unit, if any.
+- `gloss`, `terms[]`, `gloss_model`, `prompt_version`, `input_hash`, `emb_gloss halfvec(1024)`.
+- `input_hash` = hash(paragraph content hashes in span + section context + prompt_version). Unchanged hash ⇒ no re-gloss.
+- Units may overlap. On re-segmentation, new units are matched to old by `(first_pos, last_pos, anchor_label)`; unmatched old units are deleted and a `unit_changed` event is written for each.
+
+## `docs.unit_questions`
+3–5 doc2query questions per unit, each with `emb halfvec(1024)`.
+
+## `docs.events`
+Append-only outbox: `kind` (`revision_ready`, `unit_changed`, `paper_revised`, `embed_model_changed`), `payload jsonb`, `created_at`. Plugins consume by cursor. Optionally mirrored via `NOTIFY docs_events`.
+
+## Indexes
+- HNSW (`halfvec_cosine_ops`) on `paragraphs.emb`, `units.emb_gloss`, `unit_questions.emb`.
+- GIN on `paragraphs.tsv`; GIN trigram on `paragraphs.latex_norm` (`pg_trgm`).
+- Partial index on `revisions(stage)` where not `ready`/`failed`.
+
+## Files on disk
+`CI_DATA_DIR/pdfs/<paper_id with slash replaced>/<sha256>.pdf`, plus `parsed/<sha256>.md` (parser output kept for re-segmentation without re-parsing).
+
+## Identity summary
+- Paragraph: `(revision_id, position)` with `content_hash` guard.
+- Unit: `(revision_id, first_pos, last_pos, anchor_label)`.
+- Citation locator for papers: `paper_id`, `revision`, `position` (paragraph), optional `block_label`, page if known.
