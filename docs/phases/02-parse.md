@@ -16,7 +16,7 @@ Uploaded PDFs become stable paragraphs (Markdown with LaTeX math, section paths,
 2. **Markdown → paragraphs** (`ingest/paragraphs.py`). A pure function, and most of this phase's unit tests:
    - Splits into paragraphs at block boundaries, never inside display math, code, or a table.
    - Records each paragraph's `section_path` from the heading hierarchy, e.g. `4 Security > 4.1 Unforgeability`.
-   - Detects formal blocks (Theorem, Lemma, Definition, Proof, Algorithm, Game, …) into `block_kind` / `block_label`.
+   - Detects formal blocks into `block_kind` / `block_label`. The kinds are the union of mathematical and cryptographic ones (D19): theorem, lemma, proposition, corollary, definition, proof, example, exercise, remark, algorithm, game.
    - Computes `content_hash` over whitespace-normalized text, and `latex_norm` for trigram search.
 
 3. **Parse stage** replaces the no-op:
@@ -29,12 +29,12 @@ Uploaded PDFs become stable paragraphs (Markdown with LaTeX math, section paths,
 
 4. **Formula render check.** Every `$…$` / `$$…$$` span is rendered with KaTeX, the renderer the UI will use, and failures are counted. KaTeX is JavaScript, so it runs from a small pinned Node tool in `tools/katex-check/`, with a committed lockfile.
 
-5. **Parser evaluation** on `eval/parse-sample/`, per `EVALUATION.md` §1:
-   - both parsers run on every sample PDF;
+5. **Parser evaluation** on the sample below:
+   - both parsers run on every excerpt;
    - `eval/parse-report.md` gives the formula failure rate per parser;
-   - `parse-scores.csv` holds the manual pseudocode-box scores (0/1/2).
+   - `parse-scores.csv` holds the box and diagram scores (0/1/2).
 
-   Because documents are uploads (D18), `ids.txt` lists each sample's name and sha256 rather than ePrint IDs.
+   A `make` target runs this locally only.
 
 6. **Near-duplicate warning** (deferred from Phase 1). After parsing, compare the document's set of paragraph `content_hash` values with those of existing documents. If the overlap is high, `GET /documents` and the upload page show "looks similar to <name>". It is only a warning, never a rejection.
 
@@ -53,17 +53,27 @@ Uploaded PDFs become stable paragraphs (Markdown with LaTeX math, section paths,
 - Segmentation and glossing (Phase 3).
 - Embeddings (Phase 4).
 
-## Open questions for the human
-1. **The evaluation sample.** `EVALUATION.md` asks for 20–30 PDFs chosen for difficulty:
-   - at least 10 with boxed security games or oracles;
-   - at least 5 with heavy custom notation;
-   - at least 5 with parameter or benchmark tables;
-   - a few older born-digital PDFs.
+## Evaluation sample (D19, D20)
+About 10 excerpts of 10–20 pages each, cut from nine freely available textbooks and lecture notes listed with URL, license and sha256 in `eval/parse-sample/ids.txt`. The material is chosen so the human can judge fidelity, and it replaces the research-paper sample in `EVALUATION.md` §1:
 
-   Can you supply these? Scoring the pseudocode boxes 0/1/2 is manual and has to be done by you, a person who can judge fidelity. That is probably one to two hours.
-2. **Model downloads.** On first run, Marker and PaddleOCR-VL each download several GB of model weights from Hugging Face. That is network access, though not scraping. Is it OK, once, with the versions pinned?
-3. **PaddleOCR-VL can't run in Docker here.** It needs MLX, meaning Apple's Metal GPU, which Docker on macOS cannot reach. It would run as a native process started from the Makefile (`uvx mlx-vlm …`). Is that an acceptable exception to Docker-only? If not, the evaluation drops to Marker alone, which changes the roadmap and D8.
-4. **Marker's license.** The code is GPL-3.0, and the model weights are free for personal and research use but restricted commercially. That is fine for a personal index. Flag it if this might become a product.
+| Excerpts | From | Stresses |
+|---|---|---|
+| 3 | Judson, Hefferon, *Active Calculus* | formulas, aligned derivations, matrices, theorem/proof runs |
+| 1–2 | Leinster, *Basic Category Theory* | commutative diagrams (2D layout) |
+| 3–4 | Erickson, Morin, *Mathematics for Computer Science* | boxed pseudocode, indentation, numbered steps |
+| 2–3 | Rosulek, *The Joy of Cryptography*; Goldwasser–Bellare | side-by-side game boxes, oracles, older PDF encoding |
+
+Page ranges are chosen at the start of the phase by looking for the hard cases and are added to `ids.txt`. Scoring:
+- Claude proposes a 0/1/2 score per box and per diagram, with a note, by comparing page images with each parser's output.
+- The human confirms or corrects each score.
+- The results go in `parse-scores.csv`.
+
+## Decisions from the human (2026-09-21)
+- **Evaluation sample:** as above. Claude downloads the sources once (D20).
+- **Model downloads:** approved. Parser model weights may be downloaded once from Hugging Face, with versions pinned.
+- **PaddleOCR-VL:** approved to run natively, as it needs Apple's GPU, which Docker cannot reach. CI never runs either real parser; only the fakes and committed parser output are tested there.
+- **Marker's license:** GPL-3.0 code and non-commercial model weights are acceptable.
+- **Nothing is trained or fine-tuned.** The phase chooses between two off-the-shelf parsers, and possibly their settings.
 
 ## Deferred
 (Add items discovered during this phase that belong to later phases.)

@@ -4,13 +4,14 @@
 
 ## 1. Parser sample — `eval/parse-sample/`
 
-20–30 ePrint PDFs, chosen for difficulty, not typicality:
-- ≥10 with side-by-side boxed security games or oracles (`cryptocode`-style).
-- ≥5 with heavy custom notation (`\mathsf{Adv}`, sampling arrows, indexed advantages).
-- ≥5 with parameter/benchmark tables.
-- A few older (2005–2012) born-digital PDFs.
+About 10 excerpts from freely available textbooks and lecture notes that the reviewer can judge (D19), chosen for difficulty, not typicality:
+- side-by-side boxed security games or oracles (*The Joy of Cryptography*, Goldwasser–Bellare);
+- boxed pseudocode (algorithms texts);
+- commutative diagrams (category theory);
+- dense derivations, matrices, and theorem/proof runs (algebra, calculus);
+- at least one older born-digital PDF.
 
-`ids.txt` lists paper IDs and SHA-256 hashes.
+`ids.txt` lists each source's name, SHA-256, license, and URL, and each excerpt's page range. The PDFs are not in git (D20). The Phase 2 spec has the exact plan.
 
 **Automatic metric:** formula render failure rate — every extracted `$…$`/`$$…$$` is rendered with KaTeX; count failures per parser.
 
