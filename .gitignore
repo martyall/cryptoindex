@@ -13,5 +13,6 @@ wheels/
 .env
 data/
 
-# Evaluation PDFs: licensed individually, recorded by hash in ids.txt (D20)
-eval/parse-sample/pdfs/
+# Evaluation sources and everything derived from them: licensed individually,
+# recorded by hash in ids.toml (D20)
+eval/parse-sample/local/
