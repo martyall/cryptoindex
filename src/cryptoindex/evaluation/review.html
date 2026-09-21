@@ -32,7 +32,7 @@
 <header>
   <strong>Parser review</strong>
   <span id="progress"></span>
-  <button id="export">Export parse-scores.csv</button>
+  <button id="export">Export</button>
   <span class="keys">j/k next/previous · 1 2 3 Marker score 0/1/2 · 7 8 9 PaddleOCR-VL score 0/1/2</span>
 </header>
 <main id="items"></main>
@@ -40,19 +40,25 @@
 <script src="review-data.js"></script>
 <script>
 // Scores 0/1/2 per page and parser: 0 scrambled, 1 partially intact, 2 faithful
-// (EVALUATION.md §1). Proposals come from proposed-scores.json; your choices
-// are kept in this browser's local storage until exported.
+// (EVALUATION.md §1). Two modes, set by the data file:
+// - "blind": the human scores every page; Claude's proposals are not in the
+//   data at all, so they cannot anchor the score.
+// - "reconcile": only pages where the blind score and Claude's proposal differ,
+//   with both shown and the blind score preselected.
+// Choices are kept in this browser's local storage until exported.
 const PARSERS = ["marker", "paddle"];
 const LABELS = { marker: "Marker", paddle: "PaddleOCR-VL" };
-const STORE = "cryptoindex-parse-review";
-const { items, proposals } = window.REVIEW;
+const { mode, items, proposals, first_pass: firstPass } = window.REVIEW;
+const STORE = `cryptoindex-parse-review-${mode}`;
+const EXPORT_NAME = mode === "blind" ? "parse-scores.csv" : "parse-scores-reconciled.csv";
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch { saved = {}; }
 let current = 0;
 
 const key = (item, parser) => `${item.excerpt}/${item.page}/${parser}`;
-const proposal = (item, parser) => proposals[key(item, parser)];
-const scoreOf = (item, parser) => saved[key(item, parser)] ?? proposal(item, parser);
+const proposal = (item, parser) => proposals?.[key(item, parser)];
+const scoreOf = (item, parser) => saved[key(item, parser)] ?? firstPass?.[key(item, parser)];
+const disagree = (item, parser) => proposal(item, parser)?.score !== firstPass?.[key(item, parser)]?.score;
 
 function persist() {
   try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch { /* private window */ }
@@ -81,14 +87,23 @@ function column(item, parser, index) {
   const buttons = [0, 1, 2].map((n) => element("button", { textContent: String(n), onclick: () => setScore(index, parser, n) }));
   const note = element("input", { className: "note", placeholder: "note", value: scoreOf(item, parser)?.note ?? "" });
   note.onchange = () => { saved[key(item, parser)] = { ...(scoreOf(item, parser) ?? {}), note: note.value }; persist(); };
-  const p = proposal(item, parser);
-  const col = element("div", { className: "col" }, [
+  const children = [
     element("h3", { textContent: LABELS[parser] }),
     element("div", { className: "blocks" }, blocks.length ? blocks : [element("em", { textContent: "no blocks on this page" })]),
     element("div", { className: "score" }, [element("span", { textContent: "score" }), ...buttons]),
     note,
-    element("div", { className: "proposal", textContent: p ? `proposed ${p.score}: ${p.note ?? ""}` : "no proposal" }),
-  ]);
+  ];
+  if (mode === "reconcile") {
+    const p = proposal(item, parser);
+    const yours = firstPass?.[key(item, parser)]?.score;
+    children.push(element("div", {
+      className: "proposal",
+      textContent: disagree(item, parser)
+        ? `your blind score ${yours ?? "—"} · Claude ${p?.score ?? "—"}: ${p?.note ?? ""}`
+        : `agreed: ${yours}`,
+    }));
+  }
+  const col = element("div", { className: "col" }, children);
   col.dataset.parser = parser;
   return col;
 }
@@ -146,19 +161,19 @@ function csvField(value) {
   return quote ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
+document.getElementById("export").textContent = `Export ${EXPORT_NAME}`;
 document.getElementById("export").onclick = () => {
-  const header = ["excerpt", "pdf_page", "parser", "score", "note", "proposed_score", "changed"];
+  const header = ["excerpt", "page", "pdf_page", "parser", "score", "note"];
   const rows = [];
   for (const item of items) {
     for (const parser of PARSERS) {
       const s = scoreOf(item, parser);
       if (s?.score === undefined) continue;
-      const p = proposal(item, parser);
-      rows.push([item.excerpt, item.source_page, parser, s.score, s.note, p?.score, p ? String(p.score !== s.score) : ""]);
+      rows.push([item.excerpt, item.page, item.source_page, parser, s.score, s.note]);
     }
   }
   const csv = [header, ...rows].map((r) => r.map(csvField).join(",")).join("\n") + "\n";
-  const link = element("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv" })), download: "parse-scores.csv" });
+  const link = element("a", { href: URL.createObjectURL(new Blob([csv], { type: "text/csv" })), download: EXPORT_NAME });
   link.click();
   URL.revokeObjectURL(link.href);
 };

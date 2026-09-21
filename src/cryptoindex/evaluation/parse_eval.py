@@ -31,6 +31,7 @@ SAMPLE = Path("eval/parse-sample")
 LOCAL = SAMPLE / "local"
 KATEX_TOOL = Path("tools/katex-check")
 REVIEW_TEMPLATE = Path(__file__).with_name("review.html")
+ITEMS = LOCAL / "review-items.json"  # every page, for the reconcile pass
 
 
 class Source(BaseModel):
@@ -246,28 +247,19 @@ def main() -> None:
                 }
             )
     (LOCAL / "formulas.json").write_text(json.dumps(summary, indent=2))
-    _write_review_page(review)
+    ITEMS.write_text(json.dumps(review))
+    write_review_page({"mode": "blind", "items": review})
     print(json.dumps(summary, indent=2))
     print(f"review page: {(LOCAL / 'review.html').resolve()}")
 
 
-def _write_review_page(items: list[dict[str, object]]) -> None:
+def write_review_page(data: dict[str, object]) -> None:
+    """Write the review page with `data` (see review.html for the modes). The
+    blind page's data holds no proposals, so none can be seen early."""
     katex_dist = (KATEX_TOOL / "node_modules" / "katex" / "dist").resolve()
     (LOCAL / "katex").unlink(missing_ok=True)
     (LOCAL / "katex").symlink_to(katex_dist, target_is_directory=True)
-    proposals = SAMPLE / "proposed-scores.json"
-    (LOCAL / "review-data.js").write_text(
-        "window.REVIEW = "
-        + json.dumps(
-            {
-                "items": items,
-                "proposals": json.loads(proposals.read_text())
-                if proposals.exists()
-                else {},
-            }
-        )
-        + ";\n"
-    )
+    (LOCAL / "review-data.js").write_text(f"window.REVIEW = {json.dumps(data)};\n")
     (LOCAL / "review.html").write_text(REVIEW_TEMPLATE.read_text())
 
 

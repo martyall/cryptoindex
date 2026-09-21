@@ -1,6 +1,7 @@
 UV_RUN := uv run --env-file .env
 
-.PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval
+.PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval \
+	parse-reconcile parse-report
 
 .env:
 	cp .env.example .env
@@ -40,6 +41,16 @@ paddle-server:
 parse-eval: .env
 	cd tools/katex-check && npm ci --no-audit --no-fund
 	$(UV_RUN) python -m cryptoindex.evaluation.parse_eval
+
+# After the blind pass: compare your exported scores with Claude's proposals
+# and rewrite the review page with only the disagreements.
+parse-reconcile: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.parse_scores reconcile "$(SCORES)"
+
+# Final scores (blind, overridden by reconciled) and formula counts, to
+# eval/parse-report.md. RECONCILED is optional if nothing needed reconciling.
+parse-report: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.parse_scores report "$(RECONCILED)"
 
 # Read-only: safe for CI and pre-commit.
 check:
