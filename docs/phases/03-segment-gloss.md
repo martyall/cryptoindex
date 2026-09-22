@@ -1,6 +1,6 @@
 # Phase 3 — Segment and gloss
 
-Status: draft, awaiting review
+Status: ready (reviewed 2026-09-21)
 
 ## Goal
 Group each revision's paragraphs into argument units, and give each unit a plain-English gloss, key terms, the questions it answers, and its formal-block anchor (D4, D5). These are for finding, never for citing (Invariant 3).
@@ -72,9 +72,8 @@ Group each revision's paragraphs into argument units, and give each unit a plain
   - Rough estimate, to be measured with token counting at phase start: about $3 for the evaluation sample at full price (about $1.50 through batches), and about $0.70 for a 30-page paper (about $0.35 through batches). Adaptive thinking is on by default and billed as output, so either could plausibly double.
   - At phase start, confirm the context window from the Models API (`max_input_tokens`). Enable the server-side refusal fallback recommended for Opus 5, and tell the human.
 
-## Open questions for the human
-1. **Local backend for the manual acceptance run.** Which local server and model do you want tested (mlx_lm, llama.cpp, Ollama, LM Studio)? The llama.cpp installed for Marker could serve.
-2. **Anchors on paragraphs as well as units?** Should `paragraphs.block_label` also be filled from the segmentation's anchors, so a citation can say "Theorem 3.1" instead of "p42"? Proposal: yes, from validated anchors only.
+- **Local backend for the manual acceptance run:** llama.cpp's `llama-server`, already installed natively for Marker, which serves the OpenAI message format that `OpenAIFormatLLM` targets. The model is an open instruct model that fits in 48 GB of unified memory. It is chosen and pinned at phase start, and its weights are downloaded once, as for the parser models.
+- **Anchors also label paragraphs.** `paragraphs.block_label` is filled from the segmentation's validated anchors only, so a citation can say "Theorem 3.1" instead of "p42". It is written with the units, in the same transaction.
 
 ## Deferred
 (Add items discovered during this phase that belong to later phases.)
