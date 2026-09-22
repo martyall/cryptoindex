@@ -50,17 +50,18 @@
   <span style="flex:1"></span>
   <button id="prev">← previous</button>
   <button id="next">next →</button>
-  <span class="muted help">keys: 1 faithful · 2 overstated · 3 wrong · 4 unclear · 5 too narrow · 6 sensible · 7 too broad · p page images · ← →</span>
+  <span class="muted help">keys: 1 faithful · 2 overstated · 3 wrong · 4 unclear · 5 too narrow · 6 sensible · 7 too broad · 8 readable · 9 garbled · p page images · ← →</span>
 </header>
 <main id="main"></main>
 <script src="katex/katex.min.js"></script>
 <script>
 // One unit at a time; every choice is saved as soon as it is made (see
-// gloss_review.py). A unit is done when it has a verdict and a boundaries
-// judgement.
+// gloss_review.py). A unit is done when it has a verdict, a boundaries
+// judgement, and a source-text judgement.
 const VERDICTS = ["faithful", "overstated", "wrong", "unclear"];
 const BOUNDARIES = ["too_narrow", "sensible", "too_broad"];
-const LABEL = { faithful: "faithful", overstated: "overstated", wrong: "wrong", unclear: "unclear", sensible: "sensible", too_narrow: "too narrow", too_broad: "too broad" };
+const SOURCES = ["readable", "garbled"];
+const LABEL = { faithful: "faithful", overstated: "overstated", wrong: "wrong", unclear: "unclear", sensible: "sensible", too_narrow: "too narrow", too_broad: "too broad", readable: "readable", garbled: "garbled" };
 const HELP = {
   faithful: "says what the text says, at the strength the text says it",
   overstated: "claims more than the text: a dropped condition, an added conclusion or context",
@@ -69,13 +70,15 @@ const HELP = {
   too_narrow: "a statement cut off from what it refers to; should be folded into a neighbour",
   sensible: "one point, understandable on its own",
   too_broad: "several points a reader would look for separately",
+  readable: "the original text on the left is readable",
+  garbled: "the parser mangled the original text (broken math, split or missing words), so no gloss could be good",
 };
 let state;  // from /api/state
 let index = 0;
 let showImages = false;
 
 const key = (it) => `${it.excerpt}/${it.unit.first_pos}-${it.unit.last_pos}/${it.unit.anchor_label ?? ""}`;
-const complete = (it) => { const s = state.scores[key(it)]; return Boolean(s?.verdict && s?.boundaries); };
+const complete = (it) => { const s = state.scores[key(it)]; return Boolean(s?.verdict && s?.boundaries && s?.source); };
 
 function element(tag, props = {}, children = []) {
   const el = Object.assign(document.createElement(tag), props);
@@ -94,7 +97,7 @@ async function save(it, change) {
   const current = state.scores[k] ?? {};
   const body = {
     excerpt: it.excerpt, first_pos: it.unit.first_pos, last_pos: it.unit.last_pos, anchor_label: it.unit.anchor_label,
-    verdict: current.verdict ?? null, boundaries: current.boundaries ?? null, note: current.note ?? "", ...change,
+    verdict: current.verdict ?? null, boundaries: current.boundaries ?? null, source: current.source ?? null, note: current.note ?? "", ...change,
   };
   status("saving…");
   try {
@@ -138,7 +141,7 @@ function choiceRow(it, field, values, repaint) {
     return b;
   });
   const paint = () => buttons.forEach((b, n) => b.classList.toggle("on", state.scores[key(it)]?.[field] === values[n]));
-  return [element("div", { className: "choices" }, [element("span", { textContent: field === "verdict" ? "the gloss is" : "boundaries" }), ...buttons]), paint];
+  return [element("div", { className: "choices" }, [element("span", { textContent: { verdict: "the gloss is", boundaries: "boundaries", source: "source text" }[field] }), ...buttons]), paint];
 }
 
 function glossPane(it) {
@@ -149,7 +152,8 @@ function glossPane(it) {
   const repaint = () => paints.forEach((p) => p());
   const [verdictRow, paintVerdict] = choiceRow(it, "verdict", VERDICTS, repaint);
   const [boundaryRow, paintBoundary] = choiceRow(it, "boundaries", BOUNDARIES, repaint);
-  paints.push(paintVerdict, paintBoundary);
+  const [sourceRow, paintSource] = choiceRow(it, "source", SOURCES, repaint);
+  paints.push(paintVerdict, paintBoundary, paintSource);
   repaint();
   const pane = element("div", { className: "pane" }, [
     element("h3", { textContent: "What the model wrote" }),
@@ -164,7 +168,8 @@ function glossPane(it) {
     ]),
     verdictRow,
     boundaryRow,
-    element("div", { className: "muted help" }, [...VERDICTS, ...BOUNDARIES].map((v) => element("div", { textContent: `${LABEL[v]}: ${HELP[v]}` }))),
+    sourceRow,
+    element("div", { className: "muted help" }, [...VERDICTS, ...BOUNDARIES, ...SOURCES].map((v) => element("div", { textContent: `${LABEL[v]}: ${HELP[v]}` }))),
     note,
   ]);
   pane.note = note;
@@ -205,7 +210,7 @@ document.addEventListener("keydown", (e) => {
   if (e.target instanceof HTMLTextAreaElement) return;  // typing a note
   const it = state.items[index];
   const repaint = () => show(index);
-  const keys = { "1": ["verdict", "faithful"], "2": ["verdict", "overstated"], "3": ["verdict", "wrong"], "4": ["verdict", "unclear"], "5": ["boundaries", "too_narrow"], "6": ["boundaries", "sensible"], "7": ["boundaries", "too_broad"] };
+  const keys = { "1": ["verdict", "faithful"], "2": ["verdict", "overstated"], "3": ["verdict", "wrong"], "4": ["verdict", "unclear"], "5": ["boundaries", "too_narrow"], "6": ["boundaries", "sensible"], "7": ["boundaries", "too_broad"], "8": ["source", "readable"], "9": ["source", "garbled"] };
   if (e.key === "ArrowLeft") show(index - 1);
   else if (e.key === "ArrowRight") show(index + 1);
   else if (e.key === "p") { showImages = !showImages; show(index); }

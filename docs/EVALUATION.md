@@ -27,7 +27,7 @@ Reviewer marks each gloss, judged against the unit's own text:
 - **wrong:** says something false about the text;
 - **unclear:** cannot tell what it claims, or it could describe its neighbours as well.
 
-And the unit's boundaries: **too narrow** (a statement cut off from what it refers to), **sensible** (one point, understandable alone), or **too broad** (several points a reader would look for separately). The gloss-v1 pass used sensible / not sensible, and its reviewer used "overstated" for units that were too narrow.
+And the unit's boundaries: **too narrow** (a statement cut off from what it refers to), **sensible** (one point, understandable alone), or **too broad** (several points a reader would look for separately). And the source text: **readable**, or **garbled** by the parser (broken math, split or missing words), so that parser noise is not mistaken for a bad gloss. The gloss-v1 pass used sensible / not sensible, had no source judgement, and its reviewer used "overstated" for units that were too narrow.
 
 A prompt version is frozen when ≥90% faithful and no "wrong" on theorems/definitions. Each version has its own sample (`spot-check-<prompt>.json`), scores (`scores/<prompt>/blind.json`) and report (`eval/gloss-report-<prompt>.md`).
 

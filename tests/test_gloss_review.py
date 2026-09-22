@@ -70,11 +70,18 @@ async def test_each_choice_is_saved_as_it_is_made(
     assert response.status_code == 200
     response = await client.put(
         "/api/score",
-        json=update(ITEMS[0], verdict="wrong", boundaries="sensible", note="n"),
+        json=update(
+            ITEMS[0], verdict="wrong", boundaries="sensible", source="garbled", note="n"
+        ),
     )
     assert response.status_code == 200
     saved = read_judgements(tmp_path / "blind.json")[item_key(ITEMS[0])]
-    assert (saved.verdict, saved.boundaries, saved.note) == ("wrong", "sensible", "n")
+    assert (saved.verdict, saved.boundaries, saved.source, saved.note) == (
+        "wrong",
+        "sensible",
+        "garbled",
+        "n",
+    )
 
 
 async def test_unknown_units_and_verdicts_are_refused(
@@ -87,13 +94,16 @@ async def test_unknown_units_and_verdicts_are_refused(
 
 
 def judged(item: GlossedUnit, verdict: str) -> Judgement:
-    return Judgement.model_validate(update(item, verdict=verdict, at="t"))
+    return Judgement.model_validate(
+        update(item, verdict=verdict, source="readable", at="t")
+    )
 
 
 def test_report_applies_the_freeze_criterion() -> None:
     faithful = {item_key(i): judged(i, "faithful") for i in ITEMS}
     assert "criterion" in (report := render_report(ITEMS, faithful, [], ITEMS))
     assert ": met." in report and "Faithful: 2 (100%)" in report
+    assert "On readable source text: 2 of 2 faithful" in report
     wrong_theorem = faithful | {item_key(ITEMS[0]): judged(ITEMS[0], "wrong")}
     report = render_report(ITEMS, wrong_theorem, [], ITEMS)
     assert "Wrong theorem or definition glosses: 1." in report

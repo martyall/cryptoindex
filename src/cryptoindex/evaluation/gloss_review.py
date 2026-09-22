@@ -41,6 +41,10 @@ Verdict = Literal["faithful", "overstated", "wrong", "unclear"]
 # gloss-v1 was judged sensible / not_sensible; from gloss-v2 an unsensible
 # unit is judged too narrow or too broad.
 Boundaries = Literal["sensible", "too_narrow", "too_broad", "not_sensible"]
+# Whether the parsed text the unit was glossed from is readable; from
+# gloss-v2, so a garbled source (Phase 2 parser noise) can be told apart
+# from a bad gloss.
+Source = Literal["readable", "garbled"]
 # A lookup key built by `key()`; never parsed back: every record carries its
 # fields itself.
 Key = str
@@ -64,6 +68,7 @@ class ScoreUpdate(BaseModel):
     anchor_label: str | None
     verdict: Verdict | None = None
     boundaries: Boundaries | None = None
+    source: Source | None = None
     note: str = ""
 
 
@@ -134,6 +139,8 @@ def render_report(
     ]
     verdicts = Counter(j.verdict for _, j in judged)
     faithful = verdicts["faithful"] / len(judged) if judged else 0.0
+    readable = [j for _, j in judged if j.source == "readable"]
+    readable_faithful = sum(1 for j in readable if j.verdict == "faithful")
     wrong_formal = [
         (i, j)
         for i, j in judged
@@ -153,6 +160,9 @@ def render_report(
         f"- Faithful: {verdicts['faithful']} ({faithful:.0%});"
         f" overstated {verdicts['overstated']}, wrong {verdicts['wrong']},"
         f" unclear {verdicts['unclear']}.",
+        f"- On readable source text: {readable_faithful} of {len(readable)}"
+        f" faithful; {sum(1 for _, j in judged if j.source == 'garbled')}"
+        " units had garbled source text.",
         f"- Wrong theorem or definition glosses: {len(wrong_formal)}.",
         f"- Boundaries sensible: {bounded['sensible']} of {bounded.total()}"
         f" (too narrow {bounded['too_narrow']}, too broad {bounded['too_broad']},"
@@ -181,7 +191,8 @@ def render_report(
         label = f" ({i.unit.anchor_label})" if i.unit.anchor_label else ""
         lines.append(
             f"- **{i.excerpt} {i.unit.first_pos}-{i.unit.last_pos}{label}**:"
-            f" {j.verdict}, boundaries {j.boundaries or 'unjudged'}."
+            f" {j.verdict}, boundaries {j.boundaries or 'unjudged'},"
+            f" source {j.source or 'unjudged'}."
             f" Gloss: {i.unit.gloss}" + (f" Note: {j.note}" if j.note else "")
         )
     return "\n".join(lines) + "\n"

@@ -1,0 +1,454 @@
+{
+  "prompt": "gloss-v2",
+  "model": "claude-opus-5",
+  "units": [
+    {
+      "excerpt": "mcs-proofs",
+      "first_pos": 88,
+      "last_pos": 91,
+      "anchor_label": "Lemma 19.3.1",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 142,
+      "last_pos": 143,
+      "anchor_label": "Theorem 21.27",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "joy-mac-hybrids",
+      "first_pos": 56,
+      "last_pos": 60,
+      "anchor_label": "Theorem 10.8",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 47,
+      "last_pos": 57,
+      "anchor_label": "Theorem 21.13",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 144,
+      "last_pos": 145,
+      "anchor_label": "Theorem 21.28",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "gb-rsa-experiments",
+      "first_pos": 1,
+      "last_pos": 2,
+      "anchor_label": "Proposition 10.15",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 130,
+      "last_pos": 133,
+      "anchor_label": "Theorem 21.23",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 80,
+      "last_pos": 85,
+      "anchor_label": "Theorem 21.17",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "hefferon-reduction",
+      "first_pos": 143,
+      "last_pos": 148,
+      "anchor_label": "2.6 Theorem",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 134,
+      "last_pos": 139,
+      "anchor_label": "Theorem 21.25",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 45,
+      "last_pos": 46,
+      "anchor_label": "Proposition 21.12",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 97,
+      "last_pos": 99,
+      "anchor_label": "Corollary 21.18",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "mcs-proofs",
+      "first_pos": 44,
+      "last_pos": 46,
+      "anchor_label": "Theorem 19.2.3",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 36,
+      "last_pos": 38,
+      "anchor_label": "Theorem 21.9",
+      "stratum": "theorem"
+    },
+    {
+      "excerpt": "hefferon-reduction",
+      "first_pos": 47,
+      "last_pos": 51,
+      "anchor_label": "1.7 Definition",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "gb-rsa-experiments",
+      "first_pos": 3,
+      "last_pos": 12,
+      "anchor_label": "Definition 10.16",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 119,
+      "last_pos": 125,
+      "anchor_label": "Definition 1.2.16",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "mcs-proofs",
+      "first_pos": 41,
+      "last_pos": 43,
+      "anchor_label": "Definition 19.2.2",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 126,
+      "last_pos": 128,
+      "anchor_label": "Definition 1.2.18",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "mcs-proofs",
+      "first_pos": 67,
+      "last_pos": 69,
+      "anchor_label": "Definition 19.2.4",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 114,
+      "last_pos": 118,
+      "anchor_label": "Definition 1.2.15",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "gb-rsa-experiments",
+      "first_pos": 22,
+      "last_pos": 26,
+      "anchor_label": "Definition 10.17",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "gb-rsa-experiments",
+      "first_pos": 27,
+      "last_pos": 36,
+      "anchor_label": "Definition 10.18",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "hefferon-reduction",
+      "first_pos": 25,
+      "last_pos": 26,
+      "anchor_label": "1.3 Definition",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 85,
+      "last_pos": 89,
+      "anchor_label": "Definition 1.2.10",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 13,
+      "last_pos": 23,
+      "anchor_label": "Definition 1.2.1",
+      "stratum": "definition"
+    },
+    {
+      "excerpt": "joy-mac-hybrids",
+      "first_pos": 61,
+      "last_pos": 63,
+      "anchor_label": "Construction 10.9",
+      "stratum": "algorithm"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 1,
+      "last_pos": 3,
+      "anchor_label": "Construction 1.1.9",
+      "stratum": "algorithm"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 5,
+      "last_pos": 8,
+      "anchor_label": "Construction 1.1.11",
+      "stratum": "algorithm"
+    },
+    {
+      "excerpt": "joy-mac-hybrids",
+      "first_pos": 44,
+      "last_pos": 47,
+      "anchor_label": "Construction 10.5",
+      "stratum": "algorithm"
+    },
+    {
+      "excerpt": "joy-mac-hybrids",
+      "first_pos": 94,
+      "last_pos": 96,
+      "anchor_label": "10.7",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 148,
+      "last_pos": 149,
+      "anchor_label": "1.2.28",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 90,
+      "last_pos": 97,
+      "anchor_label": "Example 1.2.11",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "hefferon-reduction",
+      "first_pos": 90,
+      "last_pos": 92,
+      "anchor_label": "1.16",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 65,
+      "last_pos": 67,
+      "anchor_label": "Example 21.14",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 103,
+      "last_pos": 105,
+      "anchor_label": "Example 21.20",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 150,
+      "last_pos": 150,
+      "anchor_label": "1.2.29",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "hefferon-reduction",
+      "first_pos": 53,
+      "last_pos": 57,
+      "anchor_label": "1.8",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 133,
+      "last_pos": 133,
+      "anchor_label": "1.2.20",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "joy-mac-hybrids",
+      "first_pos": 105,
+      "last_pos": 106,
+      "anchor_label": "10.10",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "joy-mac-hybrids",
+      "first_pos": 91,
+      "last_pos": 93,
+      "anchor_label": "10.6",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 111,
+      "last_pos": 111,
+      "anchor_label": "Example 1.2.13",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 30,
+      "last_pos": 30,
+      "anchor_label": "Example 21.6",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 146,
+      "last_pos": 146,
+      "anchor_label": "1.2.26",
+      "stratum": "example"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 11,
+      "last_pos": 15,
+      "anchor_label": "Figure 21.3",
+      "stratum": "other"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 24,
+      "last_pos": 32,
+      "anchor_label": "Remarks 1.2.2",
+      "stratum": "other"
+    },
+    {
+      "excerpt": "calculus-integrals",
+      "first_pos": 16,
+      "last_pos": 17,
+      "anchor_label": "Figure 3.2.1",
+      "stratum": "other"
+    },
+    {
+      "excerpt": "calculus-integrals",
+      "first_pos": 41,
+      "last_pos": 46,
+      "anchor_label": "Figure 3.2.2",
+      "stratum": "other"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 4,
+      "last_pos": 4,
+      "anchor_label": "Remark 1.1.10",
+      "stratum": "other"
+    },
+    {
+      "excerpt": "leinster-functors",
+      "first_pos": 129,
+      "last_pos": 132,
+      "anchor_label": "Warning 1.2.19",
+      "stratum": "other"
+    },
+    {
+      "excerpt": "calculus-integrals",
+      "first_pos": 86,
+      "last_pos": 89,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "erickson-dp",
+      "first_pos": 60,
+      "last_pos": 68,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "ods-pseudocode",
+      "first_pos": 17,
+      "last_pos": 26,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "gb-rsa-experiments",
+      "first_pos": 69,
+      "last_pos": 72,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "joy-mac-hybrids",
+      "first_pos": 79,
+      "last_pos": 80,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "judson-groups",
+      "first_pos": 146,
+      "last_pos": 149,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "erickson-dp",
+      "first_pos": 99,
+      "last_pos": 106,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "erickson-dp",
+      "first_pos": 5,
+      "last_pos": 7,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "gb-rsa-experiments",
+      "first_pos": 62,
+      "last_pos": 66,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "mcs-proofs",
+      "first_pos": 54,
+      "last_pos": 64,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "calculus-integrals",
+      "first_pos": 67,
+      "last_pos": 73,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "erickson-dp",
+      "first_pos": 2,
+      "last_pos": 4,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "gb-rsa-experiments",
+      "first_pos": 0,
+      "last_pos": 0,
+      "anchor_label": null,
+      "stratum": "plain"
+    },
+    {
+      "excerpt": "ods-pseudocode",
+      "first_pos": 37,
+      "last_pos": 38,
+      "anchor_label": null,
+      "stratum": "plain"
+    }
+  ]
+}
