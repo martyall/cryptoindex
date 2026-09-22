@@ -140,6 +140,21 @@ def test_reply_not_matching_the_schema_is_rejected() -> None:
         validate_reply({"units": [{"first_pos": 3}]}, CHUNK)
 
 
+def test_a_footnote_need_not_be_in_any_unit() -> None:
+    chunk = Chunk(
+        ("S",),
+        (
+            para(0, "Body."),
+            para(1, "1. See main.rs", kind="footnote"),
+            para(2, "More."),
+        ),
+        None,
+    )
+    assert validate_reply(reply(unit(0, 0), unit(2, 2)), chunk)
+    with pytest.raises(InvalidReplyError, match=r"paragraphs \[2\]"):
+        validate_reply(reply(unit(0, 0)), chunk)
+
+
 def test_merge_keeps_each_chunks_units_before_the_next_chunk() -> None:
     first = Chunk(("S",), tuple(para(i) for i in range(0, 4)), keep_before=2)
     second = Chunk(("S",), tuple(para(i) for i in range(2, 6)), keep_before=None)

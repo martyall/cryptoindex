@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from cryptoindex.core.llm import LLMRequest, Message
 from cryptoindex.core.prompts import Prompt
 
-GLOSS_PROMPT = "gloss-v3"  # D25
+GLOSS_PROMPT = "gloss-v4"  # D25
 
 # A chunk's paragraph text is at most CHUNK_CHARS (about 8k tokens), which
 # fits a local model's context with room for the reply. Consecutive chunks of
@@ -30,8 +30,12 @@ RESTATEMENT_RATIO = 0.8
 
 AnchorKind = Literal["theorem", "definition", "algorithm", "game", "example", "other"]
 # A paragraph of the bibliography is stored and searchable, but is no part of
-# any argument, so it is not sent for glossing (D25).
+# any argument, so it is not sent for glossing at all (D25).
 UNGLOSSED: frozenset[str] = frozenset({"reference"})
+# These are sent, because the argument around them may use what they say, but
+# a unit need not cover them: in a specification most footnotes only point at
+# a source file (D25).
+OPTIONAL: frozenset[str] = frozenset({"footnote", "caption"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -231,12 +235,14 @@ class InvalidReplyError(ValueError):
 
 def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
     """The reply's units, if it matches REPLY_SCHEMA and fits the chunk:
-    spans inside the chunk and in order, every paragraph covered, no unit
-    twice, and each anchor label found verbatim in its anchor paragraph (it
-    may be cited, Invariant 3). Raises pydantic's ValidationError or
-    InvalidReplyError; a reply is accepted whole or not at all."""
+    spans inside the chunk and in order, every paragraph but an OPTIONAL one
+    covered, no unit twice, each anchor label found verbatim in its anchor
+    paragraph (it may be cited, Invariant 3) and its term a word of that
+    label. Raises pydantic's ValidationError or InvalidReplyError; a reply is
+    accepted whole or not at all."""
     units = SegmentReply.model_validate(parsed).units
     text = {p.position: p.text for p in chunk.paragraphs}
+    required = {p.position for p in chunk.paragraphs if p.block_kind not in OPTIONAL}
     if not units:
         raise InvalidReplyError("no units")
     covered: set[int] = set()
@@ -274,7 +280,7 @@ def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
         previous_first = u.first_pos
         seen.add(u.key)
         covered.update(range(u.first_pos, u.last_pos + 1))
-    missing = sorted(set(text) - covered)
+    missing = sorted(required - covered)
     if missing:
         raise InvalidReplyError(f"paragraphs {missing} are in no unit")
     return units

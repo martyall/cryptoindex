@@ -266,6 +266,9 @@ async def test_search_page_returns_rendered_hits(
     equation = next(h for h in response.json() if h["first_pos"] == 2)
     assert 'class="math block"' in equation["paragraphs"][0]["html"]
     assert all(not {"gloss", "question"} & set(h["channels"]) for h in without.json())
+    # every channel answers, so the reference is among the hits, not first
+    assert any("reference" in h["kinds"] for h in refs.json())
+    assert [h["kinds"] for h in kinds.json()] == [["theorem"]]
 
 
 def test_an_undelimited_equation_is_shown_as_math() -> None:
