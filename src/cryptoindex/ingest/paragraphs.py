@@ -20,12 +20,17 @@ class Paragraph:
     block_kind: str | None
 
 
+def paragraph_blocks(document: ParsedDocument) -> list[Block]:
+    """The blocks that become paragraphs, in reading order: every block except
+    headings, page furniture, and empty blocks (figures without text). A
+    block's index is its paragraph's position."""
+    return [b for b in document.blocks if _is_paragraph(b)]
+
+
 def paragraphs_from(document: ParsedDocument) -> list[Paragraph]:
-    """The document's paragraphs in reading order: every block except headings,
-    page furniture, and empty blocks (figures without text). Deterministic, so
-    the same parser output always yields the same positions and hashes
+    """The document's paragraphs, from paragraph_blocks. Deterministic, so the
+    same parser output always yields the same positions and hashes
     (Invariant 5)."""
-    kept = [b for b in document.blocks if _is_paragraph(b)]
     return [
         Paragraph(
             position=position,
@@ -36,7 +41,7 @@ def paragraphs_from(document: ParsedDocument) -> list[Paragraph]:
             content_hash=content_hash(block.text),
             block_kind=None if block.kind in _UNMARKED else block.kind,
         )
-        for position, block in enumerate(kept)
+        for position, block in enumerate(paragraph_blocks(document))
     ]
 
 

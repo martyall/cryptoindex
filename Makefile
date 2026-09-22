@@ -1,7 +1,7 @@
 UV_RUN := uv run --env-file .env
 
 .PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval \
-	parse-review parse-close-blind parse-report
+	parse-review parse-close-blind parse-report gloss-eval gloss-review gloss-report
 
 .env:
 	cp .env.example .env
@@ -60,6 +60,17 @@ parse-close-blind: .env
 # eval/parse-report.md.
 parse-report: .env
 	$(UV_RUN) python -m cryptoindex.evaluation.parse_scores
+
+# Phase 3 spot-check: glosses the parse-eval excerpts with the configured LLM
+# backend (calls are cached), then serves the blind review page.
+gloss-eval: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.gloss_eval
+
+gloss-review: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.gloss_review
+
+gloss-report: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.gloss_review report
 
 # Read-only: safe for CI and pre-commit.
 check:

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gloss review</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+  :root { --fg: #1b1f24; --muted: #5b6470; --bg: #fff; --line: #d8dde3; --accent: #2458c6; --ok: #1e7b3a; --bad: #b3261e; --soft: #f3f5f8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6e8eb; --muted: #9aa3ad; --bg: #15181c; --line: #2c3238; --accent: #7aa5ff; --ok: #6fd08c; --bad: #ff8a80; --soft: #1d2126; }
+  }
+  * { box-sizing: border-box; }
+  body { font: 15px/1.5 system-ui, sans-serif; color: var(--fg); background: var(--bg); margin: 0; height: 100vh; display: flex; flex-direction: column; }
+  header { border-bottom: 1px solid var(--line); padding: .5rem 1rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+  header .title { font-weight: 600; }
+  .muted { color: var(--muted); }
+  #saved { font-size: .85rem; }
+  #saved.ok { color: var(--ok); } #saved.bad { color: var(--bad); }
+  button { font: inherit; padding: .3rem .8rem; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); cursor: pointer; }
+  button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { flex: 1; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1rem; padding: 1rem; min-height: 0; }
+  .pane { display: flex; flex-direction: column; min-height: 0; }
+  .pane h3 { font-size: .95rem; margin: 0 0 .4rem; display: flex; gap: .6rem; align-items: baseline; }
+  .scroll { flex: 1; overflow: auto; border: 1px solid var(--line); padding: .6rem .8rem; min-height: 0; }
+  .scroll img { width: 100%; display: block; margin-bottom: .5rem; border: 1px solid var(--line); }
+  .para { border-left: 3px solid var(--line); padding-left: .6rem; margin: .5rem 0; }
+  .para .kind { color: var(--muted); font-size: .75rem; }
+  .lines p { font-family: ui-monospace, monospace; font-size: .9rem; }
+  .gloss { font-size: 1.05rem; padding: .6rem .8rem; background: var(--soft); border-radius: 4px; }
+  .label { color: var(--muted); font-size: .8rem; text-transform: uppercase; margin-top: .8rem; }
+  ul { margin: .2rem 0; padding-left: 1.2rem; }
+  .choices { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
+  .choices span { min-width: 6.5rem; }
+  /* One line at rest; grows upward when focused, taking height from the
+     scrolling content above it (the pane is a flex column), and scrolls
+     when the note is longer. */
+  .note { width: 100%; margin-top: .5rem; font: inherit; line-height: 1.4; padding: .3rem .4rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; resize: none; overflow-y: auto; height: 2.2rem; flex-shrink: 0; transition: height .15s; }
+  .note:focus { height: 12rem; outline: 2px solid var(--accent); outline-offset: -1px; }
+  .done { padding: 3rem; text-align: center; }
+  .help { font-size: .85rem; }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">Gloss review</span>
+  <span id="where" class="muted"></span>
+  <span id="progress"></span>
+  <span id="saved"></span>
+  <span style="flex:1"></span>
+  <button id="prev">← previous</button>
+  <button id="next">next →</button>
+  <span class="muted help">keys: 1 faithful · 2 overstated · 3 wrong · 4 unclear · 5 boundaries sensible · 6 not · p page images · ← →</span>
+</header>
+<main id="main"></main>
+<script src="katex/katex.min.js"></script>
+<script>
+// One unit at a time; every choice is saved as soon as it is made (see
+// gloss_review.py). A unit is done when it has a verdict and a boundaries
+// judgement.
+const VERDICTS = ["faithful", "overstated", "wrong", "unclear"];
+const BOUNDARIES = ["sensible", "not_sensible"];
+const LABEL = { faithful: "faithful", overstated: "overstated", wrong: "wrong", unclear: "unclear", sensible: "sensible", not_sensible: "not sensible" };
+let state;  // from /api/state
+let index = 0;
+let showImages = false;
+
+const key = (it) => `${it.excerpt}/${it.unit.first_pos}-${it.unit.last_pos}/${it.unit.anchor_label ?? ""}`;
+const complete = (it) => { const s = state.scores[key(it)]; return Boolean(s?.verdict && s?.boundaries); };
+
+function element(tag, props = {}, children = []) {
+  const el = Object.assign(document.createElement(tag), props);
+  el.append(...children);
+  return el;
+}
+
+function status(text, cls) {
+  const el = document.getElementById("saved");
+  el.textContent = text;
+  el.className = cls ?? "";
+}
+
+async function save(it, change) {
+  const k = key(it);
+  const current = state.scores[k] ?? {};
+  const body = {
+    excerpt: it.excerpt, first_pos: it.unit.first_pos, last_pos: it.unit.last_pos, anchor_label: it.unit.anchor_label,
+    verdict: current.verdict ?? null, boundaries: current.boundaries ?? null, note: current.note ?? "", ...change,
+  };
+  status("saving…");
+  try {
+    const response = await fetch("api/score", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
+    state.scores[k] = await response.json();
+    status("saved", "ok");
+    return true;
+  } catch (err) {
+    status(`not saved: ${err.message}`, "bad");
+    return false;
+  }
+}
+
+function renderMath(root) {
+  for (const el of root.querySelectorAll(".math")) {
+    katex.render(el.textContent, el, { displayMode: el.classList.contains("block"), throwOnError: false });
+  }
+}
+
+function sourcePane(it) {
+  const toggle = element("button", { textContent: showImages ? "show text" : "show page images" });
+  toggle.onclick = () => { showImages = !showImages; show(index); };
+  const body = showImages
+    ? it.images.map((src) => element("img", { src, alt: src }))
+    : it.paragraphs.map((p) => {
+        const html = element("div");
+        html.innerHTML = p.html;  // gloss_eval.paragraph_html: Markdown (raw HTML escaped) with math, or the parser's table HTML
+        return element("div", { className: "para" }, [element("div", { className: "kind", textContent: `¶${p.pos} · page ${p.page + 1}${p.kind === "text" ? "" : ` · ${p.kind}`}` }), html]);
+      });
+  return element("div", { className: "pane" }, [
+    element("h3", {}, [element("span", { textContent: "Original" }), toggle]),
+    element("div", { className: "scroll" }, body),
+  ]);
+}
+
+function choiceRow(it, field, values, repaint) {
+  const buttons = values.map((v) => {
+    const b = element("button", { textContent: LABEL[v] });
+    b.onclick = () => choose(it, { [field]: v }, repaint);
+    return b;
+  });
+  const paint = () => buttons.forEach((b, n) => b.classList.toggle("on", state.scores[key(it)]?.[field] === values[n]));
+  return [element("div", { className: "choices" }, [element("span", { textContent: field === "verdict" ? "the gloss is" : "boundaries" }), ...buttons]), paint];
+}
+
+function glossPane(it) {
+  const u = it.unit;
+  const note = element("textarea", { className: "note", placeholder: "note (optional)", value: state.scores[key(it)]?.note ?? "" });
+  note.onchange = () => save(it, { note: note.value });
+  const paints = [];
+  const repaint = () => paints.forEach((p) => p());
+  const [verdictRow, paintVerdict] = choiceRow(it, "verdict", VERDICTS, repaint);
+  const [boundaryRow, paintBoundary] = choiceRow(it, "boundaries", BOUNDARIES, repaint);
+  paints.push(paintVerdict, paintBoundary);
+  repaint();
+  const pane = element("div", { className: "pane" }, [
+    element("h3", { textContent: "What the model wrote" }),
+    element("div", { className: "scroll" }, [
+      element("div", { className: "label", textContent: `Unit: paragraphs ${u.first_pos}–${u.last_pos}` + (u.anchor_label ? ` · anchored on ${u.anchor_label} (${u.anchor_kind})` : "") }),
+      element("div", { className: "label", textContent: "Gloss" }),
+      element("div", { className: "gloss", textContent: u.gloss }),
+      element("div", { className: "label", textContent: "Key terms" }),
+      element("div", { textContent: u.key_terms.join(" · ") || "—" }),
+      element("div", { className: "label", textContent: "Questions it answers" }),
+      element("ul", {}, u.questions.map((q) => element("li", { textContent: q }))),
+    ]),
+    verdictRow,
+    boundaryRow,
+    note,
+  ]);
+  pane.note = note;
+  return pane;
+}
+
+async function choose(it, change, repaint) {
+  if (!(await save(it, change))) return;
+  repaint();
+  updateProgress();
+  if (complete(it)) {
+    const next = state.items.findIndex((x, i) => i > index && !complete(x));
+    const first = state.items.findIndex((x) => !complete(x));
+    if (next !== -1) setTimeout(() => show(next), 350);
+    else if (first !== -1) setTimeout(() => show(first), 350);
+    else status("all units reviewed: run make gloss-report", "ok");
+  }
+}
+
+function updateProgress() {
+  const done = state.items.filter(complete).length;
+  document.getElementById("progress").textContent = `${done} / ${state.items.length} units done`;
+}
+
+function show(i) {
+  index = Math.max(0, Math.min(state.items.length - 1, i));
+  const it = state.items[index];
+  document.getElementById("where").textContent = `${it.excerpt} · ${it.stresses} · (${index + 1} of ${state.items.length})`;
+  const main = document.getElementById("main");
+  main.replaceChildren(sourcePane(it), glossPane(it));
+  renderMath(main);
+  updateProgress();
+}
+
+document.getElementById("prev").onclick = () => show(index - 1);
+document.getElementById("next").onclick = () => show(index + 1);
+document.addEventListener("keydown", (e) => {
+  if (e.target instanceof HTMLTextAreaElement) return;  // typing a note
+  const it = state.items[index];
+  const repaint = () => show(index);
+  const keys = { "1": ["verdict", "faithful"], "2": ["verdict", "overstated"], "3": ["verdict", "wrong"], "4": ["verdict", "unclear"], "5": ["boundaries", "sensible"], "6": ["boundaries", "not_sensible"] };
+  if (e.key === "ArrowLeft") show(index - 1);
+  else if (e.key === "ArrowRight") show(index + 1);
+  else if (e.key === "p") { showImages = !showImages; show(index); }
+  else if (keys[e.key]) { const [field, value] = keys[e.key]; choose(it, { [field]: value }, repaint); }
+});
+
+(async () => {
+  try {
+    state = await (await fetch("api/state")).json();
+  } catch (err) {
+    document.getElementById("main").replaceChildren(element("p", { className: "done", textContent: `Cannot reach the review server: ${err.message}` }));
+    return;
+  }
+  if (state.items.length === 0) {
+    document.getElementById("main").replaceChildren(element("p", { className: "done", textContent: "No units to review. Run make gloss-eval." }));
+    return;
+  }
+  const first = state.items.findIndex((x) => !complete(x));
+  show(first === -1 ? 0 : first);
+})();
+</script>
+</body>
+</html>
