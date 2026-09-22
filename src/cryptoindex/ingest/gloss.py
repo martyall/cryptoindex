@@ -8,6 +8,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from itertools import groupby
+from typing import Literal, get_args
 
 from pydantic import BaseModel
 
@@ -26,6 +27,9 @@ OVERLAP_CHARS = 4_000
 GLOSS_MAX_CHARS = 600
 QUESTIONS_MIN, QUESTIONS_MAX = 3, 5
 RESTATEMENT_RATIO = 0.8
+
+
+AnchorKind = Literal["theorem", "definition", "algorithm", "game", "example", "other"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,6 +136,9 @@ def gloss_request(chunk: Chunk, title: str, prompt: Prompt) -> LLMRequest:
 
 _NULLABLE_STRING = {"anyOf": [{"type": "string"}, {"type": "null"}]}
 _NULLABLE_INT = {"anyOf": [{"type": "integer"}, {"type": "null"}]}
+_NULLABLE_KIND = {
+    "anyOf": [{"type": "string", "enum": list(get_args(AnchorKind))}, {"type": "null"}]
+}
 _STRINGS = {"type": "array", "items": {"type": "string"}}
 
 REPLY_SCHEMA: dict[str, object] = {
@@ -146,6 +153,7 @@ REPLY_SCHEMA: dict[str, object] = {
                     "last_pos": {"type": "integer"},
                     "anchor_label": _NULLABLE_STRING,
                     "anchor_pos": _NULLABLE_INT,
+                    "anchor_kind": _NULLABLE_KIND,
                     "gloss": {"type": "string"},
                     "key_terms": _STRINGS,
                     "questions": _STRINGS,
@@ -155,6 +163,7 @@ REPLY_SCHEMA: dict[str, object] = {
                     "last_pos",
                     "anchor_label",
                     "anchor_pos",
+                    "anchor_kind",
                     "gloss",
                     "key_terms",
                     "questions",
@@ -173,6 +182,7 @@ class UnitReply(BaseModel, frozen=True):
     last_pos: int
     anchor_label: str | None
     anchor_pos: int | None
+    anchor_kind: AnchorKind | None
     gloss: str
     key_terms: tuple[str, ...]
     questions: tuple[str, ...]
@@ -214,8 +224,11 @@ def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
             raise InvalidReplyError(f"{where} is out of order")
         if u.key in seen:
             raise InvalidReplyError(f"{where} appears twice")
-        if (u.anchor_label is None) != (u.anchor_pos is None):
-            raise InvalidReplyError(f"{where} has half an anchor")
+        if (
+            len({u.anchor_label is None, u.anchor_pos is None, u.anchor_kind is None})
+            > 1
+        ):
+            raise InvalidReplyError(f"{where} has part of an anchor")
         if u.anchor_label is not None and u.anchor_pos is not None:
             if not u.first_pos <= u.anchor_pos <= u.last_pos:
                 raise InvalidReplyError(f"{where}: anchor {u.anchor_pos} not in span")

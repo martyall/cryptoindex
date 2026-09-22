@@ -16,11 +16,18 @@ A unit is a span of consecutive paragraphs (`first_pos` to `last_pos`, inclusive
 
 ## Anchors
 
-If a unit is built around a labelled formal block (Theorem 3.1, Lemma 2, Definition 4.2, Corollary, Proposition, Algorithm 1, Game G_0, Construction 5, Example 2.3, Exercise 7, …), set `anchor_label` to the label and `anchor_pos` to the position of the paragraph where the label appears.
+If a unit is built around a labelled formal block (Theorem 3.1, Lemma 2, Definition 4.2, Corollary, Proposition, Algorithm 1, Game G_0, Construction 5, Example 2.3, Exercise 7, …), set `anchor_label` to the label, `anchor_pos` to the position of the paragraph where the label appears, and `anchor_kind` to what kind of block it is:
+
+- `theorem`: a theorem, lemma, proposition, corollary, or claim;
+- `definition`;
+- `algorithm`: an algorithm, procedure, or construction, in pseudocode or prose;
+- `game`: a security game, experiment, or hybrid;
+- `example`: an example or exercise;
+- `other`: any other labelled block (a remark, a figure, a table).
 
 - Copy the label exactly as it appears in that paragraph's text, character for character, including its LaTeX if any: it is checked against the text, and a label not found there rejects your whole reply.
 - Include only the kind and number (`Theorem 3.1`), not a title in parentheses or the trailing period.
-- If the block is unnumbered or has no label, or the unit has no formal block, set both to null.
+- If the block is unnumbered or has no label, or the unit has no formal block, set all three to null.
 
 ## Descriptions
 

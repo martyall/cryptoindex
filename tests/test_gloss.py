@@ -34,6 +34,7 @@ def unit(
         "last_pos": last,
         "anchor_label": anchor[0] if anchor else None,
         "anchor_pos": anchor[1] if anchor else None,
+        "anchor_kind": "theorem" if anchor else None,
         "gloss": gloss_text,
         "key_terms": list(terms),
         "questions": list(questions),
@@ -113,11 +114,11 @@ def test_reply_that_does_not_fit_the_chunk_is_rejected(
         validate_reply(bad, CHUNK)
 
 
-def test_half_an_anchor_is_rejected() -> None:
-    half = unit(3, 5)
-    half["anchor_label"] = "Theorem 3.1"
-    with pytest.raises(InvalidReplyError, match="half an anchor"):
-        validate_reply(reply(half), CHUNK)
+@pytest.mark.parametrize("missing", ["anchor_label", "anchor_pos", "anchor_kind"])
+def test_part_of_an_anchor_is_rejected(missing: str) -> None:
+    partial = unit(3, 5, ("Theorem 3.1", 3)) | {missing: None}
+    with pytest.raises(InvalidReplyError, match="part of an anchor"):
+        validate_reply(reply(partial), CHUNK)
 
 
 def test_reply_not_matching_the_schema_is_rejected() -> None:

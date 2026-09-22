@@ -215,6 +215,7 @@ async def _store_units(
         u = r.unit
         values = (
             u.anchor_pos,
+            u.anchor_kind,
             u.gloss,
             list(u.key_terms),
             r.flags,
@@ -226,7 +227,8 @@ async def _store_units(
             unit_id, questions = existing[u.key]
             # A changed gloss drops its embedding, so Phase 4 embeds it again.
             await conn.execute(
-                "UPDATE docs.units SET anchor_pos = %s, gloss = %s, terms = %s,"
+                "UPDATE docs.units SET anchor_pos = %s, anchor_kind = %s,"
+                "  gloss = %s, terms = %s,"
                 "  flags = %s, gloss_model = %s, prompt_version = %s,"
                 "  input_hash = %s,"
                 "  emb_gloss = CASE WHEN gloss = %s THEN emb_gloss END"
@@ -241,9 +243,10 @@ async def _store_units(
         else:
             cur = await conn.execute(
                 "INSERT INTO docs.units (revision_id, first_pos, last_pos,"
-                "  anchor_label, anchor_pos, gloss, terms, flags, gloss_model,"
-                "  prompt_version, input_hash)"
-                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                "  anchor_label, anchor_pos, anchor_kind, gloss, terms, flags,"
+                "  gloss_model, prompt_version, input_hash)"
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                " RETURNING id",
                 (work_id, u.first_pos, u.last_pos, u.anchor_label, *values),
             )
             inserted = await cur.fetchone()

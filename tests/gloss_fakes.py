@@ -29,6 +29,7 @@ class CoveringLLM:
             "last_pos": positions[-1],
             "anchor_label": None,
             "anchor_pos": None,
+            "anchor_kind": None,
             "gloss": "A passage.",
             "key_terms": [],
             "questions": ["What is it?", "Why?", "How?"],
