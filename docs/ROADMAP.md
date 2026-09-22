@@ -45,10 +45,10 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 **Goal:** PDFs become stable paragraphs; the parser is chosen.
 
-**In scope:** Marker and PaddleOCR-VL adapters (out-of-process), Markdown → paragraphs with section paths and content hashes, formula render check (KaTeX pass/fail rate), the parser evaluation on `eval/parse-sample/`, near-duplicate warning (deferred from Phase 1). No arXiv sources (D18).
+**In scope:** Marker and PaddleOCR-VL adapters (out-of-process), each parser's structured output → typed blocks → paragraphs with page, box, section path and content hash, formula render check (KaTeX pass/fail rate), the parser evaluation on `eval/parse-sample/`, near-duplicate warning (deferred from Phase 1). No arXiv sources (D18).
 
 **Acceptance:**
-- Both parsers run on the 20–30 sample PDFs; a report records formula render failure rate and manual pseudocode-box scores per `EVALUATION.md`.
+- Both parsers run on the evaluation sample (textbook excerpts, D19); a report records formula render failure rate and the human's manual scores per `EVALUATION.md`.
 - Parser chosen and recorded in `DECISIONS.md`.
 - Re-parsing an unchanged revision changes no paragraph IDs.
 
