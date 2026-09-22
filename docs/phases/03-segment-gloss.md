@@ -1,6 +1,6 @@
 # Phase 3 — Segment and gloss
 
-Status: ready (reviewed 2026-09-21)
+Status: done (2026-09-21), except the manual run with the Anthropic API, which waits for an API key
 
 ## Goal
 Group each revision's paragraphs into argument units, and give each unit a plain-English gloss, key terms, the questions it answers, and its formal-block anchor (D4, D5). These are for finding, never for citing (Invariant 3).
@@ -76,6 +76,19 @@ Group each revision's paragraphs into argument units, and give each unit a plain
 - **Local backend for the manual acceptance run:** llama.cpp's `llama-server`, already installed natively for Marker, which serves the OpenAI message format that `OpenAIFormatLLM` targets. The model is an open instruct model that fits in 48 GB of unified memory. It is chosen and pinned at phase start, and its weights are downloaded once, as for the parser models.
   - Pinned: Qwen3-30B-A3B-Instruct-2507, `Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf` (18.6 GB, Apache-2.0) from `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF` at revision `eea7b2be5805a5f151f8847ede8e5f9a9284bf77`, sha256 `6c997b8af17debdfb01d890214400ccbab00db6acc0ba8da5de1cc906c4774d0`. A mixture-of-experts model with 3B active parameters, so it is fast on this machine, and a non-thinking instruct variant. Downloaded once into the Hugging Face cache with `hf download`.
 - **Anchors also label paragraphs.** `paragraphs.block_label` is filled from the segmentation's validated anchors only, so a citation can say "Theorem 3.1" instead of "p42". It is written with the units, in the same transaction.
+
+## Outcome
+- **Prompt frozen at gloss-v2** (D23): 89% faithful overall, 92% on units with readable source text, no overstated or wrong glosses. gloss-v1 reached 74%; the difference was unit sizing.
+- **Zero LLM calls on unchanged input:** `test_unchanged_input_makes_no_llm_calls`, and seen in the local-backend run, where a retry re-asked only the chunk that had failed.
+- **Fake backend end to end:** the segment tests and the upload-to-ready API test.
+- **Real backends:** dev mode (claude-opus-5) and the local model ran end to end (below). The Anthropic backend is covered only by offline tests against recorded HTTP until an API key is added.
+
+## Lessons for later phases
+- **Parser noise is now the main limit on gloss quality.** 14 of 64 sampled units had source text the reviewer found garbled: broken equations and diagrams, words split across paragraphs.
+- **Unit size affects retrieval more than gloss accuracy.** 16 of 64 units were still judged too narrow under gloss-v2. Phase 4's retrieval questions should show whether expanding a match to its unit gives enough context.
+- **`term_absent` is noisy** (138 of 272 units): the model writes notation differently from the text and uses synonyms the text does not. It flags only; whether synonyms help finding is a Phase 4 question.
+- **The first heading is a poor title for excerpts** ("Exercises"); the parse stage stores it as `papers.title`, and the segment stage prefers it over the uploader's name.
+- **Blind review needs definitions on the page.** The reviewer used "overstated" for "too narrow" until the categories were defined.
 
 ## Acceptance runs (2026-09-21)
 Both manual end-to-end runs used `make run`'s entry point against the test database: upload of a 3-page Erickson excerpt, parsed by PaddleOCR-VL, segmented, then `ready`, then a clean Ctrl-C.

@@ -82,3 +82,10 @@ Approved by the human. Extends D9 with a third backend; the two D9 backends stay
   - The child process is isolated: an empty working directory, a replacement system prompt, no tools, no settings, MCP servers, or skills, and no session saved. `ANTHROPIC_API_KEY` is removed from its environment, or Claude Code would bill the API instead of the subscription. `--bare` cannot be used, because it refuses subscription login.
   - It supports single-turn JSON requests only (what glossing needs); the agent (Phase 5) uses `anthropic` or `openai_format`.
   - Subscription usage limits apply. A call refused for a usage limit is not counted as a failed attempt; the stage waits and retries.
+
+### D23. The glossing prompt is frozen at gloss-v2, judged on readable source text (2026-09-21)
+Approved by the human after two blind spot-check passes (`eval/gloss-report-gloss-v1.md`, `eval/gloss-report-gloss-v2.md`). The roadmap expected v1 to be frozen.
+- **gloss-v1:** 49 of 66 faithful (74%). Both failure modes were unit boundaries: the reviewer marked units too narrow to stand alone as "overstated", and most "unclear" units mixed several points. gloss-v2 adds rules for sizing units and asks each gloss to name what its unit belongs to.
+- **gloss-v2:** 57 of 64 faithful (89%), none overstated or wrong, no wrong theorem or definition gloss. Of the 50 units whose parsed source text the reviewer judged readable, 46 were faithful (92%).
+- **The ≥90% criterion (EVALUATION.md §2) is applied to units with readable source text.** A gloss cannot be better than the text it was given, and repairing parser noise in stored text is out of scope (Phase 3 spec); 14 of the 64 sampled units had garbled source text (D21's known weaknesses).
+- Still open: 16 of 64 units were judged too narrow. That costs context at retrieval time, not gloss accuracy, so it is measured with Phase 4's retrieval questions instead of by further prompt tuning.

@@ -7,7 +7,7 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 | 0 | Skeleton | done |
 | 1 | Upload | done |
 | 2 | Parse | done |
-| 3 | Segment and gloss | todo |
+| 3 | Segment and gloss | done (Anthropic manual run pending an API key) |
 | 4 | Embed and retrieve | todo |
 | 5 | Agent and citation checker | todo |
 | 6 | HTTP API | todo |
@@ -56,10 +56,10 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 **Goal:** argument units with glosses, terms, and questions.
 
-**In scope:** segmentation+glossing prompt (`prompts/gloss-v1.md`), per-section batched calls with paper context, Anthropic batch API + prompt caching, local backend fallback, JSON validation, input hashing, anchor detection for formal blocks, gloss quality checks (empty/too long/invented terms), the 50–100 unit spot-check.
+**In scope:** segmentation+glossing prompt (`prompts/gloss-v1.md`, then `gloss-v2.md`), per-section batched calls with paper context, Anthropic batch API + prompt caching, local backend fallback, the Claude Code dev-mode backend (D22), JSON validation against the section, input hashing, anchors (label, position, kind) filling `paragraphs.block_label`, gloss quality flags, the 50–100 unit spot-check.
 
 **Acceptance:**
-- Spot-check set glossed and reviewed; prompt frozen at v1 with reviewer approval.
+- Spot-check set glossed and reviewed; prompt frozen with reviewer approval (frozen at gloss-v2, D23).
 - Re-running on unchanged input makes zero LLM calls.
 - Works end-to-end with the fake backend in tests and with both real backends manually.
 
