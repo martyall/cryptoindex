@@ -50,11 +50,11 @@ Make the index searchable, and let the human check by hand how well search finds
 - Every hit shows which channels found it; a search with the gloss and question channels switched off can be compared by hand.
 - The query layer refuses to start when the model recorded in `docs.meta` differs from the configured one.
 
-## Decisions for the human before starting
-1. **Excerpt titles.** The parse stage stores an excerpt's first heading ("Exercises") as its title. For the evaluation corpus the uploader's name (the source's name) should win. Options:
-   - prefer the uploader's name everywhere;
-   - only keep a parsed title when it is not a generic heading. This needs a rule, so it is not recommended.
-2. **Download:** the Qwen3-Embedding-0.6B weights, about 1.2 GB, fetched once from Hugging Face at a pinned revision.
+## Decisions from the human (2026-09-21)
+- **Document titles:** the name given at upload is the document's title everywhere, including the glossing prompt's context and its input hash. A title the parser reads (the first heading) is kept only as stored information: for chapters, notes and excerpts the first heading is often "Exercises" or "Introduction".
+
+## Before starting
+- **Download:** the Qwen3-Embedding-0.6B weights, about 1.2 GB, fetched once from Hugging Face at a pinned revision.
 
 ## Out of scope
 - Reranker, HyDE, section summaries (D17).
