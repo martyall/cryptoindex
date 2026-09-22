@@ -1,6 +1,6 @@
 # Phase 2 — Parse
 
-Status: in progress
+Status: done (2026-09-21)
 
 ## Goal
 Uploaded PDFs become stable paragraphs, read from each parser's structured output, and the parser is chosen by evaluation (D8).
@@ -90,6 +90,14 @@ Sources and everything derived from them live in the git-ignored `eval/parse-sam
 - **Licenses:** acceptable. Marker 2.0.0 is Apache-2.0 on PyPI (1.x was GPL-3.0); the terms of its model weights have not been re-checked.
 - **Nothing is trained or fine-tuned.** The phase chooses between two off-the-shelf parsers, and possibly their settings.
 - **No string munging** (CLAUDE.md). See the audit below.
+- **Scoring:** the human stopped at 84 of 100 pages, and the unscored pages are mainly the diagram excerpt. Diagrams were not a criterion, because neither parser reproduces them reliably; text and formulas matter most. Reconciliation with Claude's proposals was skipped (they differed on 106 of 168 scores, mostly by stricter calibration), so the blind scores are final.
+- **Parser: PaddleOCR-VL** (D21).
+
+## Outcome
+`eval/parse-report.md` holds the numbers, and D21 the decision. What the evaluation taught, for future evaluations:
+- **The review page shaped the scores.** It showed 132 PaddleOCR-VL blocks as raw LaTeX source (114 undelimited equations, plus 18 pseudocode blocks whose math it did not render) and no Marker blocks. It did not flag Marker's inline math written as plain text (≠ as `6=`), which looks readable while being wrong. A reviewer who cannot read raw LaTeX scores it lower, so the text-and-formula comparison was confounded. A future review page must render all math, including inside pseudocode, and must show where a parser left math as plain text.
+- **The formula failure rate alone rewards a parser that emits less math.** Marker's 1.9% against PaddleOCR-VL's 5.0% came with a quarter as many formulas recognized. Always report both numbers.
+- **Claude's proposals were a weak cross-check.** Agreement was 62 of 168. They applied the written scale literally, stricter at the top ("any flaw means 1") and more lenient at the bottom ("tokens in order means 1"), while the human scored usefulness.
 
 ## Audit (2026-09-21)
 The first version of this phase parsed each parser's Markdown with line regexes, recognized "Theorem N" by regex, split Marker's output on its page-separator lines, and found formulas by matching `$`. The human ordered an audit of the whole ingestion pipeline for this pattern. Fixed:
@@ -110,4 +118,9 @@ Kept on inspection:
 ## Deferred
 - **Phase 3 — formal-block anchors.** Theorem, lemma, definition, proof, algorithm and game labels come from the LLM segmentation, not from text patterns.
 - **Phase 4 — `latex_norm`.** Normalize LaTeX with a real LaTeX parser (e.g. pylatexenc) for trigram search. The column exists and stays NULL until then.
-- **Section depth with PaddleOCR-VL.** It reports no heading levels, only title versus section, so its section paths are at most `title > section`. If PaddleOCR-VL is chosen, deeper paths need a source other than the heading text.
+- **Section depth with PaddleOCR-VL (now the parser).** It reports no heading levels, only title versus section, so section paths are at most `title > section`. Deeper paths need a structured source (e.g. the PDF's own outline, read with pypdf), not the heading text.
+- **Phase 3 — PaddleOCR-VL's noise.** Undelimited display equations (`malformed_math`), stray "i." / "i.e." tokens and the occasional invented word reach the paragraphs. Segmentation and glossing must tolerate them. Citations quote stored text as it is (Invariant 3), so they are never silently corrected.
+- **Undelimited equations.** About 4% of PaddleOCR-VL's formulas are equation blocks it failed to delimit; they are stored as raw text. Repairing them needs a structured source (e.g. re-recognizing that page region), not string edits. Revisit if they hurt search or display.
+- **Diagrams.** Neither parser reproduces diagrams reliably, so diagram content cannot be quoted or cited from parsed text. If that matters later, keep the page-region image (the parser supplies its bbox) and point to it.
+- **Marker adapter.** Kept (with its llama.cpp dependency documented), so the evaluation can be re-run if either parser changes. Remove it if it goes unused.
+- **Near-duplicate threshold.** 0.5 of substantial paragraphs is a first guess, not validated on real duplicates.

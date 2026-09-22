@@ -6,7 +6,7 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 |---|---|---|
 | 0 | Skeleton | done |
 | 1 | Upload | done |
-| 2 | Parse | todo |
+| 2 | Parse | done |
 | 3 | Segment and gloss | todo |
 | 4 | Embed and retrieve | todo |
 | 5 | Agent and citation checker | todo |
