@@ -325,11 +325,9 @@ def main() -> None:
     units = [g for e in excerpts for g in glossed_units(e, replies[e.name])]
     LOCAL.mkdir(parents=True, exist_ok=True)
     FAILURES.write_text(json.dumps([f.model_dump() for f in failures], indent=2))
-    (LOCAL / "units.json").write_bytes(_ITEMS.dump_json(units))
+    UNITS.write_bytes(_ITEMS.dump_json(units))
     if failures:
-        print(
-            f"{len(failures)} chunks failed validation; see {LOCAL / 'failures.json'}"
-        )
+        print(f"{len(failures)} chunks failed validation; see {FAILURES}")
     if SPOT_CHECK.exists():
         spot = SpotCheck.model_validate_json(SPOT_CHECK.read_bytes())
     else:
