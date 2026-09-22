@@ -5,7 +5,7 @@ from functools import cache
 from pathlib import Path
 from typing import Literal, TypeGuard, TypeVar, get_args
 
-LLMBackend = Literal["anthropic", "openai_format", "fake"]
+LLMBackend = Literal["anthropic", "openai_format", "claude_code", "fake"]  # D9, D22
 ParserName = Literal["marker", "paddle"]
 
 _Num = TypeVar("_Num", int, float)
@@ -36,6 +36,9 @@ class Settings:
     llm_base_url: str
     llm_model: str
     anthropic_api_key: str | None = field(repr=False)
+    claude_bin: str
+    llm_record_dir: Path | None
+    gloss_batch: bool
     parser: ParserName
     paddle_vlm_url: str
     eprint_base: str
@@ -77,6 +80,12 @@ def load_settings(env: Mapping[str, str]) -> Settings:
             errors.append(f"{name}={raw!r} must be >= {min_}")
         return value
 
+    def flag(name: str, default: str) -> bool:
+        raw = opt(name, default)
+        if raw not in ("true", "false"):
+            errors.append(f"{name}={raw!r} must be true or false")
+        return raw == "true"
+
     llm_backend: LLMBackend = "anthropic"
     raw_backend = opt("CI_LLM_BACKEND", llm_backend)
     if _is_backend(raw_backend):
@@ -103,6 +112,11 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         llm_base_url=opt("CI_LLM_BASE_URL", "http://localhost:8080/v1"),
         llm_model=opt("CI_LLM_MODEL", ""),
         anthropic_api_key=env.get("ANTHROPIC_API_KEY") or None,
+        claude_bin=opt("CI_CLAUDE_BIN", "claude"),
+        llm_record_dir=Path(env["CI_LLM_RECORD_DIR"])
+        if env.get("CI_LLM_RECORD_DIR")
+        else None,
+        gloss_batch=flag("CI_GLOSS_BATCH", "true"),  # D5
         parser=parser,
         paddle_vlm_url=opt("CI_PADDLE_VLM_URL", "http://localhost:8111/"),
         eprint_base=opt("CI_EPRINT_BASE", "https://eprint.iacr.org"),

@@ -30,7 +30,9 @@ async def test_fake_llm_replays_by_request_hash(tmp_path: Path) -> None:
     record(tmp_path, "a", MESSAGES, "Chosen-ciphertext security.")
     llm = FakeLLM.from_dir(tmp_path)
     got = await llm.complete(SYSTEM, MESSAGES)
-    assert got == Completion(text="Chosen-ciphertext security.", parsed={"ok": True})
+    assert got == Completion(
+        text="Chosen-ciphertext security.", model="fake", parsed={"ok": True}
+    )
 
 
 async def test_fake_llm_ignores_cache_prefix(tmp_path: Path) -> None:

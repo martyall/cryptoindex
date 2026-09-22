@@ -7,10 +7,12 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "anthropic>=1.7.0",
     "fastapi>=0.141.1",
     "markdown-it-py>=4.2.0",
     "mdit-py-plugins>=0.6.1",
     "numpy>=2.4.6",
+    "openai>=3.17.0",
     "psycopg[binary,pool]>=3.3.6",
     "pydantic>=2.13.5",
     "pypdf>=6.19.0",
@@ -28,6 +30,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "httpx2>=2.13.0",
     "pillow>=12.3.0",
     "pypdfium2>=5.13.0",
     "pytest>=9.1.1",

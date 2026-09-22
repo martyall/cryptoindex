@@ -3,7 +3,9 @@ import json
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import Literal, Protocol, runtime_checkable
+
+from pydantic import BaseModel
 
 Role = Literal["user", "assistant", "tool"]
 
@@ -36,17 +38,25 @@ class ToolSpec:
 @dataclass(frozen=True, slots=True)
 class Completion:
     text: str
+    model: str  # the model that produced it, which a fallback can change
     parsed: object | None = None  # set when a json_schema was requested
     tool_calls: tuple[ToolCall, ...] = field(default=())
 
 
+class LLMError(RuntimeError):
+    """The backend returned no usable completion: a refusal, a truncated
+    reply, or an error reported by the model server."""
+
+
 class LLM(Protocol):
-    """An LLM backend (Invariant 9). `cache_prefix` affects cost only and is
-    ignored where unsupported. `Completion.parsed` is set exactly when
-    `json_schema` is given. Raises on transport or parse failure; FakeLLM raises
+    """An LLM backend (Invariant 9, D22). `model` is the model requested.
+    `cache_prefix` affects cost only and is ignored where unsupported.
+    `Completion.parsed` is set exactly when `json_schema` is given. Raises
+    LLMError, or the SDK's own errors on transport failure; FakeLLM raises
     UnrecordedRequestError."""
 
     name: str
+    model: str
 
     async def complete(
         self,
@@ -56,6 +66,26 @@ class LLM(Protocol):
         json_schema: dict[str, object] | None = None,
         cache_prefix: bool = False,
     ) -> Completion: ...
+
+
+@dataclass(frozen=True, slots=True)
+class LLMRequest:
+    system: str
+    messages: list[Message]
+    json_schema: dict[str, object] | None = None
+    cache_prefix: bool = False
+
+
+@runtime_checkable
+class BatchLLM(LLM, Protocol):
+    """A backend that can also run many requests as one batch, at lower cost
+    and higher latency (D5)."""
+
+    async def batch(self, requests: list[LLMRequest]) -> list[Completion]:
+        """Completions in request order, once the whole batch has ended. Waits
+        (asynchronously) for as long as the provider takes. Raises LLMError if
+        any request failed."""
+        ...
 
 
 def request_payload(
@@ -93,8 +123,12 @@ class FakeLLM:
 
     name = "fake"
 
-    def __init__(self, recordings: Mapping[str, Completion]) -> None:
+    def __init__(
+        self, recordings: Mapping[str, Completion], model: str = "fake"
+    ) -> None:
         self._recordings = dict(recordings)
+        self.model = model
+        self.calls = 0
 
     @classmethod
     def from_dir(cls, directory: Path) -> "FakeLLM":
@@ -115,6 +149,7 @@ class FakeLLM:
         cache_prefix: bool = False,
     ) -> Completion:
         key = request_hash(request_payload(system, messages, tools, json_schema))
+        self.calls += 1
         try:
             return self._recordings[key]
         except KeyError:
@@ -123,13 +158,55 @@ class FakeLLM:
             ) from None
 
 
-def _completion_from_json(doc: dict[str, object]) -> Completion:
-    text = doc.get("text", "")
-    raw_calls = doc.get("tool_calls", [])
-    if not isinstance(text, str) or not isinstance(raw_calls, list):
-        raise ValueError(f"malformed recorded completion: {doc!r}")
-    calls = tuple(
-        ToolCall(id=c["id"], name=c["name"], arguments=c["arguments"])
-        for c in raw_calls
+class RecordingLLM:
+    """Passes requests to another backend and writes each completion as a
+    FakeLLM recording, named by its request hash, so a real run can be
+    replayed offline."""
+
+    def __init__(self, inner: LLM, directory: Path) -> None:
+        self._inner = inner
+        self._directory = directory
+        self.name = inner.name
+        self.model = inner.model
+
+    async def complete(
+        self,
+        system: str,
+        messages: list[Message],
+        tools: list[ToolSpec] | None = None,
+        json_schema: dict[str, object] | None = None,
+        cache_prefix: bool = False,
+    ) -> Completion:
+        completion = await self._inner.complete(
+            system, messages, tools, json_schema, cache_prefix
+        )
+        payload = request_payload(system, messages, tools, json_schema)
+        self._directory.mkdir(parents=True, exist_ok=True)
+        path = self._directory / f"{request_hash(payload)}.json"
+        path.write_text(
+            json.dumps({"request": payload, "completion": asdict(completion)}, indent=1)
+        )
+        return completion
+
+
+class _ToolCallJSON(BaseModel):
+    id: str
+    name: str
+    arguments: dict[str, object]
+
+
+class _CompletionJSON(BaseModel):
+    text: str = ""
+    model: str = "fake"
+    parsed: object | None = None
+    tool_calls: list[_ToolCallJSON] = []
+
+
+def _completion_from_json(doc: object) -> Completion:
+    c = _CompletionJSON.model_validate(doc)
+    return Completion(
+        text=c.text,
+        model=c.model,
+        parsed=c.parsed,
+        tool_calls=tuple(ToolCall(t.id, t.name, t.arguments) for t in c.tool_calls),
     )
-    return Completion(text=text, parsed=doc.get("parsed"), tool_calls=calls)

@@ -33,12 +33,13 @@ Runs out-of-process. Implementations: `MarkerParser`, `PaddleVLParser` (client o
 ```python
 class LLM(Protocol):
     name: str
+    model: str   # requested; Completion.model says which model answered
     async def complete(self, system: str, messages: list[Message],
                        tools: list[ToolSpec] | None = None,
                        json_schema: dict | None = None,
                        cache_prefix: bool = False) -> Completion
 ```
-`Completion` holds text, parsed JSON (if a schema was given), and tool calls. Implementations: `AnthropicLLM` (native SDK; supports batch submission via a separate `batch()` method used only by glossing), `OpenAIFormatLLM` (local servers), `FakeLLM` (replays recorded responses keyed by request hash; used in tests).
+`Completion` holds text, the model that produced it, parsed JSON (if a schema was given), and tool calls. Implementations: `AnthropicLLM` (native SDK; also a `BatchLLM`, whose `batch()` is used only by glossing), `OpenAIFormatLLM` (local servers), `ClaudeCodeLLM` (dev mode, single-turn JSON only, D22), `FakeLLM` (replays recorded responses keyed by request hash; used in tests), and `RecordingLLM` (wraps a real backend and writes FakeLLM recordings).
 
 ## Embedder
 
