@@ -47,15 +47,13 @@ Default to no comment. Write one only if deleting it would lose something a comp
 
 Needs only Docker and uv. The first `make` target copies `.env.example` to `.env`; every `uv run` in the Makefile reads `.env`.
 
+`make` (no target) prints every command with its options, read from the Makefile's own `##` annotations; annotate a new target there rather than listing it here. The ones you need most:
+
 ```
-make db-up        # start Postgres (docker compose), wait until healthy
-make db-down      # stop Postgres, keep its data volume
-make migrate      # db-up, then apply migrations and set role passwords from the DSNs
-make reset        # asks, then deletes the database volume and CI_DATA_DIR; re-migrates
-make test         # offline test suite, against a separate cryptoindex_test database
 make run          # migrate, then start the single process (pipeline + API on CI_API_PORT)
+make test         # offline test suite, against a separate cryptoindex_test database
 make check        # ruff lint + format check + ty (read-only)
-make fmt          # apply ruff fixes and formatting
+make requeue STAGE=segment   # send documents back to a stage after a prompt or model change
 ```
 
 Tests need the `.env` settings, so run them through `make test` (or `uv run --env-file .env pytest …` for a subset).
