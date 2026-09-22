@@ -31,7 +31,9 @@ def test_signal_releases_claims_and_exits_cleanly(
     seed([Stage.PARSE])
     child = subprocess.Popen(
         [sys.executable, str(CHILD)],
-        env=test_env | {"CI_API_PORT": "0"},
+        # The parse stage is replaced by `hang`; marker only avoids starting
+        # PaddleOCR-VL's (Mac-only) model server, which serve() does for paddle.
+        env=test_env | {"CI_API_PORT": "0", "CI_PARSER": "marker"},
         stderr=subprocess.PIPE,
         text=True,
     )
