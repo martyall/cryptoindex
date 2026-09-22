@@ -49,8 +49,8 @@ class Paragraph:
 class Hit:
     """One argument unit. `channels` maps each channel that found the unit, or
     one of its paragraphs, to its best rank there (1 = first);
-    `matched_positions` are the paragraphs the paragraph-level channels
-    found."""
+    `matched_positions` are the paragraphs that earned those ranks in the
+    paragraph-level channels."""
 
     unit_id: int
     paper_id: UUID
@@ -144,19 +144,24 @@ async def search(
         units_of = await _enclosing_units(conn, found)
         scores: dict[int, float] = {}
         best: dict[int, dict[Channel, int]] = {}
-        matched: dict[int, set[int]] = {}
+        # Per unit and paragraph-level channel, the paragraph that earned the
+        # unit its rank there. Vector channels return their nearest
+        # paragraphs however far, so "a channel returned it" says little.
+        best_at: dict[int, dict[Channel, int]] = {}
         for channel, ids in paragraph_ranks.items():
             for rank, pid in enumerate(ids, start=1):
                 for unit_id, position in units_of.get(pid, []):
-                    matched.setdefault(unit_id, set()).add(position)
                     ranks = best.setdefault(unit_id, {})
-                    ranks[channel] = min(ranks.get(channel, rank), rank)
+                    if channel not in ranks:  # ids are in rank order
+                        ranks[channel] = rank
+                        best_at.setdefault(unit_id, {})[channel] = position
         for channel, ids in unit_ranks.items():
             for rank, unit_id in enumerate(ids, start=1):
                 best.setdefault(unit_id, {})[channel] = rank
         for unit_id, ranks in best.items():
             scores[unit_id] = sum(1.0 / (RRF_K + r) for r in ranks.values())
         top = sorted(scores, key=lambda u: (-scores[u], u))[:k]
+        matched = {u: set(at.values()) for u, at in best_at.items()}
         return await _hits(conn, top, scores, best, matched)
 
 

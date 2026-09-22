@@ -55,9 +55,11 @@ Qwen3 requires the instruction prefix on queries only. Vectors are L2-normalized
 ## Retrieval
 
 ```python
-async def search(q: str, filters: Filters, k: int = 20) -> list[Hit]
+async def search(pool, embedder, q: str, k: int = 10,
+                 channels: Collection[Channel] = ALL_CHANNELS,
+                 paper_ids: Sequence[UUID] | None = None) -> list[Hit]
 ```
-`Hit` = paragraph or unit reference, score, channel breakdown (which retrievers matched), and the expanded unit span. Filters: paper IDs, subjects, year range, `current_only` (default true).
+`Hit` = one argument unit: its document and span, score, channel breakdown (each channel that found it and its rank there), the paragraphs that earned those ranks, and the unit's paragraphs. Channels: paragraph, gloss and question vectors, `simple` full text, trigram on `latex_norm`, fused by Reciprocal Rank Fusion. Only current, ready revisions are searched.
 
 ## Citation
 

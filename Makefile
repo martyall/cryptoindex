@@ -1,7 +1,8 @@
 UV_RUN := uv run --env-file .env
 
 .PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval \
-	parse-review parse-close-blind parse-report gloss-eval gloss-review gloss-report
+	parse-review parse-close-blind parse-report gloss-eval gloss-review gloss-report \
+	search
 
 .env:
 	cp .env.example .env
@@ -72,6 +73,10 @@ gloss-review: .env
 
 gloss-report: .env
 	$(UV_RUN) python -m cryptoindex.evaluation.gloss_review report
+
+# Manual QA of search over the index (D24), on the read-only role.
+search: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.search_page
 
 # Read-only: safe for CI and pre-commit.
 check:

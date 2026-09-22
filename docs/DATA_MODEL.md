@@ -8,7 +8,7 @@ Schema `docs`. Migrations in `db/migrations/` are the precise spec; this documen
 - `ci_query`: SELECT only on `docs.*`.
 
 ## `docs.meta`
-Key/value settings. Required keys: `embed_model`, `embed_dims`, `schema_version`. The query layer checks `embed_model` against its configuration at startup.
+Key/value settings. Required keys: `embed_model`, `embed_dims`, `schema_version`. `embed_model` is written by the first embedding; the pipeline and the query layer refuse to start, and the embed stage refuses to run, when it differs from `CI_EMBED_MODEL` (Invariant 6).
 
 ## `docs.papers`
 One row per uploaded document (D18). `id` is a UUID; `name` is chosen by the uploader and need not be unique. Optional fields: title (a parser may fill it), authors[], abstract, subjects[], `license` (if known, must be respected). `arxiv_id`, `oai_datestamp` and `fetched_datestamp` are reserved for a future remote source and unused.
@@ -34,7 +34,7 @@ One row per distinct PDF (or source bundle) of a paper. Pipeline state lives her
 Base layer. One row per paragraph of a revision.
 
 - `position` (0-based within revision, reading order), `page` (0-based, for citation locators) and `bbox` (where the paragraph sits on that page) from the parser's layout, `section_path` (`text[]`, the headings it sits under, outermost first, e.g. `{4 Security, 4.1 Unforgeability}`; migration 005), `text` (PaddleOCR-VL: its Markdown; Marker: plain text with `$`-delimited math; equations: LaTeX, raw if the parser failed to delimit them; tables: the parser's HTML), `content_hash`, `block_kind` (nullable; only what a parser reports: `equation`, `algorithm`, `code`, `table`, `list_item`, `caption`, `footnote`, `figure`), `block_label` (nullable; a formal-block label such as `Theorem 3`, written by the segment stage from validated anchors only).
-- `tsv` generated with the `simple` config; `latex_norm` (normalized LaTeX for trigram matching, filled in Phase 4 with a real LaTeX parser); `emb halfvec(1024)`.
+- `tsv` generated with the `simple` config; `latex_norm` (the paragraph's formulas, found by markdown-it's math plugin, or the whole text of an undelimited equation block, each normalized with pylatexenc's parser: layout commands dropped, whitespace removed, single-character groups unwrapped; space-separated; NULL if none parse; filled by the embed stage); `emb halfvec(1024)`.
 - Stability: re-parsing an unchanged revision must reproduce identical `(position, content_hash)` pairs and therefore keep IDs.
 
 ## `docs.units`

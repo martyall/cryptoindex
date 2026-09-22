@@ -1,6 +1,8 @@
 from collections.abc import AsyncIterator, Callable
+from pathlib import Path
 from typing import LiteralString
 
+import httpx
 import psycopg
 import pytest
 from psycopg.rows import TupleRow
@@ -15,6 +17,7 @@ from cryptoindex.core.embed import (
 )
 from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
+from cryptoindex.evaluation.search_page import create_app, paragraph_html
 from cryptoindex.ingest.embedding import embed_stage
 from cryptoindex.ingest.paragraphs import content_hash
 from cryptoindex.ingest.parsers import StubParser
@@ -224,3 +227,29 @@ async def test_search_cannot_write(query_pool: Pool) -> None:
     async with query_pool.connection() as conn:
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             await conn.execute("DELETE FROM docs.units")
+
+
+async def test_search_page_returns_rendered_hits(
+    settings: Settings, pool: Pool, query_pool: Pool, work_id: int, tmp_path: Path
+) -> None:
+    await indexed(settings, pool, work_id)
+    app = create_app(query_pool, FakeEmbedder(), tmp_path)
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as client:
+        response = await client.get("/api/search", params={"q": "nonconstant"})
+        without = await client.get(
+            "/api/search", params={"q": ASKED, "generated": "false"}
+        )
+    (hit, *_) = response.json()
+    assert hit["anchor_label"] is None and hit["first_pos"] == 0
+    assert hit["paragraphs"][0]["matched"]  # the full-text match
+    assert 'class="math block"' in hit["paragraphs"][1]["html"]
+    assert all(not {"gloss", "question"} & set(h["channels"]) for h in without.json())
+
+
+def test_an_undelimited_equation_is_shown_as_math() -> None:
+    raw = r"\alpha^{2}+1=0 <b>"
+    assert paragraph_html(raw, "equation") == (
+        r'<div class="math block">\alpha^{2}+1=0 &lt;b&gt;</div>'
+    )
+    assert "<b>" not in paragraph_html("<b>bold</b> $x$", None)
