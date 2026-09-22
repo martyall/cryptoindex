@@ -1,0 +1,662 @@
+{
+  "judson-groups/9-15/Figure 21.3": {
+    "excerpt": "judson-groups",
+    "first_pos": 9,
+    "last_pos": 15,
+    "anchor_label": "Figure 21.3",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T03:57:44.670994+00:00"
+  },
+  "judson-groups/30-30/Example 21.6": {
+    "excerpt": "judson-groups",
+    "first_pos": 30,
+    "last_pos": 30,
+    "anchor_label": "Example 21.6",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T03:58:38.015111+00:00"
+  },
+  "judson-groups/45-46/Proposition 21.12": {
+    "excerpt": "judson-groups",
+    "first_pos": 45,
+    "last_pos": 46,
+    "anchor_label": "Proposition 21.12",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T03:58:55.384240+00:00"
+  },
+  "judson-groups/65-67/Example 21.14": {
+    "excerpt": "judson-groups",
+    "first_pos": 65,
+    "last_pos": 67,
+    "anchor_label": "Example 21.14",
+    "verdict": "overstated",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:55:37.262639+00:00"
+  },
+  "judson-groups/72-78/Theorem 21.15": {
+    "excerpt": "judson-groups",
+    "first_pos": 72,
+    "last_pos": 78,
+    "anchor_label": "Theorem 21.15",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:55:55.337282+00:00"
+  },
+  "judson-groups/79-79/Remark 21.16": {
+    "excerpt": "judson-groups",
+    "first_pos": 79,
+    "last_pos": 79,
+    "anchor_label": "Remark 21.16",
+    "verdict": "overstated",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T05:56:05.574952+00:00"
+  },
+  "judson-groups/80-96/Theorem 21.17": {
+    "excerpt": "judson-groups",
+    "first_pos": 80,
+    "last_pos": 96,
+    "anchor_label": "Theorem 21.17",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:56:34.037963+00:00"
+  },
+  "judson-groups/103-105/Example 21.20": {
+    "excerpt": "judson-groups",
+    "first_pos": 103,
+    "last_pos": 105,
+    "anchor_label": "Example 21.20",
+    "verdict": "overstated",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T05:56:40.045640+00:00"
+  },
+  "judson-groups/130-132/Theorem 21.23": {
+    "excerpt": "judson-groups",
+    "first_pos": 130,
+    "last_pos": 132,
+    "anchor_label": "Theorem 21.23",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:56:50.049574+00:00"
+  },
+  "judson-groups/133-133/Corollary 21.24": {
+    "excerpt": "judson-groups",
+    "first_pos": 133,
+    "last_pos": 133,
+    "anchor_label": "Corollary 21.24",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:56:58.632723+00:00"
+  },
+  "judson-groups/134-139/Theorem 21.25": {
+    "excerpt": "judson-groups",
+    "first_pos": 134,
+    "last_pos": 139,
+    "anchor_label": "Theorem 21.25",
+    "verdict": "overstated",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:57:16.757776+00:00"
+  },
+  "judson-groups/142-143/Theorem 21.27": {
+    "excerpt": "judson-groups",
+    "first_pos": 142,
+    "last_pos": 143,
+    "anchor_label": "Theorem 21.27",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:57:26.086571+00:00"
+  },
+  "judson-groups/144-145/Theorem 21.28": {
+    "excerpt": "judson-groups",
+    "first_pos": 144,
+    "last_pos": 145,
+    "anchor_label": "Theorem 21.28",
+    "verdict": "overstated",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:57:36.734731+00:00"
+  },
+  "judson-groups/146-149/": {
+    "excerpt": "judson-groups",
+    "first_pos": 146,
+    "last_pos": 149,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:57:52.601519+00:00"
+  },
+  "hefferon-reduction/25-26/1.3 Definition": {
+    "excerpt": "hefferon-reduction",
+    "first_pos": 25,
+    "last_pos": 26,
+    "anchor_label": "1.3 Definition",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:58:02.519925+00:00"
+  },
+  "hefferon-reduction/47-51/1.7 Definition": {
+    "excerpt": "hefferon-reduction",
+    "first_pos": 47,
+    "last_pos": 51,
+    "anchor_label": "1.7 Definition",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:58:12.809509+00:00"
+  },
+  "hefferon-reduction/53-57/1.8": {
+    "excerpt": "hefferon-reduction",
+    "first_pos": 53,
+    "last_pos": 57,
+    "anchor_label": "1.8",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:58:19.423146+00:00"
+  },
+  "hefferon-reduction/90-92/1.16": {
+    "excerpt": "hefferon-reduction",
+    "first_pos": 90,
+    "last_pos": 92,
+    "anchor_label": "1.16",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:58:26.501119+00:00"
+  },
+  "hefferon-reduction/143-148/2.6 Theorem": {
+    "excerpt": "hefferon-reduction",
+    "first_pos": 143,
+    "last_pos": 148,
+    "anchor_label": "2.6 Theorem",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:58:35.825860+00:00"
+  },
+  "calculus-integrals/16-17/Figure 3.2.1": {
+    "excerpt": "calculus-integrals",
+    "first_pos": 16,
+    "last_pos": 17,
+    "anchor_label": "Figure 3.2.1",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:58:43.152497+00:00"
+  },
+  "calculus-integrals/41-46/Figure 3.2.2": {
+    "excerpt": "calculus-integrals",
+    "first_pos": 41,
+    "last_pos": 46,
+    "anchor_label": "Figure 3.2.2",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:58:48.952066+00:00"
+  },
+  "calculus-integrals/67-73/": {
+    "excerpt": "calculus-integrals",
+    "first_pos": 67,
+    "last_pos": 73,
+    "anchor_label": null,
+    "verdict": "unclear",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:59:00.486797+00:00"
+  },
+  "calculus-integrals/86-89/": {
+    "excerpt": "calculus-integrals",
+    "first_pos": 86,
+    "last_pos": 89,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:59:07.935973+00:00"
+  },
+  "leinster-functors/1-3/Construction 1.1.9": {
+    "excerpt": "leinster-functors",
+    "first_pos": 1,
+    "last_pos": 3,
+    "anchor_label": "Construction 1.1.9",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:59:14.662378+00:00"
+  },
+  "leinster-functors/4-4/Remark 1.1.10": {
+    "excerpt": "leinster-functors",
+    "first_pos": 4,
+    "last_pos": 4,
+    "anchor_label": "Remark 1.1.10",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:59:21.792027+00:00"
+  },
+  "leinster-functors/5-8/Construction 1.1.11": {
+    "excerpt": "leinster-functors",
+    "first_pos": 5,
+    "last_pos": 8,
+    "anchor_label": "Construction 1.1.11",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T05:59:30.594112+00:00"
+  },
+  "leinster-functors/13-23/Definition 1.2.1": {
+    "excerpt": "leinster-functors",
+    "first_pos": 13,
+    "last_pos": 23,
+    "anchor_label": "Definition 1.2.1",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:01:49.192565+00:00"
+  },
+  "leinster-functors/24-34/Remarks 1.2.2": {
+    "excerpt": "leinster-functors",
+    "first_pos": 24,
+    "last_pos": 34,
+    "anchor_label": "Remarks 1.2.2",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:02:02.439956+00:00"
+  },
+  "leinster-functors/85-89/Definition 1.2.10": {
+    "excerpt": "leinster-functors",
+    "first_pos": 85,
+    "last_pos": 89,
+    "anchor_label": "Definition 1.2.10",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:02:08.365557+00:00"
+  },
+  "leinster-functors/90-97/Example 1.2.11": {
+    "excerpt": "leinster-functors",
+    "first_pos": 90,
+    "last_pos": 97,
+    "anchor_label": "Example 1.2.11",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:02:20.248586+00:00"
+  },
+  "leinster-functors/111-111/Example 1.2.13": {
+    "excerpt": "leinster-functors",
+    "first_pos": 111,
+    "last_pos": 111,
+    "anchor_label": "Example 1.2.13",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:02:25.295369+00:00"
+  },
+  "leinster-functors/114-118/Definition 1.2.15": {
+    "excerpt": "leinster-functors",
+    "first_pos": 114,
+    "last_pos": 118,
+    "anchor_label": "Definition 1.2.15",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:02:28.042096+00:00"
+  },
+  "leinster-functors/119-125/Definition 1.2.16": {
+    "excerpt": "leinster-functors",
+    "first_pos": 119,
+    "last_pos": 125,
+    "anchor_label": "Definition 1.2.16",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:02:34.415136+00:00"
+  },
+  "leinster-functors/126-128/Definition 1.2.18": {
+    "excerpt": "leinster-functors",
+    "first_pos": 126,
+    "last_pos": 128,
+    "anchor_label": "Definition 1.2.18",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:02:41.287532+00:00"
+  },
+  "leinster-functors/129-132/Warning 1.2.19": {
+    "excerpt": "leinster-functors",
+    "first_pos": 129,
+    "last_pos": 132,
+    "anchor_label": "Warning 1.2.19",
+    "verdict": "unclear",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:04.697498+00:00"
+  },
+  "leinster-functors/133-133/1.2.20": {
+    "excerpt": "leinster-functors",
+    "first_pos": 133,
+    "last_pos": 133,
+    "anchor_label": "1.2.20",
+    "verdict": "unclear",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:10.849965+00:00"
+  },
+  "leinster-functors/146-146/1.2.26": {
+    "excerpt": "leinster-functors",
+    "first_pos": 146,
+    "last_pos": 146,
+    "anchor_label": "1.2.26",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:15.725154+00:00"
+  },
+  "leinster-functors/148-149/1.2.28": {
+    "excerpt": "leinster-functors",
+    "first_pos": 148,
+    "last_pos": 149,
+    "anchor_label": "1.2.28",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:19.099669+00:00"
+  },
+  "leinster-functors/150-150/1.2.29": {
+    "excerpt": "leinster-functors",
+    "first_pos": 150,
+    "last_pos": 150,
+    "anchor_label": "1.2.29",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:22.594656+00:00"
+  },
+  "mcs-proofs/35-37/Lemma 19.2.1": {
+    "excerpt": "mcs-proofs",
+    "first_pos": 35,
+    "last_pos": 37,
+    "anchor_label": "Lemma 19.2.1",
+    "verdict": "overstated",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:33.676284+00:00"
+  },
+  "mcs-proofs/41-43/Definition 19.2.2": {
+    "excerpt": "mcs-proofs",
+    "first_pos": 41,
+    "last_pos": 43,
+    "anchor_label": "Definition 19.2.2",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:38.389081+00:00"
+  },
+  "mcs-proofs/67-69/Definition 19.2.4": {
+    "excerpt": "mcs-proofs",
+    "first_pos": 67,
+    "last_pos": 69,
+    "anchor_label": "Definition 19.2.4",
+    "verdict": "unclear",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:45.108088+00:00"
+  },
+  "mcs-proofs/88-91/Lemma 19.3.1": {
+    "excerpt": "mcs-proofs",
+    "first_pos": 88,
+    "last_pos": 91,
+    "anchor_label": "Lemma 19.3.1",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:51.013980+00:00"
+  },
+  "erickson-dp/2-4/": {
+    "excerpt": "erickson-dp",
+    "first_pos": 2,
+    "last_pos": 4,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:03:57.014125+00:00"
+  },
+  "erickson-dp/5-7/": {
+    "excerpt": "erickson-dp",
+    "first_pos": 5,
+    "last_pos": 7,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:05:16.631296+00:00"
+  },
+  "erickson-dp/60-68/": {
+    "excerpt": "erickson-dp",
+    "first_pos": 60,
+    "last_pos": 68,
+    "anchor_label": null,
+    "verdict": "unclear",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T06:05:23.233599+00:00"
+  },
+  "erickson-dp/99-106/": {
+    "excerpt": "erickson-dp",
+    "first_pos": 99,
+    "last_pos": 106,
+    "anchor_label": null,
+    "verdict": "unclear",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T06:05:33.035977+00:00"
+  },
+  "ods-pseudocode/7-7/": {
+    "excerpt": "ods-pseudocode",
+    "first_pos": 7,
+    "last_pos": 7,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:05:37.042297+00:00"
+  },
+  "ods-pseudocode/17-26/": {
+    "excerpt": "ods-pseudocode",
+    "first_pos": 17,
+    "last_pos": 26,
+    "anchor_label": null,
+    "verdict": "unclear",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:05:45.867153+00:00"
+  },
+  "ods-pseudocode/37-37/": {
+    "excerpt": "ods-pseudocode",
+    "first_pos": 37,
+    "last_pos": 37,
+    "anchor_label": null,
+    "verdict": "wrong",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:05:57.116401+00:00"
+  },
+  "joy-mac-hybrids/44-47/Construction 10.5": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 44,
+    "last_pos": 47,
+    "anchor_label": "Construction 10.5",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:07.574514+00:00"
+  },
+  "joy-mac-hybrids/56-60/Theorem 10.8": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 56,
+    "last_pos": 60,
+    "anchor_label": "Theorem 10.8",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:12.425069+00:00"
+  },
+  "joy-mac-hybrids/61-63/Construction 10.9": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 61,
+    "last_pos": 63,
+    "anchor_label": "Construction 10.9",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:17.050173+00:00"
+  },
+  "joy-mac-hybrids/64-69/Claim 10.10": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 64,
+    "last_pos": 69,
+    "anchor_label": "Claim 10.10",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:26.949923+00:00"
+  },
+  "joy-mac-hybrids/77-80/": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 77,
+    "last_pos": 80,
+    "anchor_label": null,
+    "verdict": "unclear",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:40.133029+00:00"
+  },
+  "joy-mac-hybrids/91-93/10.6": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 91,
+    "last_pos": 93,
+    "anchor_label": "10.6",
+    "verdict": "unclear",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:46.445315+00:00"
+  },
+  "joy-mac-hybrids/94-96/10.7": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 94,
+    "last_pos": 96,
+    "anchor_label": "10.7",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:52.991160+00:00"
+  },
+  "joy-mac-hybrids/105-106/10.10": {
+    "excerpt": "joy-mac-hybrids",
+    "first_pos": 105,
+    "last_pos": 106,
+    "anchor_label": "10.10",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:06:55.557978+00:00"
+  },
+  "gb-rsa-experiments/0-0/": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 0,
+    "last_pos": 0,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:07:01.423904+00:00"
+  },
+  "gb-rsa-experiments/1-2/Proposition 10.15": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 1,
+    "last_pos": 2,
+    "anchor_label": "Proposition 10.15",
+    "verdict": "faithful",
+    "boundaries": "not_sensible",
+    "note": "",
+    "at": "2026-09-22T06:07:30.033076+00:00"
+  },
+  "gb-rsa-experiments/3-12/Definition 10.16": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 3,
+    "last_pos": 12,
+    "anchor_label": "Definition 10.16",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:07:42.344672+00:00"
+  },
+  "gb-rsa-experiments/22-27/Definition 10.17": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 22,
+    "last_pos": 27,
+    "anchor_label": "Definition 10.17",
+    "verdict": "unclear",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:07:51.515395+00:00"
+  },
+  "gb-rsa-experiments/27-36/Definition 10.18": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 27,
+    "last_pos": 36,
+    "anchor_label": "Definition 10.18",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:08:04.136220+00:00"
+  },
+  "gb-rsa-experiments/62-66/": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 62,
+    "last_pos": 66,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:08:08.512977+00:00"
+  },
+  "gb-rsa-experiments/69-72/": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 69,
+    "last_pos": 72,
+    "anchor_label": null,
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:08:13.648660+00:00"
+  },
+  "gb-rsa-experiments/123-127/Theorem 10.19": {
+    "excerpt": "gb-rsa-experiments",
+    "first_pos": 123,
+    "last_pos": 127,
+    "anchor_label": "Theorem 10.19",
+    "verdict": "faithful",
+    "boundaries": "sensible",
+    "note": "",
+    "at": "2026-09-22T06:08:29.299290+00:00"
+  }
+}

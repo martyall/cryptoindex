@@ -21,7 +21,15 @@ About 10 excerpts from freely available textbooks and lecture notes that the rev
 
 50–100 units drawn from the parser sample after segmentation, stratified: theorems, definitions, security games, algorithm steps, assumptions, and plain expository argument spans.
 
-Reviewer marks each gloss: faithful / overstated / wrong / unclear, and whether the segmentation boundary was sensible. Prompt is frozen when ≥90% faithful and no "wrong" on theorems/definitions. Results in `gloss-review.csv`.
+Reviewer marks each gloss, judged against the unit's own text:
+- **faithful:** says what the text says, at the strength the text says it;
+- **overstated:** claims more than the text (a dropped condition, an added conclusion or context);
+- **wrong:** says something false about the text;
+- **unclear:** cannot tell what it claims, or it could describe its neighbours as well.
+
+And the unit's boundaries: **too narrow** (a statement cut off from what it refers to), **sensible** (one point, understandable alone), or **too broad** (several points a reader would look for separately). The gloss-v1 pass used sensible / not sensible, and its reviewer used "overstated" for units that were too narrow.
+
+A prompt version is frozen when ≥90% faithful and no "wrong" on theorems/definitions. Each version has its own sample (`spot-check-<prompt>.json`), scores (`scores/<prompt>/blind.json`) and report (`eval/gloss-report-<prompt>.md`).
 
 ## 3. Retrieval questions — `eval/questions.jsonl`
 
