@@ -77,6 +77,15 @@ Group each revision's paragraphs into argument units, and give each unit a plain
   - Pinned: Qwen3-30B-A3B-Instruct-2507, `Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf` (18.6 GB, Apache-2.0) from `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF` at revision `eea7b2be5805a5f151f8847ede8e5f9a9284bf77`, sha256 `6c997b8af17debdfb01d890214400ccbab00db6acc0ba8da5de1cc906c4774d0`. A mixture-of-experts model with 3B active parameters, so it is fast on this machine, and a non-thinking instruct variant. Downloaded once into the Hugging Face cache with `hf download`.
 - **Anchors also label paragraphs.** `paragraphs.block_label` is filled from the segmentation's validated anchors only, so a citation can say "Theorem 3.1" instead of "p42". It is written with the units, in the same transaction.
 
+## Acceptance runs (2026-09-21)
+Both manual end-to-end runs used `make run`'s entry point against the test database: upload of a 3-page Erickson excerpt, parsed by PaddleOCR-VL, segmented, then `ready`, then a clean Ctrl-C.
+- **claude_code (dev mode, claude-opus-5):** 9 units, no validation failures.
+- **openai_format (the pinned Qwen3 model, llama-server):** 14 units. One chunk's reply was rejected (an anchor kind without a label); the retry re-asked only that chunk. Start the server with an alias, or the server reports the model file's path as its model name, which ends up in `units.gloss_model`:
+  `llama-server -m <gguf> --alias qwen3-30b-a3b-instruct-2507 --host 127.0.0.1 --port 8080 -c 32768 --jinja`
+- **anthropic:** not yet run; it needs an API key.
+
+Spot-check glossing (`make gloss-eval`, claude-opus-5 in dev mode): 72 chunks, 276 units, every chunk validated (one after a retry). 122 units carry `term_absent`: about half write notation differently from the text (`Z_2[x]` for `$\mathbb{Z}_2[x]$`), half use a term the text does not (`tower law`, `field extension` for "extension field"). No security games were labelled in the excerpts, so that stratum is empty.
+
 ## Deferred
 - **A batch interrupted by shutdown is lost.** `AnthropicLLM.batch` cancels its batch when the stage is cancelled; the retry submits a new one. Storing the batch ID so a restart can collect it would save the cost of a long batch, but needs a table for work in flight at the provider.
 - **Recording disables batching.** `RecordingLLM` wraps only `complete()`, so with `CI_LLM_RECORD_DIR` set the Anthropic backend makes one call per chunk.
