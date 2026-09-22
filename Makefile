@@ -2,7 +2,7 @@ UV_RUN := uv run --env-file .env
 
 .PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval \
 	parse-review parse-close-blind parse-report gloss-eval gloss-review gloss-report \
-	search
+	search requeue
 
 .env:
 	cp .env.example .env
@@ -23,6 +23,14 @@ reset: .env
 	$(UV_RUN) python -m cryptoindex.core.reset
 	docker compose down -v
 	$(MAKE) migrate
+
+# Sends documents back to STAGE (parse, segment or embed) so the pipeline
+# redoes it, after a parser, prompt or embedding-model change. DOCS is a list
+# of document IDs; every document when it is empty. Stop `make run` first.
+#   make requeue STAGE=segment
+#   make requeue STAGE=embed DOCS="8b009488-... b1f16621-..."
+requeue: .env
+	$(UV_RUN) python -m cryptoindex.ingest.requeue $(STAGE) $(DOCS)
 
 # Uses a separate cryptoindex_test database, recreated on every run.
 test: db-up
