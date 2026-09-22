@@ -15,7 +15,7 @@ MINIMAL = {
 def test_defaults_fill_everything_optional() -> None:
     s = load_settings(MINIMAL)
     assert s.data_dir == Path("data")
-    assert (s.llm_backend, s.parser, s.embed_dims) == ("anthropic", "marker", 1024)
+    assert (s.llm_backend, s.parser, s.embed_dims) == ("anthropic", "paddle", 1024)
     assert s.anthropic_api_key is None
 
 

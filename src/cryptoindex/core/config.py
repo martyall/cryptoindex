@@ -84,7 +84,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
     else:
         errors.append(f"CI_LLM_BACKEND={raw_backend!r} not in {get_args(LLMBackend)}")
 
-    parser: ParserName = "marker"
+    parser: ParserName = "paddle"  # D21
     raw_parser = opt("CI_PARSER", parser)
     if _is_parser(raw_parser):
         parser = raw_parser

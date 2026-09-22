@@ -63,3 +63,14 @@ The index will hold both cryptography research papers and standard mathematics a
 
 ### D20. Evaluation samples may be downloaded once from named sources (2026-09-21)
 A narrow exception to D18, approved by the human. Evaluation material may be downloaded once, one request per file, from the author's or institution's official URL, recorded with its URL, license, and sha256 in the evaluation set's `ids.txt`. The PDFs are never committed to git. The pipeline itself still makes no network requests.
+
+### D21. Parser: PaddleOCR-VL (supersedes D8's default of Marker) (2026-09-21)
+Chosen by the human after the Phase 2 evaluation (`eval/parse-report.md`: 84 of 100 excerpt pages scored blind).
+- **For:** PaddleOCR-VL won every pseudocode and game-box excerpt, the fidelity D8 made the deciding test (Morin 2.00 vs 1.25, Joy of Cryptography 1.42 vs 0.67, Goldwasser–Bellare 1.83 vs 1.25, Erickson 1.50 vs 1.33). It writes inline math as LaTeX: it recognized 2,854 formulas where Marker recognized 689, because Marker writes most inline math as plain text.
+- **The text-and-formula excerpts favoured Marker, but that comparison was confounded.** The review page showed 132 PaddleOCR-VL blocks as raw LaTeX source (114 equations it failed to delimit, 18 pseudocode blocks the page did not render), and no Marker blocks. Marker's plain-text math was not flagged at all. The reviewer could not read raw LaTeX and scored it lower. So those scores are not taken as evidence against PaddleOCR-VL.
+- **Diagrams were not a criterion.** Neither parser reproduces them reliably, and text and formulas matter most.
+- **Known weaknesses, accepted:**
+  - some display equations are not delimited as math (flagged `malformed_math`);
+  - stray tokens ("i.", "i.e.") and occasional invented words;
+  - no heading levels, so section paths are at most `title > section`;
+  - it needs the MLX-VLM server running natively (`make paddle-server`).

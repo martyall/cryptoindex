@@ -27,6 +27,8 @@ reset: .env
 test: db-up
 	$(UV_RUN) pytest
 
+# With CI_PARSER=paddle (the default, D21), parsing needs `make paddle-server`
+# running in another terminal; without it, parse attempts fail and are retried.
 run: migrate
 	$(UV_RUN) python -m cryptoindex
 
