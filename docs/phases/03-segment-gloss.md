@@ -65,10 +65,16 @@ Group each revision's paragraphs into argument units, and give each unit a plain
 - Repairing parser noise in stored text. Citations quote what is stored (Invariant 3).
 - Section summaries and cross-references (D17).
 
+## Decisions from the human (2026-09-21)
+- **Glossing model: Claude Opus 5** (`claude-opus-5`, 1M-token context), through the Anthropic API.
+  - The key is `ANTHROPIC_API_KEY` in `.env`, which the config already reads. Set `CI_LLM_BACKEND=anthropic` and `CI_LLM_MODEL=claude-opus-5`.
+  - Pricing as checked on 2026-09-21: $5 input / $25 output per million tokens, half that through the Batches API, cached reads at about a tenth of input.
+  - Rough estimate, to be measured with token counting at phase start: about $3 for the evaluation sample at full price (about $1.50 through batches), and about $0.70 for a 30-page paper (about $0.35 through batches). Adaptive thinking is on by default and billed as output, so either could plausibly double.
+  - At phase start, confirm the context window from the Models API (`max_input_tokens`). Enable the server-side refusal fallback recommended for Opus 5, and tell the human.
+
 ## Open questions for the human
-1. **Glossing model and budget.** D5 says a strong API model. At phase start I will check current models and prices and estimate the cost of glossing the evaluation sample and of a typical paper. Which model to use is your call.
-2. **Local backend for the manual acceptance run.** Which local server and model do you want tested (mlx_lm, llama.cpp, Ollama, LM Studio)? The llama.cpp installed for Marker could serve.
-3. **Anchors on paragraphs as well as units?** Should `paragraphs.block_label` also be filled from the segmentation's anchors, so a citation can say "Theorem 3.1" instead of "p42"? Proposal: yes, from validated anchors only.
+1. **Local backend for the manual acceptance run.** Which local server and model do you want tested (mlx_lm, llama.cpp, Ollama, LM Studio)? The llama.cpp installed for Marker could serve.
+2. **Anchors on paragraphs as well as units?** Should `paragraphs.block_label` also be filled from the segmentation's anchors, so a citation can say "Theorem 3.1" instead of "p42"? Proposal: yes, from validated anchors only.
 
 ## Deferred
 (Add items discovered during this phase that belong to later phases.)
