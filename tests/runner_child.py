@@ -11,6 +11,7 @@ import sys
 
 from cryptoindex.core import config
 from cryptoindex.core.db import open_pool
+from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
 from cryptoindex.ingest.parsers import StubParser
 from cryptoindex.ingest.runner import Runner, pool_size
@@ -35,7 +36,9 @@ async def main(delay: float) -> None:
     settings = config.settings
     pool = await open_pool(settings.ingest_dsn, pool_size(settings))
     runner = Runner(
-        StageContext(pool=pool, settings=settings, parser=StubParser()),
+        StageContext(
+            pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+        ),
         {stage: audited(stage, delay) for stage in WORK_STAGES},
     )
     task = asyncio.create_task(runner.run())

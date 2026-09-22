@@ -8,6 +8,7 @@ import uvicorn
 
 from cryptoindex.api import create_app
 from cryptoindex.core import config
+from cryptoindex.core.backends import build_llm
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import open_pool
 from cryptoindex.core.model import Stage
@@ -39,7 +40,12 @@ async def serve(
 async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
     pool = await open_pool(settings.ingest_dsn, pool_size(settings))
     try:
-        ctx = StageContext(pool=pool, settings=settings, parser=build_parser(settings))
+        ctx = StageContext(
+            pool=pool,
+            settings=settings,
+            parser=build_parser(settings),
+            llm=build_llm(settings),
+        )
         runner = Runner(ctx, stages)
         server = uvicorn.Server(
             uvicorn.Config(

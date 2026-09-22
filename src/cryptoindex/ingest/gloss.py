@@ -1,0 +1,271 @@
+"""Segmentation and glossing, apart from the database: which paragraphs go to
+the model together, what it is asked, how its reply is checked against what it
+was given, and the mechanical quality flags (docs/phases/03-segment-gloss.md)."""
+
+import hashlib
+import json
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from difflib import SequenceMatcher
+from itertools import groupby
+
+from pydantic import BaseModel
+
+from cryptoindex.core.llm import LLMRequest, Message
+from cryptoindex.core.prompts import Prompt
+
+GLOSS_PROMPT = "gloss-v1"
+
+# A chunk's paragraph text is at most CHUNK_CHARS (about 8k tokens), which
+# fits a local model's context with room for the reply. Consecutive chunks of
+# a long section share up to OVERLAP_CHARS, so a unit cut at one chunk's end
+# is seen whole at the next one's start.
+CHUNK_CHARS = 24_000
+OVERLAP_CHARS = 4_000
+
+GLOSS_MAX_CHARS = 600
+QUESTIONS_MIN, QUESTIONS_MAX = 3, 5
+RESTATEMENT_RATIO = 0.8
+
+
+@dataclass(frozen=True, slots=True)
+class SourceParagraph:
+    position: int
+    section_path: tuple[str, ...]
+    text: str
+    content_hash: str
+    block_kind: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class Chunk:
+    """Consecutive paragraphs of one section, sent to the model in one call.
+    Units starting at or after `keep_before` are left to the next chunk,
+    which starts there."""
+
+    section_path: tuple[str, ...]
+    paragraphs: tuple[SourceParagraph, ...]
+    keep_before: int | None
+
+    @property
+    def first_pos(self) -> int:
+        return self.paragraphs[0].position
+
+    @property
+    def last_pos(self) -> int:
+        return self.paragraphs[-1].position
+
+
+def chunks_of(paragraphs: Sequence[SourceParagraph]) -> list[Chunk]:
+    """Split paragraphs (in position order) into sections, consecutive
+    paragraphs with the same section path, and each section into chunks of at
+    most CHUNK_CHARS (a single longer paragraph is a chunk by itself)."""
+    out: list[Chunk] = []
+    for path, group in groupby(paragraphs, key=lambda p: p.section_path):
+        out += _split(path, list(group))
+    return out
+
+
+def _split(path: tuple[str, ...], section: list[SourceParagraph]) -> list[Chunk]:
+    out: list[Chunk] = []
+    start = 0
+    while True:
+        end, size = start, 0
+        while end < len(section) and (
+            end == start or size + len(section[end].text) <= CHUNK_CHARS
+        ):
+            size += len(section[end].text)
+            end += 1
+        if end == len(section):
+            out.append(Chunk(path, tuple(section[start:end]), None))
+            return out
+        next_start, overlap = end, 0
+        while (
+            next_start - 1 > start
+            and overlap + len(section[next_start - 1].text) <= OVERLAP_CHARS
+        ):
+            next_start -= 1
+            overlap += len(section[next_start].text)
+        out.append(Chunk(path, tuple(section[start:end]), section[next_start].position))
+        start = next_start
+
+
+def _user_message(chunk: Chunk, title: str) -> str:
+    return json.dumps(
+        {
+            "title": title,
+            "section": list(chunk.section_path),
+            "paragraphs": [
+                {"pos": p.position, "text": p.text}
+                | ({"kind": p.block_kind} if p.block_kind else {})
+                for p in chunk.paragraphs
+            ],
+        },
+        ensure_ascii=False,
+    )
+
+
+def input_hash(chunk: Chunk, title: str, prompt_version: str, model: str) -> str:
+    """Everything that determines the model's reply to this chunk (Invariant 2,
+    Invariant 10). The paragraphs enter by position, content hash and kind."""
+    key = {
+        "title": title,
+        "section": list(chunk.section_path),
+        "paragraphs": [
+            [p.position, p.content_hash, p.block_kind] for p in chunk.paragraphs
+        ],
+        "prompt": prompt_version,
+        "model": model,
+    }
+    canonical = json.dumps(key, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def gloss_request(chunk: Chunk, title: str, prompt: Prompt) -> LLMRequest:
+    return LLMRequest(
+        system=prompt.text,
+        messages=[Message(role="user", content=_user_message(chunk, title))],
+        json_schema=REPLY_SCHEMA,
+        cache_prefix=True,
+    )
+
+
+_NULLABLE_STRING = {"anyOf": [{"type": "string"}, {"type": "null"}]}
+_NULLABLE_INT = {"anyOf": [{"type": "integer"}, {"type": "null"}]}
+_STRINGS = {"type": "array", "items": {"type": "string"}}
+
+REPLY_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {
+        "units": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "first_pos": {"type": "integer"},
+                    "last_pos": {"type": "integer"},
+                    "anchor_label": _NULLABLE_STRING,
+                    "anchor_pos": _NULLABLE_INT,
+                    "gloss": {"type": "string"},
+                    "key_terms": _STRINGS,
+                    "questions": _STRINGS,
+                },
+                "required": [
+                    "first_pos",
+                    "last_pos",
+                    "anchor_label",
+                    "anchor_pos",
+                    "gloss",
+                    "key_terms",
+                    "questions",
+                ],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["units"],
+    "additionalProperties": False,
+}
+
+
+class UnitReply(BaseModel, frozen=True):
+    first_pos: int
+    last_pos: int
+    anchor_label: str | None
+    anchor_pos: int | None
+    gloss: str
+    key_terms: tuple[str, ...]
+    questions: tuple[str, ...]
+
+    @property
+    def key(self) -> tuple[int, int, str | None]:
+        """A unit's identity within its revision (DATA_MODEL, Invariant 5)."""
+        return (self.first_pos, self.last_pos, self.anchor_label)
+
+
+class SegmentReply(BaseModel):
+    units: tuple[UnitReply, ...]
+
+
+class InvalidReplyError(ValueError):
+    """The model's reply does not fit the chunk it was given."""
+
+
+def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
+    """The reply's units, if it matches REPLY_SCHEMA and fits the chunk:
+    spans inside the chunk and in order, every paragraph covered, no unit
+    twice, and each anchor label found verbatim in its anchor paragraph (it
+    may be cited, Invariant 3). Raises pydantic's ValidationError or
+    InvalidReplyError; a reply is accepted whole or not at all."""
+    units = SegmentReply.model_validate(parsed).units
+    text = {p.position: p.text for p in chunk.paragraphs}
+    if not units:
+        raise InvalidReplyError("no units")
+    covered: set[int] = set()
+    seen: set[tuple[int, int, str | None]] = set()
+    previous_first = chunk.first_pos
+    for u in units:
+        where = f"unit {u.first_pos}-{u.last_pos}"
+        if not chunk.first_pos <= u.first_pos <= u.last_pos <= chunk.last_pos:
+            raise InvalidReplyError(
+                f"{where} is outside {chunk.first_pos}-{chunk.last_pos}"
+            )
+        if u.first_pos < previous_first:
+            raise InvalidReplyError(f"{where} is out of order")
+        if u.key in seen:
+            raise InvalidReplyError(f"{where} appears twice")
+        if (u.anchor_label is None) != (u.anchor_pos is None):
+            raise InvalidReplyError(f"{where} has half an anchor")
+        if u.anchor_label is not None and u.anchor_pos is not None:
+            if not u.first_pos <= u.anchor_pos <= u.last_pos:
+                raise InvalidReplyError(f"{where}: anchor {u.anchor_pos} not in span")
+            if not u.anchor_label.strip() or u.anchor_label not in text[u.anchor_pos]:
+                raise InvalidReplyError(
+                    f"{where}: {u.anchor_label!r} is not in paragraph {u.anchor_pos}"
+                )
+        previous_first = u.first_pos
+        seen.add(u.key)
+        covered.update(range(u.first_pos, u.last_pos + 1))
+    missing = sorted(set(text) - covered)
+    if missing:
+        raise InvalidReplyError(f"paragraphs {missing} are in no unit")
+    return units
+
+
+def merge(replies: Sequence[tuple[Chunk, Sequence[UnitReply]]]) -> list[UnitReply]:
+    """Units of all chunks, each chunk contributing those starting before its
+    `keep_before`; a unit two chunks both produced is kept once. Coverage
+    carries over: a paragraph before `keep_before` is covered by a unit that
+    starts before it, and one after by the next chunk, all of whose units
+    start at or after it."""
+    out: dict[tuple[int, int, str | None], UnitReply] = {}
+    for chunk, units in replies:
+        for u in units:
+            if chunk.keep_before is None or u.first_pos < chunk.keep_before:
+                out.setdefault(u.key, u)
+    return list(out.values())
+
+
+def quality_flags(unit: UnitReply, text: Mapping[int, str]) -> list[str]:
+    """Mechanical checks that only flag a unit for review; nothing is rewritten.
+    `text` maps positions to paragraph text."""
+    flags: list[str] = []
+    gloss = unit.gloss.strip()
+    if not gloss:
+        flags.append("gloss_empty")
+    if len(gloss) > GLOSS_MAX_CHARS:
+        flags.append("gloss_long")
+    body = " ".join(
+        text[pos] for pos in range(unit.first_pos, unit.last_pos + 1)
+    ).casefold()
+    if any(term.casefold() not in body for term in unit.key_terms):
+        flags.append("term_absent")
+    if not QUESTIONS_MIN <= len(unit.questions) <= QUESTIONS_MAX:
+        flags.append("question_count")
+    if gloss and any(
+        SequenceMatcher(None, q.casefold(), gloss.casefold()).ratio()
+        >= RESTATEMENT_RATIO
+        for q in unit.questions
+    ):
+        flags.append("question_restates_gloss")
+    return flags

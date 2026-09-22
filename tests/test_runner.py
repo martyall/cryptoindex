@@ -15,6 +15,7 @@ from psycopg.rows import TupleRow
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
+from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
 from cryptoindex.ingest.parsers import StubParser
 from cryptoindex.ingest.runner import Runner
@@ -67,7 +68,10 @@ async def test_seeded_revisions_all_reach_ready(
     ids = seed(mixed_stages(20))
     await run_until_idle(
         Runner(
-            StageContext(pool=pool, settings=settings, parser=StubParser()), NOOP_STAGES
+            StageContext(
+                pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+            ),
+            NOOP_STAGES,
         )
     )
 
@@ -87,7 +91,10 @@ async def test_enqueue_signals_a_new_revision(
     settings: Settings, pool: Pool, seed: SeedFn
 ) -> None:
     runner = Runner(
-        StageContext(pool=pool, settings=settings, parser=StubParser()), NOOP_STAGES
+        StageContext(
+            pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+        ),
+        NOOP_STAGES,
     )
     task = asyncio.create_task(runner.run())
     try:
@@ -107,7 +114,9 @@ async def test_enqueue_signals_a_new_revision(
 async def test_notify_never_raises_or_stops_the_runner(
     settings: Settings, pool: Pool, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    runner = Runner(StageContext(pool=pool, settings=settings, parser=StubParser()))
+    runner = Runner(
+        StageContext(pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({}))
+    )
     runner.notify(RevisionId(1))  # before run(): a no-op
 
     async def broken_enqueue(work_id: RevisionId) -> None:
@@ -190,6 +199,7 @@ async def test_failing_stage_retries_then_fails(
         pool=pool,
         settings=dataclasses.replace(settings, max_attempts=2),
         parser=StubParser(),
+        llm=FakeLLM({}),
     )
     await run_until_idle(Runner(ctx, stages, retry_base_s=0))
 
@@ -220,7 +230,10 @@ async def test_cancel_releases_claims(
     seed([Stage.PARSE])
     task = asyncio.create_task(
         Runner(
-            StageContext(pool=pool, settings=settings, parser=StubParser()), stages
+            StageContext(
+                pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+            ),
+            stages,
         ).run()
     )
     await asyncio.wait_for(started.wait(), 5)
@@ -250,7 +263,9 @@ async def test_stale_claim_counts_as_attempt(
             " attempts = %s WHERE id = %s",
             (attempts_before, work_id),
         )
-    runner = Runner(StageContext(pool=pool, settings=settings, parser=StubParser()))
+    runner = Runner(
+        StageContext(pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({}))
+    )
     await runner._recover_stale_locks()
     rows = query(
         settings,

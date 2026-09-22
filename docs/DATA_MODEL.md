@@ -33,17 +33,19 @@ One row per distinct PDF (or source bundle) of a paper. Pipeline state lives her
 ## `docs.paragraphs`
 Base layer. One row per paragraph of a revision.
 
-- `position` (0-based within revision, reading order), `page` (0-based, for citation locators) and `bbox` (where the paragraph sits on that page) from the parser's layout, `section_path` (`text[]`, the headings it sits under, outermost first, e.g. `{4 Security, 4.1 Unforgeability}`; migration 005), `text` (PaddleOCR-VL: its Markdown; Marker: plain text with `$`-delimited math; equations: LaTeX, raw if the parser failed to delimit them; tables: the parser's HTML), `content_hash`, `block_kind` (nullable; only what a parser reports: `equation`, `algorithm`, `code`, `table`, `list_item`, `caption`, `footnote`, `figure`), `block_label` (nullable; formal-block labels such as `Theorem 3` are Phase 3 anchors).
+- `position` (0-based within revision, reading order), `page` (0-based, for citation locators) and `bbox` (where the paragraph sits on that page) from the parser's layout, `section_path` (`text[]`, the headings it sits under, outermost first, e.g. `{4 Security, 4.1 Unforgeability}`; migration 005), `text` (PaddleOCR-VL: its Markdown; Marker: plain text with `$`-delimited math; equations: LaTeX, raw if the parser failed to delimit them; tables: the parser's HTML), `content_hash`, `block_kind` (nullable; only what a parser reports: `equation`, `algorithm`, `code`, `table`, `list_item`, `caption`, `footnote`, `figure`), `block_label` (nullable; a formal-block label such as `Theorem 3`, written by the segment stage from validated anchors only).
 - `tsv` generated with the `simple` config; `latex_norm` (normalized LaTeX for trigram matching, filled in Phase 4 with a real LaTeX parser); `emb halfvec(1024)`.
 - Stability: re-parsing an unchanged revision must reproduce identical `(position, content_hash)` pairs and therefore keep IDs.
 
 ## `docs.units`
 Argument units: spans `[first_pos, last_pos]` of paragraphs within a revision.
 
-- `anchor_label` (nullable) — the formal block that anchors the unit, if any.
-- `gloss`, `terms[]`, `gloss_model`, `prompt_version`, `input_hash`, `emb_gloss halfvec(1024)`.
-- `input_hash` = hash(paragraph content hashes in span + section context + prompt_version). Unchanged hash ⇒ no re-gloss.
+- `anchor_label`, `anchor_pos` (both null or both set; migration 006) — the formal block that anchors the unit, if any, and the paragraph where its label appears verbatim. The same label is written to that paragraph's `block_label`.
+- `gloss`, `terms[]`, `gloss_model` (the model that produced it, which a refusal fallback can change), `prompt_version`, `input_hash` (of the chunk it came from, below), `flags[]` (mechanical quality checks for review: `gloss_empty`, `gloss_long`, `term_absent`, `question_count`, `question_restates_gloss`), `emb_gloss halfvec(1024)`, cleared when the gloss changes.
 - Units may overlap. On re-segmentation, new units are matched to old by `(first_pos, last_pos, anchor_label)`; unmatched old units are deleted and a `unit_changed` event is written for each.
+
+## `docs.segment_chunks`
+One validated LLM reply per chunk: the paragraphs of one section, or a piece of a long section, sent in one call. Keyed by `(revision_id, input_hash)`, where `input_hash` = hash(document title, section path, each paragraph's position, content hash and block kind, prompt version, requested model). Written as each reply arrives, before the segment stage's own transaction, like the parser's raw-output cache, so a retry never re-asks for a chunk that already succeeded. Unchanged input therefore makes no LLM call. Rows for chunks that no longer exist are deleted when the stage commits.
 
 ## `docs.unit_questions`
 3–5 doc2query questions per unit, each with `emb halfvec(1024)`.

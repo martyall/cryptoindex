@@ -7,6 +7,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from gloss_fakes import CoveringLLM
 from pypdf import PdfWriter
 
 from cryptoindex.api import create_app
@@ -35,6 +36,7 @@ def runner(settings: Settings, pool: Pool, tmp_path: Path) -> Runner:
         pool=pool,
         settings=dataclasses.replace(settings, data_dir=tmp_path),
         parser=StubParser(),
+        llm=CoveringLLM(),
     )
     return Runner(ctx)
 
