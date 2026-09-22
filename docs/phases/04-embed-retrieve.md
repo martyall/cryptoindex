@@ -67,4 +67,5 @@ Make the index searchable, and let the human check by hand how well search finds
   - **Of the two that still fail, one is PaddleX's post-processing:** when it turns `\[…\]` into `$$…$$` it deletes every `$` in the formula, including a `\$` in sampling notation (`\xleftarrow{\$}`), which crypto papers use often. That is upstream behaviour, recorded here, not worked around. The other begins mid-expression: recognition noise.
 
 ## Deferred
+- **A re-gloss job** (roadmap Phase 7, `POST /ingest/regloss`). A new prompt version currently means `make reset` and uploading every document again, because nothing moves a ready revision back to `segment`. Parsing is then repeated for nothing: about 10 minutes for two documents, hours for a corpus. Phase 3 and Phase 4 each hit this twice.
 - **The retrieval evaluation harness** (EVALUATION.md §3) and **the 0.6B vs 8B comparison** (D3), until questions collected from real use exist (D24).
