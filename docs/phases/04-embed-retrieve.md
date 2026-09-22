@@ -63,6 +63,8 @@ Make the index searchable, and let the human check by hand how well search finds
 
 ## Found during the phase
 - **MLX-VLM 0.7.2's continuous batching corrupted PaddleOCR-VL's output.** PaddleX sends many blocks to the model server at once; when the server decoded several together, the first tokens of each changed. Display formulas lost their opening `\[`, so PaddleX left them undelimited with a stray `\]`: 32 of Halo's 56 display equations could not be rendered and were missing from notation search. The same 16 formula crops sent one at a time all began with `\[`; sent together, 2 of 16 did. The server now runs with `--max-num-seqs 1` (one sequence at a time), which gives the sequential output for concurrent requests; the parser version records the setting, so documents are parsed again. Some of the parser noise attributed to PaddleOCR-VL in Phase 2 and Phase 3 (D21, D23) may have had the same cause.
+  - After the fix, Halo re-parsed in the same time (about 3 minutes); 55 of its 57 display equations render and are in notation search (24 of 56 before).
+  - **Of the two that still fail, one is PaddleX's post-processing:** when it turns `\[…\]` into `$$…$$` it deletes every `$` in the formula, including a `\$` in sampling notation (`\xleftarrow{\$}`), which crypto papers use often. That is upstream behaviour, recorded here, not worked around. The other begins mid-expression: recognition noise.
 
 ## Deferred
 - **The retrieval evaluation harness** (EVALUATION.md §3) and **the 0.6B vs 8B comparison** (D3), until questions collected from real use exist (D24).
