@@ -52,16 +52,19 @@ class FakeEmbedder:
 
 # Weights are downloaded once, at these revisions, into the Hugging Face cache
 # (`hf download <model> --revision <rev>`); nothing is fetched at run time.
-EMBED_REVISIONS = {
-    "Qwen/Qwen3-Embedding-0.6B": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",  # D3
+EMBED_REVISIONS = {  # D3
+    "Qwen/Qwen3-Embedding-0.6B": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+    "Qwen/Qwen3-Embedding-8B": "1d8ad4ca9b3dd8059ad90a75d4983776a23d44af",
 }
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 
 
 class Qwen3Embedder:
-    """Qwen3-Embedding through sentence-transformers (D3). The model is loaded
-    on first use, so starting the process stays fast; loading and encoding
-    block, so call through `asyncio.to_thread`."""
+    """Qwen3-Embedding through sentence-transformers (D3), cut to `dims`
+    dimensions: the models are trained so that a prefix of the vector is
+    itself an embedding, and the index's columns are fixed at CI_EMBED_DIMS.
+    The model is loaded on first use, so starting the process stays fast;
+    loading and encoding block, so call through `asyncio.to_thread`."""
 
     def __init__(self, model: str, revision: str, dims: int, device: str) -> None:
         self.model = model
@@ -74,6 +77,7 @@ class Qwen3Embedder:
     def _model(self) -> "SentenceTransformer":
         with self._lock:
             if self._loaded is None:
+                import torch
                 from sentence_transformers import SentenceTransformer
 
                 self._loaded = SentenceTransformer(
@@ -81,6 +85,10 @@ class Qwen3Embedder:
                     revision=self._revision,
                     device=self._device,
                     local_files_only=True,
+                    truncate_dim=self.dims,
+                    # 8B weights at full precision would take 32 GB of this
+                    # machine's 48; half precision keeps them at 16.
+                    model_kwargs={"torch_dtype": torch.float16},
                 )
             return self._loaded
 
@@ -94,19 +102,23 @@ class Qwen3Embedder:
     def _encode(self, texts: list[str], prompt: str | None) -> Vectors:
         if not texts:
             return np.empty((0, self.dims), dtype=np.float32)
-        vectors = self._model().encode(
-            texts,
-            prompt=prompt,
-            batch_size=BATCH_SIZE,
-            normalize_embeddings=True,
-            convert_to_numpy=True,
+        vectors = (
+            self._model()
+            .encode(
+                texts,
+                prompt=prompt,
+                batch_size=BATCH_SIZE,
+                convert_to_numpy=True,
+            )
+            .astype(np.float32)
         )
         if vectors.shape[1] != self.dims:
             raise ConfigError(
                 f"{self.model} gives {vectors.shape[1]} dimensions,"
                 f" CI_EMBED_DIMS is {self.dims}"
             )
-        return vectors.astype(np.float32)
+        # Normalized after the cut: a prefix of a unit vector is not one.
+        return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
 
 
 def build_embedder(settings: Settings) -> Embedder:
