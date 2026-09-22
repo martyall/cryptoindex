@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from cryptoindex.core.llm import LLMRequest, Message
 from cryptoindex.core.prompts import Prompt
 
-GLOSS_PROMPT = "gloss-v1"
+GLOSS_PROMPT = "gloss-v2"
 
 # A chunk's paragraph text is at most CHUNK_CHARS (about 8k tokens), which
 # fits a local model's context with room for the reply. Consecutive chunks of

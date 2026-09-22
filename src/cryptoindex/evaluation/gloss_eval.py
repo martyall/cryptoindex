@@ -5,9 +5,9 @@ It glosses the paragraphs PaddleOCR-VL produced for the Phase 2 excerpts,
 exactly as the segment stage would (same chunks, prompt, and validation),
 caching each validated reply by input hash so a re-run makes no new calls.
 Then it picks a sample stratified by anchor kind for the review page
-(`make gloss-review`). The chosen units are listed in
-eval/gloss-sample/spot-check.json (committed); everything derived from the
-sources goes under eval/gloss-sample/local/, which is not in git.
+(`make gloss-review`). Each prompt version gets its own sample, listed in
+eval/gloss-sample/spot-check-<prompt>.json (committed); everything derived
+from the sources goes under eval/gloss-sample/local/, which is not in git.
 """
 
 import asyncio
@@ -49,8 +49,10 @@ log = logging.getLogger(__name__)
 
 SAMPLE = Path("eval/gloss-sample")
 LOCAL = SAMPLE / "local"
-SPOT_CHECK = SAMPLE / "spot-check.json"
-ITEMS = LOCAL / "review-items.json"
+SPOT_CHECK = SAMPLE / f"spot-check-{GLOSS_PROMPT}.json"
+UNITS = LOCAL / f"units-{GLOSS_PROMPT}.json"  # every glossed unit
+FAILURES = LOCAL / f"failures-{GLOSS_PROMPT}.json"
+ITEMS = LOCAL / f"review-items-{GLOSS_PROMPT}.json"  # the sampled units
 # PaddleOCR-VL's raw output for the excerpts, written by `make parse-eval`
 # (D21: the parser the pipeline uses).
 PARSED = parse_eval.LOCAL / "output" / "paddle-3.7.0+PaddleOCR-VL-1.6"
@@ -322,9 +324,7 @@ def main() -> None:
     replies, failures = asyncio.run(gloss_all(llm, prompt, excerpts, LOCAL / "replies"))
     units = [g for e in excerpts for g in glossed_units(e, replies[e.name])]
     LOCAL.mkdir(parents=True, exist_ok=True)
-    (LOCAL / "failures.json").write_text(
-        json.dumps([f.model_dump() for f in failures], indent=2)
-    )
+    FAILURES.write_text(json.dumps([f.model_dump() for f in failures], indent=2))
     (LOCAL / "units.json").write_bytes(_ITEMS.dump_json(units))
     if failures:
         print(

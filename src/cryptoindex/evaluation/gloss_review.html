@@ -50,7 +50,7 @@
   <span style="flex:1"></span>
   <button id="prev">← previous</button>
   <button id="next">next →</button>
-  <span class="muted help">keys: 1 faithful · 2 overstated · 3 wrong · 4 unclear · 5 boundaries sensible · 6 not · p page images · ← →</span>
+  <span class="muted help">keys: 1 faithful · 2 overstated · 3 wrong · 4 unclear · 5 too narrow · 6 sensible · 7 too broad · p page images · ← →</span>
 </header>
 <main id="main"></main>
 <script src="katex/katex.min.js"></script>
@@ -59,8 +59,17 @@
 // gloss_review.py). A unit is done when it has a verdict and a boundaries
 // judgement.
 const VERDICTS = ["faithful", "overstated", "wrong", "unclear"];
-const BOUNDARIES = ["sensible", "not_sensible"];
-const LABEL = { faithful: "faithful", overstated: "overstated", wrong: "wrong", unclear: "unclear", sensible: "sensible", not_sensible: "not sensible" };
+const BOUNDARIES = ["too_narrow", "sensible", "too_broad"];
+const LABEL = { faithful: "faithful", overstated: "overstated", wrong: "wrong", unclear: "unclear", sensible: "sensible", too_narrow: "too narrow", too_broad: "too broad" };
+const HELP = {
+  faithful: "says what the text says, at the strength the text says it",
+  overstated: "claims more than the text: a dropped condition, an added conclusion or context",
+  wrong: "says something false about the text",
+  unclear: "you cannot tell what it claims, or it could describe its neighbours as well",
+  too_narrow: "a statement cut off from what it refers to; should be folded into a neighbour",
+  sensible: "one point, understandable on its own",
+  too_broad: "several points a reader would look for separately",
+};
 let state;  // from /api/state
 let index = 0;
 let showImages = false;
@@ -124,7 +133,7 @@ function sourcePane(it) {
 
 function choiceRow(it, field, values, repaint) {
   const buttons = values.map((v) => {
-    const b = element("button", { textContent: LABEL[v] });
+    const b = element("button", { textContent: LABEL[v], title: HELP[v] });
     b.onclick = () => choose(it, { [field]: v }, repaint);
     return b;
   });
@@ -155,6 +164,7 @@ function glossPane(it) {
     ]),
     verdictRow,
     boundaryRow,
+    element("div", { className: "muted help" }, [...VERDICTS, ...BOUNDARIES].map((v) => element("div", { textContent: `${LABEL[v]}: ${HELP[v]}` }))),
     note,
   ]);
   pane.note = note;
@@ -195,7 +205,7 @@ document.addEventListener("keydown", (e) => {
   if (e.target instanceof HTMLTextAreaElement) return;  // typing a note
   const it = state.items[index];
   const repaint = () => show(index);
-  const keys = { "1": ["verdict", "faithful"], "2": ["verdict", "overstated"], "3": ["verdict", "wrong"], "4": ["verdict", "unclear"], "5": ["boundaries", "sensible"], "6": ["boundaries", "not_sensible"] };
+  const keys = { "1": ["verdict", "faithful"], "2": ["verdict", "overstated"], "3": ["verdict", "wrong"], "4": ["verdict", "unclear"], "5": ["boundaries", "too_narrow"], "6": ["boundaries", "sensible"], "7": ["boundaries", "too_broad"] };
   if (e.key === "ArrowLeft") show(index - 1);
   else if (e.key === "ArrowRight") show(index + 1);
   else if (e.key === "p") { showImages = !showImages; show(index); }

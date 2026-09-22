@@ -139,9 +139,9 @@ async def test_units_questions_and_labels_commit_with_the_transition(
     await segment_stage(claim(settings, work_id), ctx(pool, settings, llm))
 
     assert [u[1:] for u in units(settings)] == [
-        (0, 1, "Definition 1", 0, "Paragraphs 0 to 1.", "m", "gloss-v1"),
-        (2, 3, "Theorem 2", 2, "Paragraphs 2 to 3.", "m", "gloss-v1"),
-        (4, 4, None, None, "Paragraphs 4 to 4.", "m", "gloss-v1"),
+        (0, 1, "Definition 1", 0, "Paragraphs 0 to 1.", "m", GLOSS_PROMPT),
+        (2, 3, "Theorem 2", 2, "Paragraphs 2 to 3.", "m", GLOSS_PROMPT),
+        (4, 4, None, None, "Paragraphs 4 to 4.", "m", GLOSS_PROMPT),
     ]
     assert query(settings, "SELECT count(*) FROM docs.unit_questions") == [(9,)]
     assert query(
