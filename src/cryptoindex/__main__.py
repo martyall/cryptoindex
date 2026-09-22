@@ -11,6 +11,7 @@ from cryptoindex.core import config
 from cryptoindex.core.backends import build_llm
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import open_pool
+from cryptoindex.core.embed import build_embedder, check_embed_model
 from cryptoindex.core.model import Stage
 from cryptoindex.ingest.model_server import mlx_vlm_server
 from cryptoindex.ingest.parsers import build_parser
@@ -40,11 +41,14 @@ async def serve(
 async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
     pool = await open_pool(settings.ingest_dsn, pool_size(settings))
     try:
+        async with pool.connection() as conn:
+            await check_embed_model(conn, settings.embed_model)  # Invariant 6
         ctx = StageContext(
             pool=pool,
             settings=settings,
             parser=build_parser(settings),
             llm=build_llm(settings),
+            embedder=build_embedder(settings),
         )
         runner = Runner(ctx, stages)
         server = uvicorn.Server(

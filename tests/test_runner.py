@@ -15,6 +15,7 @@ from psycopg.rows import TupleRow
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
+from cryptoindex.core.embed import FakeEmbedder
 from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
 from cryptoindex.ingest.parsers import StubParser
@@ -69,7 +70,11 @@ async def test_seeded_revisions_all_reach_ready(
     await run_until_idle(
         Runner(
             StageContext(
-                pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+                pool=pool,
+                settings=settings,
+                parser=StubParser(),
+                llm=FakeLLM({}),
+                embedder=FakeEmbedder(),
             ),
             NOOP_STAGES,
         )
@@ -92,7 +97,11 @@ async def test_enqueue_signals_a_new_revision(
 ) -> None:
     runner = Runner(
         StageContext(
-            pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+            pool=pool,
+            settings=settings,
+            parser=StubParser(),
+            llm=FakeLLM({}),
+            embedder=FakeEmbedder(),
         ),
         NOOP_STAGES,
     )
@@ -115,7 +124,13 @@ async def test_notify_never_raises_or_stops_the_runner(
     settings: Settings, pool: Pool, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runner = Runner(
-        StageContext(pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({}))
+        StageContext(
+            pool=pool,
+            settings=settings,
+            parser=StubParser(),
+            llm=FakeLLM({}),
+            embedder=FakeEmbedder(),
+        )
     )
     runner.notify(RevisionId(1))  # before run(): a no-op
 
@@ -200,6 +215,7 @@ async def test_failing_stage_retries_then_fails(
         settings=dataclasses.replace(settings, max_attempts=2),
         parser=StubParser(),
         llm=FakeLLM({}),
+        embedder=FakeEmbedder(),
     )
     await run_until_idle(Runner(ctx, stages, retry_base_s=0))
 
@@ -231,7 +247,11 @@ async def test_cancel_releases_claims(
     task = asyncio.create_task(
         Runner(
             StageContext(
-                pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+                pool=pool,
+                settings=settings,
+                parser=StubParser(),
+                llm=FakeLLM({}),
+                embedder=FakeEmbedder(),
             ),
             stages,
         ).run()
@@ -264,7 +284,13 @@ async def test_stale_claim_counts_as_attempt(
             (attempts_before, work_id),
         )
     runner = Runner(
-        StageContext(pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({}))
+        StageContext(
+            pool=pool,
+            settings=settings,
+            parser=StubParser(),
+            llm=FakeLLM({}),
+            embedder=FakeEmbedder(),
+        )
     )
     await runner._recover_stale_locks()
     rows = query(

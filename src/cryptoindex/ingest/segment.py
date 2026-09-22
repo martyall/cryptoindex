@@ -120,7 +120,7 @@ async def _load(
 ) -> tuple[str, list[SourceParagraph]]:
     async with ctx.pool.connection() as conn:
         cur = await conn.execute(
-            "SELECT coalesce(p.title, p.name) FROM docs.revisions r"
+            "SELECT p.name FROM docs.revisions r"
             " JOIN docs.papers p ON p.id = r.paper_id WHERE r.id = %s",
             (work_id,),
         )

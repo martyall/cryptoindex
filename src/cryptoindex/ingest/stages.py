@@ -6,6 +6,7 @@ from psycopg import AsyncConnection
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
+from cryptoindex.core.embed import Embedder
 from cryptoindex.core.events import EventKind, write_event
 from cryptoindex.core.llm import LLM
 from cryptoindex.core.model import RevisionId, Stage
@@ -27,6 +28,7 @@ class StageContext:
     settings: Settings
     parser: Parser
     llm: LLM
+    embedder: Embedder
 
 
 StageFn = Callable[[RevisionId, StageContext], Awaitable[None]]

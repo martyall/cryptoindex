@@ -8,6 +8,7 @@ from psycopg.rows import TupleRow
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
+from cryptoindex.core.embed import FakeEmbedder
 from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
 from cryptoindex.ingest.document import Block, ParsedDocument
@@ -73,6 +74,7 @@ def ctx(
         settings=dataclasses.replace(settings, data_dir=tmp_path),
         parser=parser,
         llm=FakeLLM({}),
+        embedder=FakeEmbedder(),
     )
 
 

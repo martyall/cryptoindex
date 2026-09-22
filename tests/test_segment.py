@@ -8,6 +8,7 @@ from psycopg.rows import TupleRow
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
+from cryptoindex.core.embed import FakeEmbedder
 from cryptoindex.core.llm import (
     LLM,
     Completion,
@@ -119,6 +120,7 @@ def ctx(pool: Pool, settings: Settings, llm: LLM, batch: bool = True) -> StageCo
         settings=dataclasses.replace(settings, gloss_batch=batch),
         parser=StubParser(),
         llm=llm,
+        embedder=FakeEmbedder(),
     )
 
 

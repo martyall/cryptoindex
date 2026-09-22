@@ -13,6 +13,7 @@ from pypdf import PdfWriter
 from cryptoindex.api import create_app
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
+from cryptoindex.core.embed import FakeEmbedder
 from cryptoindex.core.model import Stage
 from cryptoindex.ingest.parsers import StubParser
 from cryptoindex.ingest.runner import Runner
@@ -37,6 +38,7 @@ def runner(settings: Settings, pool: Pool, tmp_path: Path) -> Runner:
         settings=dataclasses.replace(settings, data_dir=tmp_path),
         parser=StubParser(),
         llm=CoveringLLM(),
+        embedder=FakeEmbedder(),
     )
     return Runner(ctx)
 

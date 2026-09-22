@@ -51,12 +51,14 @@ def database(test_env: dict[str, str]) -> Settings:
 
 @pytest.fixture
 def settings(database: Settings) -> Iterator[Settings]:
-    """The test database with pipeline and audit tables emptied before each test."""
+    """The test database with pipeline and audit tables emptied, and no
+    embedding model recorded, before each test."""
     with psycopg.connect(database.admin_dsn, autocommit=True) as conn:
         conn.execute(
             "TRUNCATE docs.events, docs.unit_questions, docs.units,"
             " docs.segment_chunks, docs.paragraphs, docs.revisions, docs.papers,"
-            " test_audit.stage_runs"
+            " test_audit.stage_runs;"
+            " DELETE FROM docs.meta WHERE key = 'embed_model'"
         )
     yield database
 

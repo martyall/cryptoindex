@@ -11,6 +11,7 @@ import sys
 
 from cryptoindex.core import config
 from cryptoindex.core.db import open_pool
+from cryptoindex.core.embed import FakeEmbedder
 from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
 from cryptoindex.ingest.parsers import StubParser
@@ -37,7 +38,11 @@ async def main(delay: float) -> None:
     pool = await open_pool(settings.ingest_dsn, pool_size(settings))
     runner = Runner(
         StageContext(
-            pool=pool, settings=settings, parser=StubParser(), llm=FakeLLM({})
+            pool=pool,
+            settings=settings,
+            parser=StubParser(),
+            llm=FakeLLM({}),
+            embedder=FakeEmbedder(),
         ),
         {stage: audited(stage, delay) for stage in WORK_STAGES},
     )

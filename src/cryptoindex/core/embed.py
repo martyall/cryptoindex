@@ -1,8 +1,15 @@
 import hashlib
-from typing import Protocol
+import threading
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 import numpy.typing as npt
+from psycopg import AsyncConnection
+
+from cryptoindex.core.config import ConfigError, Settings
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 Vectors = npt.NDArray[np.float32]
 
@@ -41,3 +48,91 @@ class FakeEmbedder:
             row = np.random.default_rng(seed).standard_normal(self.dims)
             out[i] = row / np.linalg.norm(row)
         return out
+
+
+# Weights are downloaded once, at these revisions, into the Hugging Face cache
+# (`hf download <model> --revision <rev>`); nothing is fetched at run time.
+EMBED_REVISIONS = {
+    "Qwen/Qwen3-Embedding-0.6B": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",  # D3
+}
+BATCH_SIZE = 32
+
+
+class Qwen3Embedder:
+    """Qwen3-Embedding through sentence-transformers (D3). The model is loaded
+    on first use, so starting the process stays fast; loading and encoding
+    block, so call through `asyncio.to_thread`."""
+
+    def __init__(self, model: str, revision: str, dims: int, device: str) -> None:
+        self.model = model
+        self.dims = dims
+        self._revision = revision
+        self._device = device
+        self._loaded: SentenceTransformer | None = None
+        self._lock = threading.Lock()
+
+    def _model(self) -> "SentenceTransformer":
+        with self._lock:
+            if self._loaded is None:
+                from sentence_transformers import SentenceTransformer
+
+                self._loaded = SentenceTransformer(
+                    self.model,
+                    revision=self._revision,
+                    device=self._device,
+                    local_files_only=True,
+                )
+            return self._loaded
+
+    def embed_documents(self, texts: list[str]) -> Vectors:
+        return self._encode(texts, prompt=None)
+
+    def embed_queries(self, texts: list[str], instruction: str) -> Vectors:
+        # Qwen3-Embedding's query format; documents take no prompt.
+        return self._encode(texts, prompt=f"Instruct: {instruction}\nQuery:")
+
+    def _encode(self, texts: list[str], prompt: str | None) -> Vectors:
+        if not texts:
+            return np.empty((0, self.dims), dtype=np.float32)
+        vectors = self._model().encode(
+            texts,
+            prompt=prompt,
+            batch_size=BATCH_SIZE,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+        )
+        if vectors.shape[1] != self.dims:
+            raise ConfigError(
+                f"{self.model} gives {vectors.shape[1]} dimensions,"
+                f" CI_EMBED_DIMS is {self.dims}"
+            )
+        return vectors.astype(np.float32)
+
+
+def build_embedder(settings: Settings) -> Embedder:
+    """Raises ConfigError for a model without a pinned revision."""
+    revision = EMBED_REVISIONS.get(settings.embed_model)
+    if revision is None:
+        raise ConfigError(
+            f"CI_EMBED_MODEL={settings.embed_model!r} has no pinned revision;"
+            f" known: {sorted(EMBED_REVISIONS)}"
+        )
+    return Qwen3Embedder(
+        settings.embed_model, revision, settings.embed_dims, settings.embed_device
+    )
+
+
+class EmbedModelMismatchError(RuntimeError):
+    """The index was built with a different embedding model (Invariant 6)."""
+
+
+async def check_embed_model(conn: AsyncConnection, model: str) -> None:
+    """Raise EmbedModelMismatchError if `docs.meta` records an embedding model
+    other than `model`. An index with no vectors yet records none."""
+    cur = await conn.execute("SELECT value FROM docs.meta WHERE key = 'embed_model'")
+    row = await cur.fetchone()
+    if row is not None and row[0] != model:
+        raise EmbedModelMismatchError(
+            f"the index was embedded with {row[0]}, but CI_EMBED_MODEL is {model};"
+            " re-embedding is a separate job (Invariant 6)"
+        )
