@@ -33,6 +33,8 @@ A prompt version is frozen when ≥90% faithful and no "wrong" on theorems/defin
 
 ## 3. Retrieval questions — `eval/questions.jsonl`
 
+Postponed by D24: until real questions exist, retrieval is checked by manual QA on the search page.
+
 30–50 questions written by someone who knows the corpus. Each line:
 
 ```json

@@ -65,13 +65,13 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 ## Phase 4 — Embed and retrieve
 
-**Goal:** searchable index, measured.
+**Goal:** searchable index, checked by hand (D24).
 
-**In scope:** local embedding (Qwen3-Embedding-0.6B, `mps`), model registry in `docs.meta`, HNSW indexes, hybrid search (paragraph/gloss/question vectors + full-text + trigram) with RRF, expansion to enclosing unit, the retrieval evaluation harness, 0.6B vs 8B comparison.
+**In scope:** local embedding (Qwen3-Embedding-0.6B, `mps`), model registry in `docs.meta`, HNSW indexes, hybrid search (paragraph/gloss/question vectors + full-text + trigram) with RRF, expansion to enclosing unit, a local search page for manual QA. The retrieval evaluation harness and the 0.6B vs 8B comparison wait for real questions (D24).
 
 **Acceptance:**
-- `eval/questions.jsonl` (≥30 questions) run through the harness; recall@10 of the expected unit/paragraph is reported, with and without gloss/question channels.
-- Embedding model choice recorded in `DECISIONS.md`.
+- The nine evaluation excerpts are indexed end to end, and the human has tried searches of each kind on the search page (lookup, assumption, near-miss, and one the excerpts cannot answer) and judged the results usable.
+- Every hit shows which channels found it; a search with the gloss and question channels switched off can be compared by hand.
 - Query layer refuses to start when `docs.meta` model differs from configured model.
 
 ## Phase 5 — Agent and citation checker

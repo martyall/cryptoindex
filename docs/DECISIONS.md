@@ -89,3 +89,8 @@ Approved by the human after two blind spot-check passes (`eval/gloss-report-glos
 - **gloss-v2:** 57 of 64 faithful (89%), none overstated or wrong, no wrong theorem or definition gloss. Of the 50 units whose parsed source text the reviewer judged readable, 46 were faithful (92%).
 - **The ≥90% criterion (EVALUATION.md §2) is applied to units with readable source text.** A gloss cannot be better than the text it was given, and repairing parser noise in stored text is out of scope (Phase 3 spec); 14 of the 64 sampled units had garbled source text (D21's known weaknesses).
 - Still open: 16 of 64 units were judged too narrow. That costs context at retrieval time, not gloss accuracy, so it is measured with Phase 4's retrieval questions instead of by further prompt tuning.
+
+### D24. Retrieval is checked by manual QA until real search questions exist (2026-09-21)
+Decided by the human. Nobody writes a question set in advance (EVALUATION.md §3); a question set would be invented rather than drawn from real use. Until real questions exist, search is checked by the human trying queries on a local search page that shows, for each hit, which channels found it and the passage it expands to.
+- Phase 4's acceptance changes accordingly: no recall@10 or MRR, no measured comparison with and without the gloss channels.
+- D3's comparison of Qwen3-Embedding 0.6B against 8B is postponed with it, since it needs the same questions; the index starts on 0.6B as D3 says. The retrieval harness is built once questions collected from real use exist.

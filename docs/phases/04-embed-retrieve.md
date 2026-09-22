@@ -3,7 +3,7 @@
 Status: draft, for the human's review
 
 ## Goal
-Make the index searchable and measure how well search finds the right passage, with and without the gloss and question channels (D3, D15, Invariant 6).
+Make the index searchable, and let the human check by hand how well search finds the right passage, with and without the gloss and question channels (D3, D15, D24, Invariant 6).
 
 ## What Phase 3 hands over
 - Paragraphs with `block_kind` and, where a unit is anchored, `block_label` (`Theorem 21.5`).
@@ -13,7 +13,7 @@ Make the index searchable and measure how well search finds the right passage, w
   - **units too narrow to stand alone** in about a quarter;
   - **key terms often not in the text** (notation written differently, or synonyms).
 
-  Whether these hurt finding is one of the things the evaluation below should show.
+  Whether these hurt finding is one of the things manual QA should look at.
 
 ## Deliverables
 
@@ -40,33 +40,26 @@ Make the index searchable and measure how well search finds the right passage, w
    - A matching paragraph expands to its enclosing unit or units. A matching gloss or question expands to its unit's paragraphs.
    - Filters: document IDs, and current revisions only by default.
 
-5. **Retrieval evaluation harness** (EVALUATION.md §3), `make retrieval-eval`.
-   - **Corpus:** the nine Phase 2 excerpts, uploaded through the normal pipeline and glossed with gloss-v2. The questions must be ones the human can judge (D19).
-   - **Questions:** `eval/questions.jsonl`, at least 30, of the four kinds (lookup, assumption, near-miss, negative), each naming the expected document and locator (`Theorem 21.5` or a paragraph position).
-   - **Metrics:** recall@10 and MRR, per channel, for the fused result, and for the fused result without the gloss and question channels.
+5. **Search page for manual QA** (D24), `make search` on 127.0.0.1, in the style of the review pages.
+   - A query box, and per hit: the document, the locator (block label or paragraph), the rendered passage with all math rendered, the unit it expands to, and which channels found it with their ranks.
+   - A switch to leave out the gloss and question channels, so their effect can be seen by hand.
+   - It calls the same `cryptoindex.query` functions the API and agent will use. The page itself is a QA tool, not the browser UI (which is out of scope).
 
-6. **Embedding model comparison:** 0.6B against 8B truncated to 1024 dimensions, on the same questions. The choice is recorded in `DECISIONS.md`.
-
-## Acceptance (from ROADMAP)
-- At least 30 questions run through the harness, with recall@10 reported with and without the gloss and question channels.
-- The embedding model choice is recorded in `DECISIONS.md`.
+## Acceptance (from ROADMAP, as changed by D24)
+- The nine evaluation excerpts are indexed end to end, and the human has tried searches of each kind on the search page (lookup, assumption, near-miss, and one the excerpts cannot answer) and judged the results usable.
+- Every hit shows which channels found it; a search with the gloss and question channels switched off can be compared by hand.
 - The query layer refuses to start when the model recorded in `docs.meta` differs from the configured one.
 
 ## Decisions for the human before starting
-1. **Who writes the questions?** EVALUATION.md says someone who knows the corpus. Two options:
-   - you write them, which takes the most of your time;
-   - Claude drafts about 45 from the excerpts, and you keep, edit, or reject each one on a review page like the spot-check.
-
-   The recommendation is the second, with the expected locators checked against the text by code.
-2. **Excerpt titles.** The parse stage stores an excerpt's first heading ("Exercises") as its title. For the evaluation corpus the uploader's name (the source's name) should win. Options:
+1. **Excerpt titles.** The parse stage stores an excerpt's first heading ("Exercises") as its title. For the evaluation corpus the uploader's name (the source's name) should win. Options:
    - prefer the uploader's name everywhere;
    - only keep a parsed title when it is not a generic heading. This needs a rule, so it is not recommended.
-3. **Downloads:** the 0.6B and 8B embedding weights, about 1.2 GB and 16 GB, fetched once from Hugging Face at pinned revisions.
+2. **Download:** the Qwen3-Embedding-0.6B weights, about 1.2 GB, fetched once from Hugging Face at a pinned revision.
 
 ## Out of scope
 - Reranker, HyDE, section summaries (D17).
 - The agent and citation checker (Phase 5); the HTTP search endpoint (Phase 6).
-- Repairing parser noise; re-segmenting narrow units. Both are measured here, not fixed.
+- Repairing parser noise; re-segmenting narrow units. Manual QA may show their effect; neither is fixed here.
 
 ## Deferred
-(Add items discovered during this phase that belong to later phases.)
+- **The retrieval evaluation harness** (EVALUATION.md §3) and **the 0.6B vs 8B comparison** (D3), until questions collected from real use exist (D24).
