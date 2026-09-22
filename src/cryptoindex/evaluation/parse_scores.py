@@ -47,8 +47,9 @@ def render_report(
     lines = [
         "# Parser evaluation report (Phase 2)",
         "",
-        "Scores are the human's, per page: blind first, then reconciled where they "
-        "differed from Claude's independent proposal. 0 scrambled, 1 partially "
+        "Scores are the human's, per page, given blind (without seeing Claude's "
+        "independent proposals) and optionally reconciled afterwards where the two "
+        "differed. 0 scrambled, 1 partially "
         "intact, 2 faithful (EVALUATION.md §1). Formulas: math each parser "
         "recognized as math, and how many KaTeX could not render (undelimited "
         "equations count as failures). A parser that emits math as plain text has "
@@ -103,11 +104,15 @@ def render_report(
         ]
     differ = disagreements(blind, proposals)
     changed = sum(1 for k in differ if final[k].score != blind[k].score)
+    outcome = (
+        f"on reconciling, the human changed {changed} of them."
+        if reconciled
+        else "reconciliation was skipped, so the blind scores are final."
+    )
     lines += [
         "",
         f"Claude's proposals differed from the blind score on {len(differ)} of "
-        f"{len(blind)} page scores; on reconciling, the human changed {changed} "
-        "of them.",
+        f"{len(blind)} page scores; {outcome}",
         "",
     ]
     return "\n".join(lines)

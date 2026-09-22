@@ -38,3 +38,5 @@ def test_report_summarizes_scores_formulas_and_reconciling() -> None:
     assert "**10 (1, 10.0%)**" in text
     assert "differed from the blind score on 2 of 4 page scores" in text
     assert "the human changed 1 of them" in text
+    skipped = render_report(blind, {}, proposals, formulas, excerpts)
+    assert "reconciliation was skipped, so the blind scores are final" in skipped
