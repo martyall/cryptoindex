@@ -61,5 +61,8 @@ Make the index searchable, and let the human check by hand how well search finds
 - The agent and citation checker (Phase 5); the HTTP search endpoint (Phase 6).
 - Repairing parser noise; re-segmenting narrow units. Manual QA may show their effect; neither is fixed here.
 
+## Found during the phase
+- **MLX-VLM 0.7.2's continuous batching corrupted PaddleOCR-VL's output.** PaddleX sends many blocks to the model server at once; when the server decoded several together, the first tokens of each changed. Display formulas lost their opening `\[`, so PaddleX left them undelimited with a stray `\]`: 32 of Halo's 56 display equations could not be rendered and were missing from notation search. The same 16 formula crops sent one at a time all began with `\[`; sent together, 2 of 16 did. The server now runs with `--max-num-seqs 1` (one sequence at a time), which gives the sequential output for concurrent requests; the parser version records the setting, so documents are parsed again. Some of the parser noise attributed to PaddleOCR-VL in Phase 2 and Phase 3 (D21, D23) may have had the same cause.
+
 ## Deferred
 - **The retrieval evaluation harness** (EVALUATION.md §3) and **the 0.6B vs 8B comparison** (D3), until questions collected from real use exist (D24).

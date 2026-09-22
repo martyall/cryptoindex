@@ -35,6 +35,11 @@ MARKER_ENV = {
 PADDLE_VERSION = "3.7.0"
 PADDLEPADDLE_VERSION = "3.3.1"
 MLX_VLM_VERSION = "0.7.2"  # the server `make paddle-server` runs
+# PaddleX sends many blocks at once. MLX-VLM 0.7.2 decoding several sequences
+# together in its continuous batch corrupts their first tokens (a display
+# formula loses its opening `\[`, so PaddleX leaves it undelimited); one
+# sequence at a time matches sequential requests exactly.
+MLX_VLM_MAX_NUM_SEQS = 1
 PADDLE_MODEL = "PaddlePaddle/PaddleOCR-VL-1.6"
 PADDLE_MODEL_NAME = "PaddleOCR-VL-1.6"
 PADDLE_COMMAND = (
@@ -129,7 +134,7 @@ class PaddleVLParser:
     name = "paddle"
     version = (
         f"{PADDLE_VERSION}+paddle{PADDLEPADDLE_VERSION}"
-        f"+mlxvlm{MLX_VLM_VERSION}+{PADDLE_MODEL_NAME}"
+        f"+mlxvlm{MLX_VLM_VERSION}-seqs{MLX_VLM_MAX_NUM_SEQS}+{PADDLE_MODEL_NAME}"
     )
 
     def __init__(

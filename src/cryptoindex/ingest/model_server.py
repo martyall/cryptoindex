@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from cryptoindex.core import config
-from cryptoindex.ingest.parsers import MLX_VLM_VERSION
+from cryptoindex.ingest.parsers import MLX_VLM_MAX_NUM_SEQS, MLX_VLM_VERSION
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +27,8 @@ MLX_VLM_COMMAND = (
     "--from",
     f"mlx-vlm=={MLX_VLM_VERSION}",
     "mlx_vlm.server",
+    "--max-num-seqs",
+    str(MLX_VLM_MAX_NUM_SEQS),
 )
 
 
@@ -56,8 +58,10 @@ async def mlx_vlm_server(
 
     Yields True if it started the server, which it stops on exit (SIGTERM to
     its process group, SIGKILL after 10 s), or False if one was already
-    listening, which it leaves alone. The first start installs the tool, hence
-    the long timeout; model weights download later, on the first request.
+    listening, which it leaves alone: a reused server must have been started
+    with the same command (`make paddle-server`), MLX_VLM_MAX_NUM_SEQS
+    included. The first start installs the tool, hence the long timeout;
+    model weights download later, on the first request.
     Raises RuntimeError if the server exits or is not listening in time.
     """
     host, port = address(url)
