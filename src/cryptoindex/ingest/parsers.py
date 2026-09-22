@@ -33,6 +33,8 @@ MARKER_ENV = {
 }
 
 PADDLE_VERSION = "3.7.0"
+PADDLEPADDLE_VERSION = "3.3.1"
+MLX_VLM_VERSION = "0.7.2"  # the server `make paddle-server` runs
 PADDLE_MODEL = "PaddlePaddle/PaddleOCR-VL-1.6"
 PADDLE_MODEL_NAME = "PaddleOCR-VL-1.6"
 PADDLE_COMMAND = (
@@ -42,7 +44,7 @@ PADDLE_COMMAND = (
     "--from",
     f"paddleocr[doc-parser]=={PADDLE_VERSION}",
     "--with",
-    "paddlepaddle==3.3.1",
+    f"paddlepaddle=={PADDLEPADDLE_VERSION}",
     "python",
     str(TOOLS / "paddle_vl_parse.py"),
 )
@@ -60,8 +62,10 @@ class Parser(Protocol):
     `run` is blocking and runs the actual parser out-of-process (D7), so a
     native crash cannot take down the pipeline; it returns the parser's own
     structured output (JSON bytes) and raises ParserError on failure. `read` is
-    pure: it maps that output to a ParsedDocument. `version` names everything
-    that changes `run`'s output, since cached output is keyed by it.
+    pure and blocking: it maps that output to a ParsedDocument and raises
+    (pydantic's ValidationError, UnknownBlockError) on output it does not
+    accept. Cached output is keyed by `name` and `version`, so `version` must
+    change whenever `run`'s output could.
     """
 
     name: str
@@ -92,7 +96,9 @@ class StubParser:
 class MarkerParser:
     """Marker through its Python API (tools/marker_parse.py) in its own uv tool
     environment, so torch and its models never enter the project's
-    environment. Needs llama.cpp's `llama-server` on the PATH."""
+    environment. Needs llama.cpp's `llama-server` on the PATH. Only
+    marker-pdf is pinned; uvx resolves its other dependencies (surya, …) on
+    install, so a fresh install can change output without changing `version`."""
 
     name = "marker"
     version = MARKER_VERSION
@@ -121,7 +127,10 @@ class PaddleVLParser:
     uv tool environment through tools/paddle_vl_parse.py."""
 
     name = "paddle"
-    version = f"{PADDLE_VERSION}+{PADDLE_MODEL_NAME}"
+    version = (
+        f"{PADDLE_VERSION}+paddle{PADDLEPADDLE_VERSION}"
+        f"+mlxvlm{MLX_VLM_VERSION}+{PADDLE_MODEL_NAME}"
+    )
 
     def __init__(
         self,
@@ -151,6 +160,8 @@ class PaddleVLParser:
 
 
 def build_parser(settings: Settings) -> Parser:
+    """The configured real parser. PaddleVLParser needs `make paddle-server`
+    running only when `run` is called."""
     match settings.parser:
         case "marker":
             return MarkerParser()

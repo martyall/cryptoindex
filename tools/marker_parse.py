@@ -3,9 +3,10 @@
 Usage: marker_parse.py PDF OUT_JSON
 
 Writes Marker's JSON document (marker.renderers.json.JSONOutput, without
-metadata) to OUT_JSON, exactly as marker_single --output_format json renders
-it. Mirrors marker/scripts/convert_single.py; the environment variables that
-script sets before importing are set by the caller (MarkerParser).
+metadata) to OUT_JSON, as `marker_single --output_format json
+--disable_image_extraction` renders it. Mirrors marker/scripts/convert_single.py;
+the environment variables that script sets before importing are set by the
+caller (MarkerParser).
 """
 
 import sys

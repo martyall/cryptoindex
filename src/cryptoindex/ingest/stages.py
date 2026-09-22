@@ -108,7 +108,9 @@ async def _noop(stage: Stage, work_id: RevisionId, ctx: StageContext) -> None:
 
 
 def noop_stage(stage: Stage) -> StageFn:
-    """A placeholder stage that only commits the transition."""
+    """A placeholder stage that commits only the transition, in its own
+    transaction; raises TransitionConflictError if the revision is not
+    claimed at `stage`."""
 
     async def run(work_id: RevisionId, ctx: StageContext) -> None:
         await _noop(stage, work_id, ctx)

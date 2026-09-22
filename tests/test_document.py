@@ -148,6 +148,7 @@ def test_marker_groups_are_flattened_and_sections_nest() -> None:
 def test_marker_undelimited_equation_is_malformed() -> None:
     [block] = read_marker(marker_doc(marker_block("Equation", "<p>x = y</p>"))).blocks
     assert block.kind == "equation" and block.malformed_math and block.math == ()
+    assert block.text == "x = y"  # kept, not dropped as an empty paragraph
 
 
 def test_paddle_sections_are_title_then_section() -> None:

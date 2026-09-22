@@ -5,6 +5,7 @@ from pathlib import Path
 from psycopg import AsyncConnection
 
 from cryptoindex.core.model import RevisionId, Stage
+from cryptoindex.ingest.document import ParsedDocument
 from cryptoindex.ingest.paragraphs import Paragraph, paragraphs_from
 from cryptoindex.ingest.stages import StageContext, TransitionConflictError, advance
 
@@ -14,12 +15,16 @@ log = logging.getLogger(__name__)
 async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
     """Parse the revision's PDF into paragraphs and advance it to `segment`.
 
-    Idempotent: the parser's raw output is cached per parser version and
-    reused, so a retry never re-runs the parser; paragraphs are matched by
-    position and content hash, so unchanged ones keep their IDs (Invariant 5).
-    Paragraphs, parser identity, an empty title, and the transition commit
-    together. The parser is blocking and runs in a thread (it is itself
-    out-of-process, D7).
+    Idempotent. The parser's raw output is cached per parser name and version
+    once its reader accepts it, so after one successful run a retry reads the
+    cache instead of re-running the parser. Paragraphs are matched by position
+    and content hash, so unchanged ones keep their IDs (Invariant 5).
+    Paragraphs, the similarity warning, parser name and version, the paper's
+    title (only if unset), and the transition commit in one transaction. The
+    parser and its reader run in a thread (the parser is itself
+    out-of-process, D7). Raises ParserError if the parser fails, pydantic's
+    ValidationError or UnknownBlockError if its output is rejected, and
+    TransitionConflictError if the revision is gone or no longer claimed.
     """
     async with ctx.pool.connection() as conn:
         cur = await conn.execute(
@@ -31,8 +36,7 @@ async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
         raise TransitionConflictError(f"revision {work_id} disappeared")
     pdf_path, sha256, paper_id = row
 
-    raw = await _raw_output(ctx, ctx.settings.data_dir / pdf_path, sha256)
-    document = ctx.parser.read(raw)
+    document = await _parsed(ctx, ctx.settings.data_dir / pdf_path, sha256)
     paragraphs = paragraphs_from(document)
 
     async with ctx.pool.connection() as conn, conn.transaction():
@@ -57,20 +61,21 @@ async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
     )
 
 
-async def _raw_output(ctx: StageContext, pdf: Path, sha256: str) -> bytes:
+async def _parsed(ctx: StageContext, pdf: Path, sha256: str) -> ParsedDocument:
     parser = ctx.parser
     cached = (
         ctx.settings.data_dir / "parsed" / f"{parser.name}-{parser.version}"
     ) / f"{sha256}.json"
     if cached.exists():
-        return await asyncio.to_thread(cached.read_bytes)
+        raw = await asyncio.to_thread(cached.read_bytes)
+        return await asyncio.to_thread(parser.read, raw)
     raw = await asyncio.to_thread(parser.run, pdf)
-    parser.read(raw)  # never cache output the reader rejects
+    document = await asyncio.to_thread(parser.read, raw)  # raises before caching
     cached.parent.mkdir(parents=True, exist_ok=True)
     partial = cached.with_name(cached.name + ".partial")
     await asyncio.to_thread(partial.write_bytes, raw)
     partial.replace(cached)
-    return raw
+    return document
 
 
 # Paragraphs shorter than this ("Proof.", "Exercises", a lone equation) are
@@ -79,8 +84,9 @@ SIMILARITY_MIN_CHARS = 80
 
 
 async def _record_similarity(conn: AsyncConnection, work_id: RevisionId) -> None:
-    """The other document sharing the largest fraction of this revision's
-    paragraphs (by content hash), or NULL if none shares any."""
+    """Record on the revision the other document sharing the largest fraction
+    of its paragraphs of at least SIMILARITY_MIN_CHARS (by content hash), or
+    NULL if none shares any."""
     await conn.execute(
         "WITH mine AS ("
         "   SELECT DISTINCT content_hash FROM docs.paragraphs"
@@ -103,8 +109,9 @@ async def _store_paragraphs(
     conn: AsyncConnection, work_id: RevisionId, paragraphs: list[Paragraph]
 ) -> None:
     # Invariant 5: a paragraph whose (position, content_hash) is unchanged is
-    # updated in place and keeps its ID (and embedding); any other row at that
-    # position is replaced, and rows past the new end are removed.
+    # updated in place and keeps its ID, so anything keyed by it survives; any
+    # other row at that position is replaced, and rows past the new end are
+    # removed.
     cur = await conn.execute(
         "SELECT position, content_hash FROM docs.paragraphs WHERE revision_id = %s",
         (work_id,),
@@ -134,7 +141,7 @@ async def _store_paragraphs(
                     p.position,
                     p.page,
                     list(p.bbox),
-                    p.section_path,
+                    list(p.section_path),
                     p.text,
                     p.content_hash,
                     p.block_kind,

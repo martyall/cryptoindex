@@ -107,7 +107,16 @@ def _check_pdf(path: Path) -> None:
     """Accept the file only if a PDF parser can read its page tree."""
     try:
         pages = len(PdfReader(path).pages)
-    except PyPdfError as exc:
+    except (
+        PyPdfError,
+        ValueError,
+        KeyError,
+        TypeError,
+        IndexError,
+        AttributeError,
+    ) as exc:
+        # pypdf raises its own errors on malformed files, and sometimes these
+        # built-in ones from deep in the parser; either way it cannot be read.
         raise RejectedUploadError(f"file is not a readable PDF: {exc}") from exc
     if pages == 0:
         raise RejectedUploadError("PDF has no pages")

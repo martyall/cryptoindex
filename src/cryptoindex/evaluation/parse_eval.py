@@ -220,8 +220,12 @@ def main() -> None:
             )
             if not raw_path.exists():
                 print(f"parsing {excerpt.name} with {parser.name}", flush=True)
+                raw = parser.run(pdf)
+                parser.read(raw)  # raises before caching output it rejects
                 raw_path.parent.mkdir(parents=True, exist_ok=True)
-                raw_path.write_bytes(parser.run(pdf))
+                partial = raw_path.with_name(raw_path.name + ".partial")
+                partial.write_bytes(raw)
+                partial.replace(raw_path)
             documents[parser.name] = parser.read(raw_path.read_bytes())
             report = formula_report(documents[parser.name])
             summary.setdefault(excerpt.name, {})[parser.name] = {

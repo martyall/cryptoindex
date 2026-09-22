@@ -28,7 +28,9 @@ class DocumentSummary:
     revision: int
     stage: str
     error: str | None
-    similar_to: str | None  # name of a near-duplicate, if at SIMILARITY_WARNING
+    similar_to: (
+        str | None
+    )  # a near-duplicate's name, if similarity >= SIMILARITY_WARNING
     similarity: float | None
 
 
@@ -86,8 +88,9 @@ def create_app(runner: Runner, pool: Pool, settings: Settings) -> FastAPI:
 
     @app.get("/documents")
     async def list_documents() -> list[DocumentSummary]:
-        """Newest first, each with the stage of its latest revision and, if its
-        paragraphs largely appear in another document, that document's name."""
+        """Newest first, each with the stage of its latest revision and, if at
+        least SIMILARITY_WARNING of its paragraphs appear in another document,
+        that document's name."""
         async with pool.connection() as conn:
             cur = await conn.execute(
                 "SELECT p.id, p.name, p.created_at, r.revision, r.stage,"

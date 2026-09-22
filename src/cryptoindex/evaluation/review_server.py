@@ -2,8 +2,10 @@
 
 It shows one page at a time and saves every judgement to disk as it is made.
 The mode follows from what is saved:
-- blind, until every page has both parsers scored: Claude's proposals are
-  never sent to the browser, so they cannot anchor the human's scores;
+- blind, until every page has both parsers scored or the pass is closed
+  early (`make parse-close-blind` writes blind-closed.json): Claude's
+  proposals are never sent to the browser, so they cannot anchor the human's
+  scores;
 - reconcile, afterwards: only the pages where a blind score and Claude's
   proposal differ, with both shown; the human's decisions go to their own file.
 Binds to 127.0.0.1 only.

@@ -15,8 +15,8 @@ from cryptoindex.ingest.stages import (
 
 log = logging.getLogger(__name__)
 
-# Shared by both failure paths. Right-hand sides see the old row, so
-# failed_stage records the stage the revision was in.
+# Right-hand sides see the old row, so failed_stage records the stage the
+# revision was in.
 _FAIL_AT_LIMIT = (
     "failed_stage = CASE WHEN attempts + 1 >= %(limit)s THEN stage END,"
     " stage = CASE WHEN attempts + 1 >= %(limit)s THEN 'failed' ELSE stage END"

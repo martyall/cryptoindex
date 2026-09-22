@@ -49,7 +49,9 @@ class Block:
     kind: BlockKind
     page: int  # 0-based
     bbox: BBox
-    text: str  # Markdown with $…$ / $$…$$ math; LaTeX for equations; HTML for tables
+    # PaddleOCR-VL: its Markdown. Marker: plain text with $-delimited math.
+    # Equations: LaTeX (raw text if undelimited). Tables: the parser's HTML.
+    text: str
     math: tuple[Math, ...] = ()
     heading_level: int | None = None  # None if the parser reports no levels
     section_path: tuple[str, ...] = ()
@@ -71,7 +73,7 @@ class ParsedDocument:
 
 
 class MarkerBlockJSON(BaseModel):
-    """Mirrors marker.renderers.json.JSONBlockOutput."""
+    """The fields of marker.renderers.json.JSONBlockOutput this reader uses."""
 
     id: str
     block_type: str
@@ -82,7 +84,8 @@ class MarkerBlockJSON(BaseModel):
 
 
 class MarkerDocumentJSON(BaseModel):
-    """Mirrors marker.renderers.json.JSONOutput: the children are pages."""
+    """The field of marker.renderers.json.JSONOutput this reader uses: the
+    children are pages."""
 
     children: list[MarkerBlockJSON]
 
@@ -161,7 +164,10 @@ def _marker_block(page: int, block: MarkerBlockJSON, headings: dict[str, str]) -
         kind=kind,
         page=page,
         bbox=block.bbox,
-        text=content.equations_tex if kind == "equation" else content.markdown,
+        # An equation Marker left undelimited keeps its text, like PaddleOCR-VL's.
+        text=content.equations_tex
+        if kind == "equation" and content.math
+        else content.markdown,
         math=content.math,
         heading_level=content.heading_level if kind == "heading" else None,
         section_path=section_path,
@@ -170,8 +176,9 @@ def _marker_block(page: int, block: MarkerBlockJSON, headings: dict[str, str]) -
 
 
 class _HtmlContent(HTMLParser):
-    """Walks one block's HTML. Text becomes Markdown (literal `$` escaped),
-    each <math> element becomes a formula, and <h1>…<h6> gives the level."""
+    """Walks one block's HTML. Text is kept as plain text, with only `$`
+    escaped so math delimiters stay unambiguous; each <math> element becomes a
+    `$`-delimited formula, and <h1>…<h6> gives the heading level."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -297,6 +304,8 @@ def read_paddle(raw: str | bytes) -> ParsedDocument:
             kind = PADDLE_KINDS[block.block_label]
             content = block.block_content.strip()
             math = markdown_math(content)
+            if kind == "equation":  # a display block, however it was delimited
+                math = tuple(Math(m.tex, display=True) for m in math)
             if block.block_label == "doc_title":
                 title, section = content, None
                 heading_path: tuple[str, ...] = ()
@@ -327,9 +336,18 @@ def markdown_math(markdown: str) -> tuple[Math, ...]:
     return tuple(_math_tokens(_MARKDOWN.parse(markdown)))
 
 
+# The dollarmath plugin's token types, and whether each is display math.
+_MATH_TOKENS = {
+    "math_inline": False,
+    "math_inline_double": True,
+    "math_block": True,
+    "math_block_label": True,
+}
+
+
 def _math_tokens(tokens: Sequence[Token]) -> Iterator[Math]:
     for token in tokens:
-        if token.type.startswith("math_"):
-            yield Math(token.content.strip(), display=token.type != "math_inline")
+        if token.type in _MATH_TOKENS:
+            yield Math(token.content.strip(), display=_MATH_TOKENS[token.type])
         if token.children:
             yield from _math_tokens(token.children)

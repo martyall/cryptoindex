@@ -32,11 +32,12 @@ def test_report_summarizes_scores_formulas_and_reconciling() -> None:
         }
     }
     excerpts = {"ex": (3, "pseudocode"), "unseen": (5, "diagrams")}
-    text = render_report(blind, reconciled, proposals, formulas, excerpts)
+    text = render_report(blind, reconciled, proposals, formulas, excerpts, True)
     assert "| ex | 2 of 3 | 1.50 | 1.00 | 10 (1) | 40 (4) |" in text
-    assert "**Not scored**" in text and "unseen (diagrams)" in text
+    assert "**Not scored** (the blind pass was closed early)" in text
+    assert "unseen (diagrams)" in text
     assert "**10 (1, 10.0%)**" in text
     assert "differed from the blind score on 2 of 4 page scores" in text
     assert "the human changed 1 of them" in text
-    skipped = render_report(blind, {}, proposals, formulas, excerpts)
+    skipped = render_report(blind, {}, proposals, formulas, excerpts, False)
     assert "reconciliation was skipped, so the blind scores are final" in skipped

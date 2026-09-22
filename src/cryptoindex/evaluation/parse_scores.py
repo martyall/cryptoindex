@@ -10,6 +10,7 @@ from statistics import mean
 from cryptoindex.evaluation.parse_eval import LOCAL, SAMPLE, load_sample
 from cryptoindex.evaluation.review_server import (
     BLIND,
+    CLOSED,
     PARSERS,
     PROPOSALS,
     RECONCILED,
@@ -27,7 +28,6 @@ REPORT = Path("eval/parse-report.md")
 def final_scores(
     blind: dict[Key, Judgement], reconciled: dict[Key, Judgement]
 ) -> dict[Key, Judgement]:
-    """The blind scores, with reconciled ones taking precedence."""
     return blind | reconciled
 
 
@@ -37,6 +37,7 @@ def render_report(
     proposals: dict[Key, Proposal],
     formulas: dict[str, dict[str, dict[str, int]]],
     excerpts: dict[str, tuple[int, str]],
+    closed_early: bool,
 ) -> str:
     """`excerpts` maps each excerpt to (pages, what it stresses), in sample
     order, so unscored pages and excerpts are reported rather than hidden."""
@@ -59,7 +60,8 @@ def render_report(
         "| Marker formulas (failed) | PaddleOCR-VL formulas (failed) |",
         "|---|---|---|---|---|---|",
     ]
-    for excerpt, scores in by_excerpt.items():
+    for excerpt in (e for e in excerpts if e in by_excerpt):
+        scores = by_excerpt[excerpt]
         counts = formulas.get(excerpt, {})
         scored = min(len(scores[p]) for p in PARSERS)
         lines.append(
@@ -99,8 +101,11 @@ def render_report(
     if unscored:
         lines += [
             "",
-            "**Not scored** (the blind pass was closed early, so these were not "
-            "evaluated): " + "; ".join(f"{e} ({why})" for e, why in unscored) + ".",
+            "**Not scored**"
+            + (" (the blind pass was closed early)" if closed_early else "")
+            + ": "
+            + "; ".join(f"{e} ({why})" for e, why in unscored)
+            + ".",
         ]
     differ = disagreements(blind, proposals)
     changed = sum(1 for k in differ if final[k].score != blind[k].score)
@@ -134,6 +139,7 @@ def main() -> None:
         read_proposals(PROPOSALS),
         json.loads((LOCAL / "formulas.json").read_text()),
         {e.name: (e.last_page - e.first_page + 1, e.stresses) for e in sample.excerpt},
+        closed_early=CLOSED.exists(),
     )
     REPORT.write_text(report)
     print(f"wrote {REPORT}")

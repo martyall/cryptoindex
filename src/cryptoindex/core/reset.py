@@ -13,7 +13,7 @@ def unsafe_reason(data_dir: Path, repo: Path) -> str | None:
     resolved (absolute, symlinks followed)."""
     if data_dir == Path(data_dir.anchor):
         return "it is a filesystem root"
-    if data_dir == Path.home():
+    if data_dir == Path.home().resolve():
         return "it is the home directory"
     if data_dir == repo or data_dir in repo.parents:
         return "it contains the repository"
@@ -27,7 +27,10 @@ def main() -> None:
     answer = input(f"Delete the database and everything in {data_dir}? [y/N] ")
     if answer.strip().lower() != "y":
         sys.exit("aborted")
-    shutil.rmtree(data_dir, ignore_errors=True)
+    try:
+        shutil.rmtree(data_dir)
+    except FileNotFoundError:
+        pass  # nothing to delete
 
 
 if __name__ == "__main__":

@@ -31,8 +31,8 @@ def test_headings_furniture_and_empty_blocks_are_not_paragraphs() -> None:
     assert [
         (p.position, p.page, p.section_path, p.block_kind, p.text) for p in paras
     ] == [
-        (0, 0, "Groups", None, "A group is a set."),
-        (1, 1, "Groups > Abelian", "equation", "ab = ba"),
+        (0, 0, ("Groups",), None, "A group is a set."),
+        (1, 1, ("Groups", "Abelian"), "equation", "ab = ba"),
     ]
     assert paras[1].bbox == (1, 2, 3, 4)
 

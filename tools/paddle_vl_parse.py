@@ -2,8 +2,8 @@
 
 Usage: paddle_vl_parse.py PDF OUT_JSON SERVER_URL MODEL
 
-Writes {"pages": [...]} to OUT_JSON: each element is one page's result as
-returned by the pipeline's public `json` property (page_index, width, height,
+Writes {"pages": [...]} to OUT_JSON: each element is the `res` object of one
+page result's public `json` property (page_index, width, height,
 parsing_res_list of labelled blocks with content and bbox). Only JSON is
 written: the CLI's save_all also draws visualizations, which downloads a font
 from a CDN.

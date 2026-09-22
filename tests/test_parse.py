@@ -98,9 +98,9 @@ async def test_parse_stores_paragraphs_and_advances(
     await parse_stage(claim(), ctx(pool, settings, tmp_path, FakeParser(BLOCKS)))
 
     assert [row[1:] for row in paragraphs(settings)] == [
-        (0, 0, [10, 20, 30, 40], "Groups", None, "A group is a set."),
-        (1, 0, [10, 20, 30, 40], "Groups", "equation", "ab = ba"),
-        (2, 1, [10, 20, 30, 40], "Groups", None, "Every subgroup is normal here."),
+        (0, 0, [10, 20, 30, 40], ["Groups"], None, "A group is a set."),
+        (1, 0, [10, 20, 30, 40], ["Groups"], "equation", "ab = ba"),
+        (2, 1, [10, 20, 30, 40], ["Groups"], None, "Every subgroup is normal here."),
     ]
     assert tuple(revision(settings)) == ("segment", None, "fake", "1", "Groups")
     assert list((tmp_path / "parsed" / "fake-1").glob("*.json"))
