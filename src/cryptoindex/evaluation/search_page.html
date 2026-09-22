@@ -23,6 +23,9 @@
   .hit > .head { padding: .5rem .8rem; background: var(--soft); border-bottom: 1px solid var(--line); display: flex; gap: .8rem; flex-wrap: wrap; align-items: baseline; }
   .hit .rank { font-weight: 600; }
   .chan { font-size: .8rem; padding: .05rem .4rem; border: 1px solid var(--line); border-radius: 3px; }
+  .kind { font-size: .8rem; padding: .05rem .4rem; border: 1px solid var(--accent); border-radius: 3px; background: none; color: var(--accent); cursor: pointer; }
+  #filters { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; width: 100%; }
+  #filters .on { background: var(--accent); color: #fff; }
   .gloss { padding: .5rem .8rem; font-style: italic; border-bottom: 1px solid var(--line); }
   .paras { padding: .2rem .8rem .6rem; }
   .para { border-left: 3px solid var(--line); padding-left: .6rem; margin: .5rem 0; }
@@ -38,12 +41,18 @@
   <input id="q" type="search" placeholder="Ask a question, name a result, or type notation" autofocus>
   <label title="Search the glosses and questions the model wrote at ingestion time"><input id="generated" type="checkbox" checked> gloss and question channels</label>
   <button id="go">Search</button>
+  <div id="filters" class="muted"></div>
 </header>
 <main id="main"><p class="empty muted">Results show the unit each match belongs to. Highlighted paragraphs are the ones a paragraph channel matched; the gloss is shown for context only and is never cited.</p></main>
 <script src="katex/katex.min.js"></script>
 <script>
 // Channels: paragraph/gloss/question vectors, full_text (simple config),
 // latex (trigram on normalized LaTeX); each badge shows the rank there.
+// Kinds (D25) are an open vocabulary: a paragraph's structural kind and a
+// unit's anchor kind and the document's own word. Clicking a kind keeps only
+// that kind; references are excluded until asked for.
+let only = new Set();      // kinds to keep, empty = all
+let withRefs = false;      // include references
 function element(tag, props = {}, children = []) {
   const el = Object.assign(document.createElement(tag), props);
   el.append(...children);
@@ -54,6 +63,27 @@ function renderMath(root) {
   for (const el of root.querySelectorAll(".math")) {
     katex.render(el.textContent, el, { displayMode: el.classList.contains("block"), throwOnError: false });
   }
+}
+
+function kindChip(kind, active, onclick) {
+  const b = element("button", { className: "kind" + (active ? " on" : ""), textContent: kind });
+  b.onclick = onclick;
+  return b;
+}
+
+function showFilters(hits) {
+  const seen = [...new Set(hits.flatMap((h) => h.kinds))].sort();
+  const chips = seen.map((k) => kindChip(k, only.has(k), () => {
+    only.has(k) ? only.delete(k) : only.add(k);
+    run();
+  }));
+  const refs = kindChip(withRefs ? "references included" : "references excluded", withRefs, () => {
+    withRefs = !withRefs;
+    run();
+  });
+  const clear = only.size ? [kindChip("clear filter", false, () => { only.clear(); run(); })] : [];
+  document.getElementById("filters").replaceChildren(
+    element("span", { textContent: "kinds:" }), ...chips, ...clear, refs);
 }
 
 function hitCard(hit, n) {
@@ -85,9 +115,13 @@ async function run() {
   const main = document.getElementById("main");
   main.replaceChildren(element("p", { className: "empty muted", textContent: "searching…" }));
   try {
-    const response = await fetch(`api/search?${new URLSearchParams({ q, generated })}`);
+    const params = new URLSearchParams({ q, generated });
+    for (const k of only) params.append("kinds", k);
+    if (withRefs) params.set("references", "true");
+    const response = await fetch(`api/search?${params}`);
     if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
     const hits = await response.json();
+    showFilters(hits);
     main.replaceChildren(...(hits.length ? hits.map((h, i) => hitCard(h, i + 1)) : [element("p", { className: "empty muted", textContent: "No results." })]));
     renderMath(main);
   } catch (err) {

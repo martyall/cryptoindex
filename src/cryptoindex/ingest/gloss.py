@@ -7,7 +7,6 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from difflib import SequenceMatcher
-from itertools import groupby
 from typing import Literal, get_args
 
 from pydantic import BaseModel
@@ -15,7 +14,7 @@ from pydantic import BaseModel
 from cryptoindex.core.llm import LLMRequest, Message
 from cryptoindex.core.prompts import Prompt
 
-GLOSS_PROMPT = "gloss-v2"  # D23
+GLOSS_PROMPT = "gloss-v3"  # D25
 
 # A chunk's paragraph text is at most CHUNK_CHARS (about 8k tokens), which
 # fits a local model's context with room for the reply. Consecutive chunks of
@@ -30,6 +29,9 @@ RESTATEMENT_RATIO = 0.8
 
 
 AnchorKind = Literal["theorem", "definition", "algorithm", "game", "example", "other"]
+# A paragraph of the bibliography is stored and searchable, but is no part of
+# any argument, so it is not sent for glossing (D25).
+UNGLOSSED: frozenset[str] = frozenset({"reference"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,13 +63,35 @@ class Chunk:
 
 
 def chunks_of(paragraphs: Sequence[SourceParagraph]) -> list[Chunk]:
-    """Split paragraphs (in position order) into sections, consecutive
-    paragraphs with the same section path, and each section into chunks of at
-    most CHUNK_CHARS (a single longer paragraph is a chunk by itself)."""
+    """Split the paragraphs to gloss (every kind but UNGLOSSED, in position
+    order) into sections, consecutive paragraphs with the same section path,
+    and each section into chunks of at most CHUNK_CHARS (a single longer
+    paragraph is a chunk by itself)."""
     out: list[Chunk] = []
-    for path, group in groupby(paragraphs, key=lambda p: p.section_path):
-        out += _split(path, list(group))
+    for section in _sections(paragraphs):
+        out += _split(section[0].section_path, section)
     return out
+
+
+def _sections(paragraphs: Sequence[SourceParagraph]) -> list[list[SourceParagraph]]:
+    """Runs of neighbouring paragraphs with the same section path, broken
+    where an UNGLOSSED paragraph sits between them, so that no unit spans
+    one."""
+    sections: list[list[SourceParagraph]] = []
+    previous: SourceParagraph | None = None
+    for p in paragraphs:
+        if p.block_kind in UNGLOSSED:
+            previous = None
+            continue
+        if (
+            previous is None
+            or previous.section_path != p.section_path
+            or previous.position + 1 != p.position
+        ):
+            sections.append([])
+        sections[-1].append(p)
+        previous = p
+    return sections
 
 
 def _split(path: tuple[str, ...], section: list[SourceParagraph]) -> list[Chunk]:
@@ -155,6 +179,7 @@ REPLY_SCHEMA: dict[str, object] = {
                     "anchor_label": _NULLABLE_STRING,
                     "anchor_pos": _NULLABLE_INT,
                     "anchor_kind": _NULLABLE_KIND,
+                    "anchor_term": _NULLABLE_STRING,
                     "gloss": {"type": "string"},
                     "key_terms": _STRINGS,
                     "questions": _STRINGS,
@@ -165,6 +190,7 @@ REPLY_SCHEMA: dict[str, object] = {
                     "anchor_label",
                     "anchor_pos",
                     "anchor_kind",
+                    "anchor_term",
                     "gloss",
                     "key_terms",
                     "questions",
@@ -184,6 +210,7 @@ class UnitReply(BaseModel, frozen=True):
     anchor_label: str | None
     anchor_pos: int | None
     anchor_kind: AnchorKind | None
+    anchor_term: str | None  # the document's own word, e.g. "lemma"
     gloss: str
     key_terms: tuple[str, ...]
     questions: tuple[str, ...]
@@ -225,10 +252,13 @@ def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
             raise InvalidReplyError(f"{where} is out of order")
         if u.key in seen:
             raise InvalidReplyError(f"{where} appears twice")
-        if (
-            len({u.anchor_label is None, u.anchor_pos is None, u.anchor_kind is None})
-            > 1
-        ):
+        parts = {
+            u.anchor_label is None,
+            u.anchor_pos is None,
+            u.anchor_kind is None,
+            u.anchor_term is None,
+        }
+        if len(parts) > 1:
             raise InvalidReplyError(f"{where} has part of an anchor")
         if u.anchor_label is not None and u.anchor_pos is not None:
             if not u.first_pos <= u.anchor_pos <= u.last_pos:
@@ -236,6 +266,10 @@ def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
             if not u.anchor_label.strip() or u.anchor_label not in text[u.anchor_pos]:
                 raise InvalidReplyError(
                     f"{where}: {u.anchor_label!r} is not in paragraph {u.anchor_pos}"
+                )
+            if u.anchor_term is None or u.anchor_term not in u.anchor_label.casefold():
+                raise InvalidReplyError(
+                    f"{where}: {u.anchor_term!r} is not a word of {u.anchor_label!r}"
                 )
         previous_first = u.first_pos
         seen.add(u.key)

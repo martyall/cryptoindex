@@ -38,14 +38,20 @@ MATCHES_QUERY = f"{QUERY_INSTRUCTION}\n{ASKED}"
 
 PARAGRAPHS = [
     ("Theorem 1. Every nonconstant polynomial has a root.", None, "Theorem 1"),
+    (
+        "[7] Bootle et al. Efficient zero-knowledge nonconstant arguments.",
+        "reference",
+        None,
+    ),
     (r"$$\mathbb Z_{2} [x] / \langle p \rangle$$", "equation", None),
     ("A ring is a set with two operations.", None, None),
     (MATCHES_QUERY, None, None),
 ]
-UNITS = [  # first, last, gloss, questions
-    (0, 1, "Kronecker's theorem on roots.", ["Why do roots exist?"]),
-    (2, 2, "Defines rings.", [MATCHES_QUERY]),
-    (3, 3, MATCHES_QUERY, ["Something else?"]),
+# A reference paragraph (position 1) is in no unit: it is not glossed (D25).
+UNITS = [  # first, last, anchor kind and term, gloss, questions
+    (0, 0, ("theorem", "theorem"), "Kronecker's theorem on roots.", ["Why roots?"]),
+    (2, 3, None, "Defines rings.", [MATCHES_QUERY]),
+    (4, 4, None, MATCHES_QUERY, ["Something else?"]),
 ]
 
 
@@ -69,12 +75,20 @@ def work_id(settings: Settings, seed: Callable[[list[Stage]], list[int]]) -> int
                 " VALUES (%s, %s, 0, '{0,0,1,1}', %s, %s, %s, %s)",
                 (work_id, pos, text, content_hash(text), kind, label),
             )
-        for first, last, gloss, questions in UNITS:
+        for first, last, anchor, gloss, questions in UNITS:
             row = conn.execute(
-                "INSERT INTO docs.units (revision_id, first_pos, last_pos, gloss,"
+                "INSERT INTO docs.units (revision_id, first_pos, last_pos,"
+                " anchor_label, anchor_pos, anchor_kind, anchor_term, gloss,"
                 " gloss_model, prompt_version, input_hash)"
-                " VALUES (%s, %s, %s, %s, 'm', 'gloss-v2', 'h') RETURNING id",
-                (work_id, first, last, gloss),
+                " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'm', 'gloss-v3', 'h')"
+                " RETURNING id",
+                (
+                    work_id,
+                    first,
+                    last,
+                    *(("Theorem 1", first, *anchor) if anchor else (None,) * 4),
+                    gloss,
+                ),
             ).fetchone()
             assert row is not None
             for q in questions:
@@ -113,7 +127,7 @@ async def test_embed_stage_fills_vectors_and_latex_and_makes_ready(
         settings,
         "SELECT count(*) FILTER (WHERE emb IS NULL),"
         " count(*) FILTER (WHERE latex_norm IS NOT NULL) FROM docs.paragraphs",
-    ) == [(0, 1)]
+    ) == [(0, 1)]  # the reference is embedded too, and has no math
     assert query(
         settings, "SELECT count(*) FROM docs.units WHERE emb_gloss IS NULL"
     ) == [(0,)]
@@ -181,9 +195,9 @@ async def test_each_channel_finds_its_match(
         return hit.first_pos, hit.channels[channel]
 
     assert await first("nonconstant polynomial", Channel.FULL_TEXT) == (0, 1)
-    assert await first(r"\mathbb{Z}_2[x]", Channel.LATEX) == (0, 1)
-    assert await first(ASKED, Channel.PARAGRAPH) == (3, 1)
-    assert await first(ASKED, Channel.GLOSS) == (3, 1)
+    assert await first(r"\mathbb{Z}_2[x]", Channel.LATEX) == (2, 1)
+    assert await first(ASKED, Channel.PARAGRAPH) == (4, 1)
+    assert await first(ASKED, Channel.GLOSS) == (4, 1)
     assert await first(ASKED, Channel.QUESTION) == (2, 1)
 
 
@@ -192,7 +206,7 @@ async def test_fusion_ranks_units_found_by_more_channels_higher(
 ) -> None:
     await indexed(settings, pool, work_id)
     hits = await search(query_pool, FakeEmbedder(), ASKED)
-    assert hits[0].first_pos == 3
+    assert hits[0].first_pos == 4
     assert {Channel.PARAGRAPH, Channel.GLOSS} <= set(hits[0].channels)
     assert hits[0].paragraphs[0].text == MATCHES_QUERY
     assert [h.score for h in hits] == sorted((h.score for h in hits), reverse=True)
@@ -210,8 +224,8 @@ async def test_a_paragraph_match_expands_to_its_unit(
     (hit,) = await search(
         query_pool, FakeEmbedder(), "nonconstant", channels={Channel.FULL_TEXT}
     )
-    assert (hit.first_pos, hit.last_pos, hit.matched_positions) == (0, 1, (0,))
-    assert [p.block_label for p in hit.paragraphs] == ["Theorem 1", None]
+    assert (hit.first_pos, hit.last_pos, hit.matched_positions) == (0, 0, (0,))
+    assert [p.block_label for p in hit.paragraphs] == ["Theorem 1"]
 
 
 async def test_only_current_ready_revisions_are_searched(
@@ -240,10 +254,17 @@ async def test_search_page_returns_rendered_hits(
         without = await client.get(
             "/api/search", params={"q": ASKED, "generated": "false"}
         )
+        refs = await client.get(
+            "/api/search", params={"q": "Bootle", "references": "true"}
+        )
+        kinds = await client.get(
+            "/api/search", params={"q": "nonconstant", "kinds": "theorem"}
+        )
     (hit, *_) = response.json()
-    assert hit["anchor_label"] is None and hit["first_pos"] == 0
+    assert hit["anchor_label"] == "Theorem 1" and hit["first_pos"] == 0
     assert hit["paragraphs"][0]["matched"]  # the full-text match
-    assert 'class="math block"' in hit["paragraphs"][1]["html"]
+    equation = next(h for h in response.json() if h["first_pos"] == 2)
+    assert 'class="math block"' in equation["paragraphs"][0]["html"]
     assert all(not {"gloss", "question"} & set(h["channels"]) for h in without.json())
 
 
@@ -253,3 +274,32 @@ def test_an_undelimited_equation_is_shown_as_math() -> None:
         r'<div class="math block">\alpha^{2}+1=0 &lt;b&gt;</div>'
     )
     assert "<b>" not in paragraph_html("<b>bold</b> $x$", None)
+
+
+async def test_references_are_left_out_unless_asked_for(
+    settings: Settings, pool: Pool, query_pool: Pool, work_id: int
+) -> None:
+    await indexed(settings, pool, work_id)
+    embedder = FakeEmbedder()
+    text_only = {Channel.FULL_TEXT}
+    assert await search(query_pool, embedder, "Bootle", channels=text_only) == []
+    (hit,) = await search(
+        query_pool, embedder, "Bootle", channels=text_only, exclude=()
+    )
+    # A reference is in no unit, so it is a hit on its own.
+    assert (hit.unit_id, hit.first_pos, hit.matched_positions) == (None, 1, (1,))
+    assert hit.paragraphs[0].block_kind == "reference"
+
+
+async def test_kinds_filter_paragraphs_and_units(
+    settings: Settings, pool: Pool, query_pool: Pool, work_id: int
+) -> None:
+    await indexed(settings, pool, work_id)
+    embedder = FakeEmbedder()
+    (hit,) = await search(query_pool, embedder, "nonconstant", kinds={"theorem"})
+    assert (hit.anchor_kind, hit.anchor_term) == ("theorem", "theorem")
+    assert await search(query_pool, embedder, "nonconstant", kinds={"lemma"}) == []
+    (equation,) = await search(
+        query_pool, embedder, r"\mathbb{Z}_2[x]", kinds={"equation"}
+    )
+    assert equation.first_pos == 2  # the unit holding the matching equation

@@ -35,6 +35,7 @@ def unit(
         "anchor_label": anchor[0] if anchor else None,
         "anchor_pos": anchor[1] if anchor else None,
         "anchor_kind": "theorem" if anchor else None,
+        "anchor_term": "theorem" if anchor else None,
         "gloss": gloss_text,
         "key_terms": list(terms),
         "questions": list(questions),
@@ -114,11 +115,24 @@ def test_reply_that_does_not_fit_the_chunk_is_rejected(
         validate_reply(bad, CHUNK)
 
 
-@pytest.mark.parametrize("missing", ["anchor_label", "anchor_pos", "anchor_kind"])
+@pytest.mark.parametrize(
+    "missing", ["anchor_label", "anchor_pos", "anchor_kind", "anchor_term"]
+)
 def test_part_of_an_anchor_is_rejected(missing: str) -> None:
     partial = unit(3, 5, ("Theorem 3.1", 3)) | {missing: None}
     with pytest.raises(InvalidReplyError, match="part of an anchor"):
         validate_reply(reply(partial), CHUNK)
+
+
+def test_an_anchor_term_must_be_a_word_of_the_label() -> None:
+    wrong = unit(3, 5, ("Theorem 3.1", 3)) | {"anchor_term": "lemma"}
+    with pytest.raises(InvalidReplyError, match="not a word of"):
+        validate_reply(reply(wrong), CHUNK)
+
+
+def test_references_are_not_glossed() -> None:
+    ps = [para(0), para(1, kind="reference"), para(2, kind="reference"), para(3)]
+    assert [(c.first_pos, c.last_pos) for c in chunks_of(ps)] == [(0, 0), (3, 3)]
 
 
 def test_reply_not_matching_the_schema_is_rejected() -> None:

@@ -59,6 +59,7 @@ def unit(
         "anchor_label": anchor[0] if anchor else None,
         "anchor_pos": anchor[1] if anchor else None,
         "anchor_kind": "definition" if anchor else None,
+        "anchor_term": anchor[0].split()[0].casefold() if anchor else None,
         "gloss": gloss_text or f"Paragraphs {first} to {last}.",
         "key_terms": [],
         "questions": [f"Q{first}a?", f"Q{first}b?", f"Q{first}c?"],

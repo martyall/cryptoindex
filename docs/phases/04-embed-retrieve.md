@@ -38,11 +38,11 @@ Make the index searchable, and let the human check by hand how well search finds
      - trigram similarity on `latex_norm`.
    - The channels are fused with Reciprocal Rank Fusion. Every hit records which channels found it.
    - A matching paragraph expands to its enclosing unit or units. A matching gloss or question expands to its unit's paragraphs.
-   - Filters: document IDs, and current revisions only by default.
+   - Filters: document IDs, kinds to keep and kinds to drop (D25), and current revisions only by default.
 
 5. **Search page for manual QA** (D24), `make search` on 127.0.0.1, in the style of the review pages.
    - A query box, and per hit: the document, the locator (block label or paragraph), the rendered passage with all math rendered, the unit it expands to, and which channels found it with their ranks.
-   - A switch to leave out the gloss and question channels, so their effect can be seen by hand.
+   - A switch to leave out the gloss and question channels, so their effect can be seen by hand, and the kinds present in the results as filters (D25).
    - It calls the same `cryptoindex.query` functions the API and agent will use. The page itself is a QA tool, not the browser UI (which is out of scope).
 
 ## Acceptance (from ROADMAP, as changed by D24)

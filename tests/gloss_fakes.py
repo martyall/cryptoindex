@@ -30,6 +30,7 @@ class CoveringLLM:
             "anchor_label": None,
             "anchor_pos": None,
             "anchor_kind": None,
+            "anchor_term": None,
             "gloss": "A passage.",
             "key_terms": [],
             "questions": ["What is it?", "Why?", "How?"],

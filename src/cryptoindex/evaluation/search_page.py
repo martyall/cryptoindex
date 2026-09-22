@@ -6,9 +6,10 @@ what rank, and the paragraphs they matched. Binds to 127.0.0.1 only."""
 import asyncio
 import html
 from pathlib import Path
+from typing import Annotated
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from markdown_it import MarkdownIt
@@ -20,7 +21,13 @@ from cryptoindex.core.db import Pool, open_pool
 from cryptoindex.core.embed import Embedder, build_embedder, check_embed_model
 from cryptoindex.core.latex import formulas
 from cryptoindex.evaluation.parse_eval import KATEX_TOOL
-from cryptoindex.query.search import ALL_CHANNELS, GENERATED, Hit, search
+from cryptoindex.query.search import (
+    ALL_CHANNELS,
+    EXCLUDED_BY_DEFAULT,
+    GENERATED,
+    Hit,
+    search,
+)
 
 PAGE = Path(__file__).with_name("search_page.html")
 PORT = 8011
@@ -57,6 +64,7 @@ class ParagraphView(BaseModel):
 
 
 class HitView(BaseModel):
+    kinds: list[str]  # this hit's kinds, to filter by (D25)
     name: str
     revision: int
     first_pos: int
@@ -70,7 +78,9 @@ class HitView(BaseModel):
 
 def hit_view(hit: Hit) -> HitView:
     matched = set(hit.matched_positions)
+    kinds = {hit.anchor_kind, hit.anchor_term} | {p.block_kind for p in hit.paragraphs}
     return HitView(
+        kinds=sorted(k for k in kinds if k),
         name=hit.name,
         revision=hit.revision,
         first_pos=hit.first_pos,
@@ -101,9 +111,24 @@ def create_app(pool: Pool, embedder: Embedder, katex_dir: Path) -> FastAPI:
         return FileResponse(PAGE)
 
     @app.get("/api/search")
-    async def run(q: str, generated: bool = True, k: int = 10) -> list[HitView]:
-        channels = ALL_CHANNELS if generated else ALL_CHANNELS - GENERATED
-        hits = await search(pool, embedder, q, k=k, channels=channels)
+    async def run(
+        q: str,
+        generated: bool = True,
+        k: int = 10,
+        kinds: Annotated[list[str] | None, Query()] = None,
+        references: bool = False,
+    ) -> list[HitView]:
+        """`kinds` keeps only those kinds; references are left out unless
+        `references` is set (D25)."""
+        hits = await search(
+            pool,
+            embedder,
+            q,
+            k=k,
+            channels=ALL_CHANNELS if generated else ALL_CHANNELS - GENERATED,
+            kinds=kinds or None,
+            exclude=() if references else EXCLUDED_BY_DEFAULT,
+        )
         return [hit_view(h) for h in hits]
 
     app.mount("/katex", StaticFiles(directory=katex_dir), name="katex")

@@ -27,6 +27,7 @@ def glossed(
         anchor_label=anchor[0] if anchor else None,
         anchor_pos=first if anchor else None,
         anchor_kind=anchor[1] if anchor else None,
+        anchor_term=anchor[0].split()[0].casefold() if anchor else None,
         gloss=f"Gloss {first}.",
         key_terms=(),
         questions=("A?", "B?", "C?"),
