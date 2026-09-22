@@ -74,7 +74,9 @@ Group each revision's paragraphs into argument units, and give each unit a plain
   - At phase start, confirm the context window from the Models API (`max_input_tokens`). Enable the server-side refusal fallback recommended for Opus 5, and tell the human.
 
 - **Local backend for the manual acceptance run:** llama.cpp's `llama-server`, already installed natively for Marker, which serves the OpenAI message format that `OpenAIFormatLLM` targets. The model is an open instruct model that fits in 48 GB of unified memory. It is chosen and pinned at phase start, and its weights are downloaded once, as for the parser models.
+  - Pinned: Qwen3-30B-A3B-Instruct-2507, `Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf` (18.6 GB, Apache-2.0) from `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF` at revision `eea7b2be5805a5f151f8847ede8e5f9a9284bf77`, sha256 `6c997b8af17debdfb01d890214400ccbab00db6acc0ba8da5de1cc906c4774d0`. A mixture-of-experts model with 3B active parameters, so it is fast on this machine, and a non-thinking instruct variant. Downloaded once into the Hugging Face cache with `hf download`.
 - **Anchors also label paragraphs.** `paragraphs.block_label` is filled from the segmentation's validated anchors only, so a citation can say "Theorem 3.1" instead of "p42". It is written with the units, in the same transaction.
 
 ## Deferred
-(Add items discovered during this phase that belong to later phases.)
+- **A batch interrupted by shutdown is lost.** `AnthropicLLM.batch` cancels its batch when the stage is cancelled; the retry submits a new one. Storing the batch ID so a restart can collect it would save the cost of a long batch, but needs a table for work in flight at the provider.
+- **Recording disables batching.** `RecordingLLM` wraps only `complete()`, so with `CI_LLM_RECORD_DIR` set the Anthropic backend makes one call per chunk.
