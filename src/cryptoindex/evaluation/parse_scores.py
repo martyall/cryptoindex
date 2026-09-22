@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from statistics import mean
 
-from cryptoindex.evaluation.parse_eval import LOCAL
+from cryptoindex.evaluation.parse_eval import LOCAL, SAMPLE, load_sample
 from cryptoindex.evaluation.review_server import (
     BLIND,
     PARSERS,
@@ -36,7 +36,10 @@ def render_report(
     reconciled: dict[Key, Judgement],
     proposals: dict[Key, Proposal],
     formulas: dict[str, dict[str, dict[str, int]]],
+    excerpts: dict[str, tuple[int, str]],
 ) -> str:
+    """`excerpts` maps each excerpt to (pages, what it stresses), in sample
+    order, so unscored pages and excerpts are reported rather than hidden."""
     final = final_scores(blind, reconciled)
     by_excerpt: dict[str, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
     for judgement in final.values():
@@ -51,14 +54,15 @@ def render_report(
         "equations count as failures). A parser that emits math as plain text has "
         "fewer formulas to fail, so read the two columns together.",
         "",
-        "| Excerpt | Marker score | PaddleOCR-VL score | Marker formulas (failed) "
-        "| PaddleOCR-VL formulas (failed) |",
-        "|---|---|---|---|---|",
+        "| Excerpt | Pages scored | Marker score | PaddleOCR-VL score "
+        "| Marker formulas (failed) | PaddleOCR-VL formulas (failed) |",
+        "|---|---|---|---|---|---|",
     ]
     for excerpt, scores in by_excerpt.items():
         counts = formulas.get(excerpt, {})
+        scored = min(len(scores[p]) for p in PARSERS)
         lines.append(
-            f"| {excerpt} | "
+            f"| {excerpt} | {scored} of {excerpts[excerpt][0]} | "
             + " | ".join(f"{_mean(scores[p]):.2f}" for p in PARSERS)
             + " | "
             + " | ".join(
@@ -76,8 +80,9 @@ def render_report(
         )
         for p in PARSERS
     }
+    scored_pages = sum(min(len(s[p]) for p in PARSERS) for s in by_excerpt.values())
     lines.append(
-        "| **all** | "
+        f"| **all** | {scored_pages} of {sum(n for n, _ in excerpts.values())} | "
         + " | ".join(
             f"**{_mean(s for e in by_excerpt.values() for s in e[p]):.2f}**"
             for p in PARSERS
@@ -89,6 +94,13 @@ def render_report(
         )
         + " |"
     )
+    unscored = [(e, why) for e, (_, why) in excerpts.items() if e not in by_excerpt]
+    if unscored:
+        lines += [
+            "",
+            "**Not scored** (the blind pass was closed early, so these were not "
+            "evaluated): " + "; ".join(f"{e} ({why})" for e, why in unscored) + ".",
+        ]
     differ = disagreements(blind, proposals)
     changed = sum(1 for k in differ if final[k].score != blind[k].score)
     lines += [
@@ -110,11 +122,13 @@ def main() -> None:
     blind = read_judgements(BLIND)
     if not blind:
         raise SystemExit(f"no blind scores in {BLIND}; run make parse-review first")
+    sample = load_sample(SAMPLE / "ids.toml")
     report = render_report(
         blind,
         read_judgements(RECONCILED),
         read_proposals(PROPOSALS),
         json.loads((LOCAL / "formulas.json").read_text()),
+        {e.name: (e.last_page - e.first_page + 1, e.stresses) for e in sample.excerpt},
     )
     REPORT.write_text(report)
     print(f"wrote {REPORT}")

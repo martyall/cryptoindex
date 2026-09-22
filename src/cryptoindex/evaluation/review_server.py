@@ -10,6 +10,7 @@ Binds to 127.0.0.1 only.
 """
 
 import os
+import sys
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,6 +28,8 @@ PARSERS = ("marker", "paddle")
 SCORES = SAMPLE / "scores"
 BLIND = SCORES / "blind.json"
 RECONCILED = SCORES / "reconciled.json"
+# Written when the human ends the blind pass early (`make parse-close-blind`).
+CLOSED = SCORES / "blind-closed.json"
 PROPOSALS = LOCAL / "proposals"
 PAGE = Path(__file__).with_name("review.html")
 
@@ -53,6 +56,14 @@ class Judgement(BaseModel):
 class Proposal(BaseModel):
     score: int = Field(ge=0, le=2)
     note: str = ""
+
+
+class BlindClosed(BaseModel):
+    """The human ended the blind pass before scoring every page."""
+
+    closed_at: str
+    scored: int  # judgements saved when it closed
+    total: int  # judgements a complete pass would have
 
 
 class ReviewItem(BaseModel):
@@ -118,12 +129,14 @@ def create_app(
     blind_path: Path,
     reconciled_path: Path,
     proposals: dict[Key, Proposal],
+    closed_path: Path,
 ) -> FastAPI:
     app = FastAPI(title="parser review")
     all_keys = {k for item in items for k in item_keys(item)}
 
     def mode() -> Mode:
-        return "reconcile" if all_keys <= set(read_judgements(blind_path)) else "blind"
+        complete = all_keys <= set(read_judgements(blind_path))
+        return "reconcile" if complete or closed_path.exists() else "blind"
 
     @app.get("/")
     async def page() -> FileResponse:
@@ -162,8 +175,29 @@ def create_app(
     return app
 
 
+def close_blind(
+    items: list[ReviewItem], blind_path: Path, closed_path: Path
+) -> BlindClosed:
+    """End the blind pass where it stands; reconciling then covers only the
+    pages that were scored."""
+    total = sum(len(item_keys(i)) for i in items)
+    closed = BlindClosed(
+        closed_at=datetime.now(UTC).isoformat(),
+        scored=len(read_judgements(blind_path)),
+        total=total,
+    )
+    closed_path.parent.mkdir(parents=True, exist_ok=True)
+    closed_path.write_text(closed.model_dump_json(indent=2))
+    return closed
+
+
 def main() -> None:
-    app = create_app(read_items(ITEMS), BLIND, RECONCILED, read_proposals(PROPOSALS))
+    items = read_items(ITEMS)
+    if sys.argv[1:] == ["close-blind"]:
+        closed = close_blind(items, BLIND, CLOSED)
+        print(f"blind pass closed at {closed.scored} of {closed.total} judgements")
+        return
+    app = create_app(items, BLIND, RECONCILED, read_proposals(PROPOSALS), CLOSED)
     print("review page: http://127.0.0.1:8009/")
     uvicorn.run(app, host="127.0.0.1", port=8009, log_level="warning")
 

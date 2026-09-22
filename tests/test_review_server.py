@@ -8,6 +8,7 @@ import pytest
 from cryptoindex.evaluation.review_server import (
     Proposal,
     ReviewItem,
+    close_blind,
     create_app,
     read_judgements,
 )
@@ -27,7 +28,13 @@ PROPOSALS = {
 
 @pytest.fixture
 async def client(tmp_path: Path) -> AsyncIterator[httpx.AsyncClient]:
-    app = create_app(ITEMS, tmp_path / "blind.json", tmp_path / "rec.json", PROPOSALS)
+    app = create_app(
+        ITEMS,
+        tmp_path / "blind.json",
+        tmp_path / "rec.json",
+        PROPOSALS,
+        tmp_path / "closed.json",
+    )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
         yield c
@@ -88,3 +95,17 @@ async def test_reconcile_follows_a_complete_blind_pass(
     assert await score(client, 1, "paddle", 2) == 200
     assert read_judgements(tmp_path / "rec.json")["ex/1/paddle"].score == 2
     assert read_judgements(tmp_path / "blind.json")["ex/1/paddle"].score == 1
+
+
+async def test_closing_the_blind_pass_reconciles_only_scored_pages(
+    client: httpx.AsyncClient, tmp_path: Path
+) -> None:
+    assert await score(client, 1, "paddle", 1) == 200  # disagrees with Claude's 2
+    assert await score(client, 1, "marker", 0) == 200  # agrees
+    closed = close_blind(ITEMS, tmp_path / "blind.json", tmp_path / "closed.json")
+    assert (closed.scored, closed.total) == (2, 4)
+
+    state = (await client.get("/api/state")).json()
+    assert state["mode"] == "reconcile"
+    assert [i["page"] for i in state["items"]] == [1]
+    assert list(state["proposals"]) == ["ex/1/paddle"]

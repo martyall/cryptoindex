@@ -1,7 +1,7 @@
 UV_RUN := uv run --env-file .env
 
 .PHONY: db-up db-down migrate reset test run check fmt paddle-server parse-eval \
-	parse-review parse-report
+	parse-review parse-close-blind parse-report
 
 .env:
 	cp .env.example .env
@@ -47,6 +47,11 @@ parse-eval: .env
 # disagreements with Claude's proposals. Binds 127.0.0.1; Ctrl-C to stop.
 parse-review: .env
 	$(UV_RUN) python -m cryptoindex.evaluation.review_server
+
+# Ends the blind pass before every page is scored; `make parse-review` then
+# reconciles the scored pages, and the report lists what was left unscored.
+parse-close-blind: .env
+	$(UV_RUN) python -m cryptoindex.evaluation.review_server close-blind
 
 # Final scores (blind, overridden by reconciled) and formula counts, to
 # eval/parse-report.md.
