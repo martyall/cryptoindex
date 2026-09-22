@@ -4,7 +4,7 @@ from cryptoindex.core.llm import Completion, Message, ToolSpec
 
 
 class CoveringLLM:
-    """Answers every gloss request with one unconditional unit spanning the
+    """Answers every gloss request with one unanchored unit spanning the
     whole chunk, read from the request's JSON; for pipeline tests where the
     glosses themselves do not matter."""
 

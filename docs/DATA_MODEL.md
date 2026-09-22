@@ -45,7 +45,7 @@ Argument units: spans `[first_pos, last_pos]` of paragraphs within a revision.
 - Units may overlap. On re-segmentation, new units are matched to old by `(first_pos, last_pos, anchor_label)`; unmatched old units are deleted and a `unit_changed` event is written for each.
 
 ## `docs.segment_chunks`
-One validated LLM reply per chunk: the paragraphs of one section, or a piece of a long section, sent in one call. Keyed by `(revision_id, input_hash)`, where `input_hash` = hash(document title, section path, each paragraph's position, content hash and block kind, prompt version, requested model). Written as each reply arrives, before the segment stage's own transaction, like the parser's raw-output cache, so a retry never re-asks for a chunk that already succeeded. Unchanged input therefore makes no LLM call. Rows for chunks that no longer exist are deleted when the stage commits.
+One validated LLM reply per chunk: the paragraphs of one section, or a piece of a long section, sent in one call. Keyed by `(revision_id, input_hash)`, where `input_hash` = hash(document title, section path, each paragraph's position, content hash and block kind, prompt version, requested model). Written as each reply arrives (a batch arrives whole), before the segment stage's own transaction, like the parser's raw-output cache, so a retry never re-asks for a chunk that already succeeded. Unchanged input therefore makes no LLM call. Rows for chunks that no longer exist are deleted when the stage commits.
 
 ## `docs.unit_questions`
 3–5 doc2query questions per unit, each with `emb halfvec(1024)`.

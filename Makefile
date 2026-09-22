@@ -61,8 +61,9 @@ parse-close-blind: .env
 parse-report: .env
 	$(UV_RUN) python -m cryptoindex.evaluation.parse_scores
 
-# Phase 3 spot-check: glosses the parse-eval excerpts with the configured LLM
-# backend (calls are cached), then serves the blind review page.
+# Phase 3 spot-check: gloss-eval glosses the parse-eval excerpts with the
+# configured backend (calls cached); gloss-review serves the blind review
+# page; gloss-report writes the report.
 gloss-eval: .env
 	$(UV_RUN) python -m cryptoindex.evaluation.gloss_eval
 

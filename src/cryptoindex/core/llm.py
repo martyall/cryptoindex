@@ -44,16 +44,18 @@ class Completion:
 
 
 class LLMError(RuntimeError):
-    """The backend returned no usable completion: a refusal, a truncated
-    reply, or an error reported by the model server."""
+    """The backend returned no usable completion (a refusal, truncation, a
+    failed request, malformed output), or was given a request it cannot
+    serve."""
 
 
 class LLM(Protocol):
     """An LLM backend (Invariant 9, D22). `model` is the model requested.
     `cache_prefix` affects cost only and is ignored where unsupported.
     `Completion.parsed` is set exactly when `json_schema` is given. Raises
-    LLMError, or the SDK's own errors on transport failure; FakeLLM raises
-    UnrecordedRequestError."""
+    LLMError, ValueError (including json.JSONDecodeError and pydantic's
+    ValidationError) for an unparseable reply, or the SDK's own errors on
+    transport failure; FakeLLM raises UnrecordedRequestError."""
 
     name: str
     model: str
@@ -84,7 +86,8 @@ class BatchLLM(LLM, Protocol):
     async def batch(self, requests: list[LLMRequest]) -> list[Completion]:
         """Completions in request order, once the whole batch has ended. Waits
         (asynchronously) for as long as the provider takes. Raises LLMError if
-        any request failed."""
+        any request failed. Cancelling the call cancels the provider's batch;
+        its results are lost."""
         ...
 
 
@@ -161,7 +164,7 @@ class FakeLLM:
 class RecordingLLM:
     """Passes requests to another backend and writes each completion as a
     FakeLLM recording, named by its request hash, so a real run can be
-    replayed offline."""
+    replayed offline. Not a BatchLLM: recording disables batching."""
 
     def __init__(self, inner: LLM, directory: Path) -> None:
         self._inner = inner

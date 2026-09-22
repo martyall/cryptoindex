@@ -3,7 +3,8 @@ configured real LLM backend, which CI never does. `make gloss-eval`.
 
 It glosses the paragraphs PaddleOCR-VL produced for the Phase 2 excerpts,
 exactly as the segment stage would (same chunks, prompt, and validation),
-caching each validated reply by input hash so a re-run makes no new calls.
+caching each validated reply by input hash, so a re-run calls the model only
+for chunks without one.
 Then it picks a sample stratified by anchor kind for the review page
 (`make gloss-review`). Each prompt version gets its own sample, listed in
 eval/gloss-sample/spot-check-<prompt>.json (committed); everything derived
@@ -121,10 +122,9 @@ class Failure(BaseModel):
 
 _ITEMS = TypeAdapter(list[GlossedUnit])
 
-# Every block the reviewer sees is rendered: prose as Markdown with math, all
-# equations (including those the parser left undelimited, which are raw
-# LaTeX) and pseudocode lines as math where they contain it. Raw HTML in
-# parser text is escaped; tables are the parser's own HTML.
+# Parser text is untrusted: raw HTML in it is escaped, and only tables pass
+# through as the parser's own HTML. Undelimited equations (malformed_math)
+# are rendered as the raw LaTeX they are, so the reviewer never sees source.
 _MARKDOWN = MarkdownIt("commonmark", {"html": False}).use(
     dollarmath_plugin, allow_space=True, allow_digits=True, double_inline=True
 )
@@ -172,7 +172,8 @@ def load_excerpts() -> list[ExcerptText]:
             ExcerptText(
                 excerpt.name,
                 excerpt.stresses,
-                # An excerpt's first heading ("Exercises") is no title.
+                # The source's name: an excerpt's first heading (e.g.
+                # "Exercises") is not a title.
                 sample.source_of(excerpt).name,
                 tuple(blocks),
                 paragraphs,

@@ -15,12 +15,12 @@ from pydantic import BaseModel
 from cryptoindex.core.llm import LLMRequest, Message
 from cryptoindex.core.prompts import Prompt
 
-GLOSS_PROMPT = "gloss-v2"
+GLOSS_PROMPT = "gloss-v2"  # D23
 
 # A chunk's paragraph text is at most CHUNK_CHARS (about 8k tokens), which
 # fits a local model's context with room for the reply. Consecutive chunks of
-# a long section share up to OVERLAP_CHARS, so a unit cut at one chunk's end
-# is seen whole at the next one's start.
+# a long section share up to OVERLAP_CHARS: a unit starting in the overlap is
+# left to the next chunk (Chunk.keep_before), which sees it whole if it fits.
 CHUNK_CHARS = 24_000
 OVERLAP_CHARS = 4_000
 
@@ -110,8 +110,9 @@ def _user_message(chunk: Chunk, title: str) -> str:
 
 
 def input_hash(chunk: Chunk, title: str, prompt_version: str, model: str) -> str:
-    """Everything that determines the model's reply to this chunk (Invariant 2,
-    Invariant 10). The paragraphs enter by position, content hash and kind."""
+    """The chunk's input hash (Invariants 2, 10): title, section path, each
+    paragraph's position, content hash and kind, prompt version, and model.
+    REPLY_SCHEMA is not in it; a schema change needs a new prompt version."""
     key = {
         "title": title,
         "section": list(chunk.section_path),
@@ -247,7 +248,8 @@ def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
 
 def merge(replies: Sequence[tuple[Chunk, Sequence[UnitReply]]]) -> list[UnitReply]:
     """Units of all chunks, each chunk contributing those starting before its
-    `keep_before`; a unit two chunks both produced is kept once. Coverage
+    `keep_before`, so a unit two chunks both produced comes from the later
+    one. Coverage
     carries over: a paragraph before `keep_before` is covered by a unit that
     starts before it, and one after by the next chunk, all of whose units
     start at or after it."""

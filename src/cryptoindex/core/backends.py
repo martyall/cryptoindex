@@ -227,6 +227,9 @@ class OpenAIFormatLLM:
                         json_schema={"name": "reply", "schema": json_schema},
                     ),
                 )
+            # Any 400 is taken to mean json_schema is unsupported; the server
+            # gives no structured reason, and the flag stays off for this
+            # backend's lifetime.
             except openai.BadRequestError as e:
                 log.warning("llm_json_schema_rejected model=%s error=%s", self.model, e)
                 self._schema_supported = False
@@ -349,14 +352,13 @@ USAGE_LIMIT_WAIT_S = 300.0
 
 
 class ClaudeCodeLLM:
-    """Dev mode (D22): the human's own logged-in Claude Code, run headless, so
-    calls count against their subscription. Single-turn JSON requests only.
-
-    Each call is a `claude -p` subprocess in an empty directory with a
-    replacement system prompt and no tools, settings, MCP servers, skills, or
-    saved session. A call refused for a usage limit (HTTP 429) is retried
-    after USAGE_LIMIT_WAIT_S, indefinitely, so it does not count as a failed
-    attempt. Raises LLMError for any other failure.
+    """Dev mode (D22): a headless `claude -p` subprocess, isolated as D22
+    describes. Single-turn JSON requests only. A usage-limit refusal (HTTP
+    429) is retried every USAGE_LIMIT_WAIT_S without limit, so it does not
+    count as a failed attempt. Raises LLMError for any other reported failure
+    or for a request with tools or more than one message, pydantic's
+    ValidationError if the output is not the expected JSON, and OSError if
+    the binary cannot be started.
     """
 
     name = "claude_code"
@@ -451,7 +453,8 @@ def build_llm(settings: Settings) -> LLM:
         client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         llm = AnthropicLLM(client, settings.llm_model)
     elif settings.llm_backend == "openai_format":
-        # Local servers ignore the key, but the SDK requires one.
+        # Local servers ignore the key, but the SDK requires one. A local model
+        # can take minutes on a full chunk, well past the SDK's default.
         client = openai.AsyncOpenAI(
             base_url=settings.llm_base_url, api_key="local", timeout=900.0
         )

@@ -68,11 +68,14 @@ GROUPS = [unit(0, 1, ("Definition 1", 0)), unit(2, 3, ("Theorem 2", 2))]
 RINGS = [unit(4, 4)]
 
 
-def recorded(*replies: Sequence[dict[str, object]], model: str = "m") -> FakeLLM:
-    """A FakeLLM answering the stage's requests for each section, in order."""
+def recorded(*replies: Sequence[dict[str, object]] | None, model: str = "m") -> FakeLLM:
+    """A FakeLLM answering the stage's requests for each section, in order;
+    a section whose reply is None has no recording."""
     prompt = load_prompt(GLOSS_PROMPT)
     recordings = {}
     for chunk, units in zip(chunks_of(source()), replies, strict=True):
+        if units is None:
+            continue
         r = gloss_request(chunk, TITLE, prompt)
         key = request_hash(request_payload(r.system, r.messages, None, r.json_schema))
         recordings[key] = Completion("", model, {"units": list(units)})
@@ -228,15 +231,19 @@ async def test_invalid_reply_stores_no_units_but_keeps_valid_replies(
     assert len(units(settings)) == 3
 
 
-async def test_backend_failure_leaves_the_revision_unchanged(
+async def test_backend_failure_keeps_the_replies_already_received(
     settings: Settings, pool: Pool, work_id: int
 ) -> None:
+    first_only = recorded(GROUPS, None)
     with pytest.raises(UnrecordedRequestError):
-        await segment_stage(
-            claim(settings, work_id), ctx(pool, settings, FakeLLM({}, model="m"))
-        )
+        await segment_stage(claim(settings, work_id), ctx(pool, settings, first_only))
     assert units(settings) == []
     assert query(settings, "SELECT stage FROM docs.revisions") == [("segment",)]
+    assert query(settings, "SELECT count(*) FROM docs.segment_chunks") == [(1,)]
+
+    retry = recorded(GROUPS, RINGS)
+    await segment_stage(claim(settings, work_id), ctx(pool, settings, retry))
+    assert retry.calls == 1
 
 
 class BatchingFake:

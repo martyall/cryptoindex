@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Mapping, Sequence
 from dataclasses import dataclass
 
 from psycopg import AsyncConnection
@@ -30,13 +30,15 @@ async def segment_stage(work_id: RevisionId, ctx: StageContext) -> None:
     """Group the revision's paragraphs into glossed argument units and advance
     it to `embed`.
 
-    Idempotent: each chunk's validated reply is stored under its input hash as
-    it arrives (docs.segment_chunks), so unchanged input, or a retry after a
-    later chunk failed, makes no call for that chunk. With a BatchLLM and
-    CI_GLOSS_BATCH, the missing chunks go as one batch (D5). Units are matched
-    to existing ones by span and anchor (Invariant 5); units that no longer
-    exist are deleted with a `unit_changed` event each. Units, questions,
-    paragraph block labels (from validated anchors only) and the transition
+    Idempotent: each chunk's validated reply is stored under its input hash
+    (docs.segment_chunks) as soon as it arrives, before the stage's own
+    transaction, so unchanged input, or a retry after a later call failed,
+    makes no call for that chunk. With a BatchLLM and CI_GLOSS_BATCH, two or
+    more missing chunks go as one batch (D5), which arrives, or fails, whole.
+    Units are matched to existing ones by span and anchor (Invariant 5);
+    units that no longer exist are deleted with a `unit_changed` event each.
+    Units, questions, paragraph block labels (from the units' anchors), the
+    removal of replies for chunks that no longer exist, and the transition
     commit in one transaction. Raises the backend's errors, pydantic's
     ValidationError or InvalidReplyError for a reply that does not fit its
     chunk (after storing the replies that did), and TransitionConflictError
@@ -69,9 +71,9 @@ async def segment_stage(work_id: RevisionId, ctx: StageContext) -> None:
             len(missing),
             ctx.llm.name,
         )
-    requests = [gloss_request(chunks[i], title, prompt) for i in missing]
+    requests = {i: gloss_request(chunks[i], title, prompt) for i in missing}
     failure: Exception | None = None
-    for i, completion in zip(missing, await _complete(ctx, requests), strict=True):
+    async for i, completion in _completions(ctx, requests):
         try:
             units = validate_reply(completion.parsed, chunks[i])
         except ValueError as e:  # includes pydantic's ValidationError
@@ -137,16 +139,26 @@ async def _load(
     return row[0], paragraphs
 
 
-async def _complete(ctx: StageContext, requests: list[LLMRequest]) -> list[Completion]:
+async def _completions(
+    ctx: StageContext, requests: Mapping[int, LLMRequest]
+) -> AsyncIterator[tuple[int, Completion]]:
+    """Each chunk's completion, by chunk index, as it arrives."""
     llm = ctx.llm
     if len(requests) > 1 and ctx.settings.gloss_batch and isinstance(llm, BatchLLM):
-        return await llm.batch(requests)
-    return [
-        await llm.complete(
-            r.system, r.messages, json_schema=r.json_schema, cache_prefix=r.cache_prefix
+        completions = await llm.batch(list(requests.values()))
+        for i, completion in zip(requests, completions, strict=True):
+            yield i, completion
+        return
+    for i, r in requests.items():
+        yield (
+            i,
+            await llm.complete(
+                r.system,
+                r.messages,
+                json_schema=r.json_schema,
+                cache_prefix=r.cache_prefix,
+            ),
         )
-        for r in requests
-    ]
 
 
 async def _store_reply(
@@ -225,7 +237,8 @@ async def _store_units(
         )
         if u.key in existing:
             unit_id, questions = existing[u.key]
-            # A changed gloss drops its embedding, so Phase 4 embeds it again.
+            # Phase 4 re-embeds a changed gloss; `gloss` in the CASE is the
+            # value before this update.
             await conn.execute(
                 "UPDATE docs.units SET anchor_pos = %s, anchor_kind = %s,"
                 "  gloss = %s, terms = %s,"

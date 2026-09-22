@@ -2,8 +2,9 @@
 -- docs.segment_chunks).
 
 -- One validated LLM reply per chunk of a section, keyed by the chunk's input
--- hash. Written as each reply arrives, before the stage's own transaction,
--- so a retry after a later chunk fails makes no new call for this one.
+-- hash. Written as each reply arrives (a batch arrives whole), before the
+-- stage's own transaction, so a retry after a later call fails makes no new
+-- call for this one.
 CREATE TABLE docs.segment_chunks (
     revision_id    bigint NOT NULL REFERENCES docs.revisions (id) ON DELETE CASCADE,
     input_hash     text NOT NULL,
