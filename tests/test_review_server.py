@@ -34,6 +34,8 @@ async def client(tmp_path: Path) -> AsyncIterator[httpx.AsyncClient]:
         tmp_path / "rec.json",
         PROPOSALS,
         tmp_path / "closed.json",
+        pages_dir=tmp_path,
+        katex_dir=tmp_path,
     )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:

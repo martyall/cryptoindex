@@ -132,6 +132,8 @@ def create_app(
     reconciled_path: Path,
     proposals: dict[Key, Proposal],
     closed_path: Path,
+    pages_dir: Path,
+    katex_dir: Path,
 ) -> FastAPI:
     app = FastAPI(title="parser review")
     all_keys = {k for item in items for k in item_keys(item)}
@@ -171,9 +173,8 @@ def create_app(
         write_judgements(path, judgements)
         return judgements[k]
 
-    app.mount("/pages", StaticFiles(directory=LOCAL / "pages"), name="pages")
-    katex = KATEX_TOOL / "node_modules" / "katex" / "dist"
-    app.mount("/katex", StaticFiles(directory=katex), name="katex")
+    app.mount("/pages", StaticFiles(directory=pages_dir), name="pages")
+    app.mount("/katex", StaticFiles(directory=katex_dir), name="katex")
     return app
 
 
@@ -199,7 +200,15 @@ def main() -> None:
         closed = close_blind(items, BLIND, CLOSED)
         print(f"blind pass closed at {closed.scored} of {closed.total} judgements")
         return
-    app = create_app(items, BLIND, RECONCILED, read_proposals(PROPOSALS), CLOSED)
+    app = create_app(
+        items,
+        BLIND,
+        RECONCILED,
+        read_proposals(PROPOSALS),
+        CLOSED,
+        pages_dir=LOCAL / "pages",
+        katex_dir=KATEX_TOOL / "node_modules" / "katex" / "dist",
+    )
     print("review page: http://127.0.0.1:8009/")
     uvicorn.run(app, host="127.0.0.1", port=8009, log_level="warning")
 
