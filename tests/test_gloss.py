@@ -124,10 +124,15 @@ def test_part_of_an_anchor_is_rejected(missing: str) -> None:
         validate_reply(reply(partial), CHUNK)
 
 
-def test_an_anchor_term_must_be_a_word_of_the_label() -> None:
+def test_an_anchor_term_must_be_part_of_the_label() -> None:
     wrong = unit(3, 5, ("Theorem 3.1", 3)) | {"anchor_term": "lemma"}
-    with pytest.raises(InvalidReplyError, match="not a word of"):
+    with pytest.raises(InvalidReplyError, match="is not in"):
         validate_reply(reply(wrong), CHUNK)
+
+
+def test_an_anchor_term_is_compared_without_case() -> None:
+    capitalized = unit(3, 5, ("Theorem 3.1", 3)) | {"anchor_term": "Theorem"}
+    assert validate_reply(reply(capitalized), CHUNK)
 
 
 def test_references_are_not_glossed() -> None:

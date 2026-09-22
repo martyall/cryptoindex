@@ -49,6 +49,8 @@ def paragraph_html(text: str, block_kind: str | None) -> str:
         return text
     if block_kind in ("algorithm", "code"):
         return f'<div class="lines">{_LINES.render(text)}</div>'
+    # None, not the kind: asks whether the text carries its own delimiters,
+    # where passing "equation" would answer with the whole text (D21).
     if block_kind == "equation" and not formulas(text, None):
         return f'<div class="math block">{html.escape(text)}</div>'
     return _MARKDOWN.render(text)

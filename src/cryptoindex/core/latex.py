@@ -57,10 +57,11 @@ def _inline_tokens(tokens: Sequence) -> Iterable:
 
 
 def normalize(tex: str) -> str | None:
-    """A canonical form of one formula: layout commands dropped, whitespace
-    removed, and single-character groups unwrapped, so `\\mathbb Z_{2}` and
-    `\\mathbb{Z}_2` compare equal. None if the parser rejects it; the
-    formula is then left out of the index, never guessed at."""
+    """A canonical form of one formula: layout commands and comments dropped,
+    whitespace removed, groups canonically braced (single characters bare), so
+    `\\mathbb Z_{2}` and `\\mathbb{Z}_2` compare equal. None if the parser
+    rejects it or nothing survives; the formula is then left out of the index,
+    never guessed at."""
     try:
         nodes, _, _ = LatexWalker(tex, tolerant_parsing=False).get_latex_nodes()
     except LatexWalkerError as e:

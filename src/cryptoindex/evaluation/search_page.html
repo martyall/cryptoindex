@@ -46,13 +46,11 @@
 <main id="main"><p class="empty muted">Results show the unit each match belongs to. Highlighted paragraphs are the ones a paragraph channel matched; the gloss is shown for context only and is never cited.</p></main>
 <script src="katex/katex.min.js"></script>
 <script>
-// Channels: paragraph/gloss/question vectors, full_text (simple config),
-// latex (trigram on normalized LaTeX); each badge shows the rank there.
-// Kinds (D25) are an open vocabulary: a paragraph's structural kind and a
-// unit's anchor kind and the document's own word. Clicking a kind keeps only
-// that kind; references are excluded until asked for.
+// Clicking a kind keeps only that kind. References are excluded until asked
+// for, and asking for the kind has to ask for them too: the server drops an
+// excluded kind even when a filter names it.
 let only = new Set();      // kinds to keep, empty = all
-let withRefs = false;      // include references
+let withRefs = false;
 function element(tag, props = {}, children = []) {
   const el = Object.assign(document.createElement(tag), props);
   el.append(...children);
@@ -117,7 +115,7 @@ async function run() {
   try {
     const params = new URLSearchParams({ q, generated });
     for (const k of only) params.append("kinds", k);
-    if (withRefs) params.set("references", "true");
+    if (withRefs || only.has("reference")) params.set("references", "true");
     const response = await fetch(`api/search?${params}`);
     if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
     const hits = await response.json();

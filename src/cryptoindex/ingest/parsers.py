@@ -35,10 +35,9 @@ MARKER_ENV = {
 PADDLE_VERSION = "3.7.0"
 PADDLEPADDLE_VERSION = "3.3.1"
 MLX_VLM_VERSION = "0.7.2"  # the server `make paddle-server` runs
-# PaddleX sends many blocks at once. MLX-VLM 0.7.2 decoding several sequences
-# together in its continuous batch corrupts their first tokens (a display
-# formula loses its opening `\[`, so PaddleX leaves it undelimited); one
-# sequence at a time matches sequential requests exactly.
+# MLX-VLM 0.7.2 corrupts the first tokens of sequences decoded together, so a
+# display formula loses its opening `\[` (phase spec 04, "Found during the
+# phase"). PaddleX sends many blocks at once, so the server takes one at a time.
 MLX_VLM_MAX_NUM_SEQS = 1
 PADDLE_MODEL = "PaddlePaddle/PaddleOCR-VL-1.6"
 PADDLE_MODEL_NAME = "PaddleOCR-VL-1.6"
@@ -134,6 +133,8 @@ class PaddleVLParser:
     name = "paddle"
     version = (
         f"{PADDLE_VERSION}+paddle{PADDLEPADDLE_VERSION}"
+        # The setting changes the output, so the version carries it: parsed
+        # output from a batching server is not reused.
         f"+mlxvlm{MLX_VLM_VERSION}-seqs{MLX_VLM_MAX_NUM_SEQS}+{PADDLE_MODEL_NAME}"
     )
 

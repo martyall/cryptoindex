@@ -1,6 +1,7 @@
 """Hybrid search (ARCHITECTURE data flow 6): five channels over the current,
-ready revisions, fused with Reciprocal Rank Fusion at the level of argument
-units. Read-only, on the ci_query role (Invariant 7)."""
+ready revisions, fused with Reciprocal Rank Fusion per argument unit, or per
+paragraph that belongs to none. Read-only, on the ci_query role
+(Invariant 7)."""
 
 import asyncio
 import dataclasses
@@ -25,10 +26,10 @@ RRF_K = 60  # the usual Reciprocal Rank Fusion constant
 
 
 class Channel(StrEnum):
-    PARAGRAPH = "paragraph"  # paragraph vectors
-    GLOSS = "gloss"  # gloss vectors
-    QUESTION = "question"  # question vectors
-    FULL_TEXT = "full_text"  # `simple` full-text search (D15)
+    PARAGRAPH = "paragraph"
+    GLOSS = "gloss"
+    QUESTION = "question"
+    FULL_TEXT = "full_text"  # the `simple` configuration (D15)
     LATEX = "latex"  # trigram similarity on normalized LaTeX
 
 
@@ -39,7 +40,7 @@ GENERATED = frozenset({Channel.GLOSS, Channel.QUESTION})
 # parser (equation, algorithm, table, reference, …) and a unit's anchor kind
 # and the document's own word for it (theorem, lemma, protocol, …).
 # References are indexed and searchable, but not what anyone means by
-# default, so they are left out unless asked for.
+# default, so they are dropped unless the caller passes `exclude=()`.
 EXCLUDED_BY_DEFAULT = frozenset({"reference"})
 
 
@@ -55,9 +56,9 @@ class Paragraph:
 @dataclass(frozen=True, slots=True)
 class Hit:
     """One argument unit, or a single paragraph that belongs to none (a
-    reference). `channels` maps each channel that found it to its best rank
-    there (1 = first); `matched_positions` are the paragraphs that earned
-    those ranks in the paragraph-level channels."""
+    footnote, caption or reference). `channels` maps each channel that found
+    it to its best rank there (1 = first); `matched_positions` are the
+    paragraphs that earned those ranks in the paragraph-level channels."""
 
     unit_id: int | None
     anchor_kind: str | None
@@ -85,16 +86,17 @@ async def search(
     kinds: Collection[str] | None = None,
     exclude: Collection[str] = EXCLUDED_BY_DEFAULT,
 ) -> list[Hit]:
-    """The `k` best units for `q` over current, ready revisions, optionally
-    only those of `paper_ids`. A unit's score is the sum over channels of
-    1 / (RRF_K + rank), where a paragraph-level channel ranks a unit by its
-    best paragraph. Read-only; the query is embedded in a thread.
+    """The `k` best units, or paragraphs belonging to none, for `q` over
+    current, ready revisions, optionally only those of `paper_ids`. A score
+    is the sum over channels of 1 / (RRF_K + rank), where a paragraph-level
+    channel ranks a unit by its best paragraph. Read-only; the query is
+    embedded in a thread.
 
     `kinds`, if given, keeps only paragraphs and units of those kinds, and
     `exclude` drops them; both take a paragraph's structural kind, a unit's
-    anchor kind, or a unit's anchor term (D25). Filtering a vector channel
-    can return fewer than CHANNEL_K candidates, so the index is scanned
-    iteratively."""
+    anchor kind, or a unit's anchor term (D25). `exclude` wins, so a kind in
+    both is dropped. A paragraph kept by kind still expands to its enclosing
+    unit, whatever that unit's kind."""
     wanted = frozenset(channels)
     vector = None
     if wanted & {Channel.PARAGRAPH, Channel.GLOSS, Channel.QUESTION}:
@@ -174,8 +176,8 @@ async def search(
         best_at: dict[Item, dict[Channel, int]] = {}
         for channel, ids in paragraph_ranks.items():
             for rank, pid in enumerate(ids, start=1):
-                # A paragraph in no unit, such as a reference, stands alone;
-                # its own hit needs no matched position, it is the match.
+                # A paragraph in no unit stands alone; its matched position
+                # comes from its own row, not from this bookkeeping.
                 enclosing = units_of.get(pid) or [(None, None)]
                 for unit_id, position in enclosing:
                     item: Item = ("unit", unit_id) if unit_id else ("paragraph", pid)
@@ -196,7 +198,6 @@ async def search(
         return await _hits(conn, top, scores, best, matched)
 
 
-# Only the current revision of each document, once it is ready.
 _CURRENT_P: LiteralString = (
     " JOIN docs.revisions r ON r.id = p.revision_id"
     " WHERE r.is_current AND r.stage = 'ready'"
@@ -216,7 +217,6 @@ _CURRENT_U: LiteralString = (
 )
 
 
-# What a hit is: a unit, or a paragraph that belongs to none, by id.
 Item = tuple[Literal["unit", "paragraph"], int]
 
 
@@ -228,8 +228,8 @@ async def _ids(conn: AsyncConnection, sql: LiteralString, params: dict) -> list[
 async def _enclosing_units(
     conn: AsyncConnection, paragraph_ids: set[int]
 ) -> dict[int, list[tuple[int, int]]]:
-    """For each paragraph, the units containing it and its position; a
-    paragraph in no unit is absent."""
+    """Units may overlap, so a paragraph can be in several; one in no unit is
+    absent."""
     if not paragraph_ids:
         return {}
     cur = await conn.execute(
@@ -266,7 +266,7 @@ async def _hits(
     ]
 
 
-_WHERE = (
+_UNITS = (
     "SELECT u.id, r.paper_id, pa.name, r.revision, u.first_pos, u.last_pos,"
     "  u.anchor_label, u.anchor_kind, u.anchor_term, u.gloss,"
     "  array_agg(array[p.position, p.page]::int[] ORDER BY p.position),"
@@ -285,7 +285,7 @@ _WHERE = (
 async def _unit_rows(conn: AsyncConnection, unit_ids: list[int]) -> dict[Item, Hit]:
     if not unit_ids:
         return {}
-    cur = await conn.execute(_WHERE, (unit_ids,))
+    cur = await conn.execute(_UNITS, (unit_ids,))
     out: dict[Item, Hit] = {}
     for row in await cur.fetchall():
         (

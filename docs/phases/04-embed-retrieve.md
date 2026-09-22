@@ -42,7 +42,7 @@ Make the index searchable, and let the human check by hand how well search finds
 
 5. **Search page for manual QA** (D24), `make search` on 127.0.0.1, in the style of the review pages.
    - A query box, and per hit: the document, the locator (block label or paragraph), the rendered passage with all math rendered, the unit it expands to, and which channels found it with their ranks.
-   - A switch to leave out the gloss and question channels, so their effect can be seen by hand, and the kinds present in the results as filters (D25).
+   - A switch to leave out the gloss and question channels, so their effect can be seen by hand, and the kinds present in the results as filters (D25, D26).
    - It calls the same `cryptoindex.query` functions the API and agent will use. The page itself is a QA tool, not the browser UI (which is out of scope).
 
 ## Acceptance (from ROADMAP, as changed by D24)

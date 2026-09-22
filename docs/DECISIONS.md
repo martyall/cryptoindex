@@ -101,3 +101,9 @@ Decided by the human after searching the first indexed paper, where the bibliogr
 - **References are stored and embedded, but not glossed** (`gloss.UNGLOSSED`) and not part of any unit; a section is broken where one sits, so no unit spans a bibliography. A reference a search matches is returned as a hit on its own.
 - **A unit's anchor also records the document's own word for it** (`units.anchor_term`: `lemma`, `protocol`, `hybrid`, …), copied from the label and checked against it, beside the coarse `anchor_kind`. gloss-v3 asks for it. The vocabulary is open: a document that labels blocks "Claim" or "Construction" is searchable by those words without a code change.
 - **Both are indexed** (migration 007), and `search()` takes `kinds` to keep and `exclude` to drop, matching a paragraph's structural kind, a unit's anchor kind, or its anchor term. Only `reference` is excluded by default. The QA page offers the kinds present in the results, rather than a fixed set of filters.
+
+### D26. gloss-v4: a footnote or caption need not belong to a unit (2026-09-22)
+Approved by the human while indexing the Kimchi specification, which has 200 footnotes against Halo's 4; almost all are pointers at a source file (`Kimchi.Gate.VarBaseMul.secant_add`), and a handful carry real content. Extends D25's treatment of minor blocks; D23's freeze is superseded again for the same reason.
+- **Footnotes and captions are still sent to the model** (`gloss.OPTIONAL`), so an argument that uses one can include it, and a caption can join the unit discussing its figure. Only the coverage rule changes: a reply is no longer rejected for leaving them out.
+- **They are not what a section breaks on.** Unlike a bibliography, they sit inside the text; breaking there would cut arguments in half and cost more calls, not fewer.
+- Skipping them by length or by reading them was rejected: that is a heuristic over text.

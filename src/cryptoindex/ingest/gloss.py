@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from cryptoindex.core.llm import LLMRequest, Message
 from cryptoindex.core.prompts import Prompt
 
-GLOSS_PROMPT = "gloss-v4"  # D25
+GLOSS_PROMPT = "gloss-v4"  # D26
 
 # A chunk's paragraph text is at most CHUNK_CHARS (about 8k tokens), which
 # fits a local model's context with room for the reply. Consecutive chunks of
@@ -34,7 +34,7 @@ AnchorKind = Literal["theorem", "definition", "algorithm", "game", "example", "o
 UNGLOSSED: frozenset[str] = frozenset({"reference"})
 # These are sent, because the argument around them may use what they say, but
 # a unit need not cover them: in a specification most footnotes only point at
-# a source file (D25).
+# a source file (D26).
 OPTIONAL: frozenset[str] = frozenset({"footnote", "caption"})
 
 
@@ -78,9 +78,9 @@ def chunks_of(paragraphs: Sequence[SourceParagraph]) -> list[Chunk]:
 
 
 def _sections(paragraphs: Sequence[SourceParagraph]) -> list[list[SourceParagraph]]:
-    """Runs of neighbouring paragraphs with the same section path, broken
-    where an UNGLOSSED paragraph sits between them, so that no unit spans
-    one."""
+    """Runs of paragraphs with the same section path and consecutive
+    positions, broken where an UNGLOSSED paragraph sits between them, so that
+    no unit spans one."""
     sections: list[list[SourceParagraph]] = []
     previous: SourceParagraph | None = None
     for p in paragraphs:
@@ -237,9 +237,9 @@ def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
     """The reply's units, if it matches REPLY_SCHEMA and fits the chunk:
     spans inside the chunk and in order, every paragraph but an OPTIONAL one
     covered, no unit twice, each anchor label found verbatim in its anchor
-    paragraph (it may be cited, Invariant 3) and its term a word of that
-    label. Raises pydantic's ValidationError or InvalidReplyError; a reply is
-    accepted whole or not at all."""
+    paragraph (it may be cited, Invariant 3) and its term inside that label,
+    both casefolded ("Fig" of "Fig. 1"). Raises pydantic's ValidationError or
+    InvalidReplyError; a reply is accepted whole or not at all."""
     units = SegmentReply.model_validate(parsed).units
     text = {p.position: p.text for p in chunk.paragraphs}
     required = {p.position for p in chunk.paragraphs if p.block_kind not in OPTIONAL}
@@ -273,9 +273,12 @@ def validate_reply(parsed: object, chunk: Chunk) -> tuple[UnitReply, ...]:
                 raise InvalidReplyError(
                     f"{where}: {u.anchor_label!r} is not in paragraph {u.anchor_pos}"
                 )
-            if u.anchor_term is None or u.anchor_term not in u.anchor_label.casefold():
+            if (
+                u.anchor_term is None
+                or u.anchor_term.casefold() not in u.anchor_label.casefold()
+            ):
                 raise InvalidReplyError(
-                    f"{where}: {u.anchor_term!r} is not a word of {u.anchor_label!r}"
+                    f"{where}: {u.anchor_term!r} is not in {u.anchor_label!r}"
                 )
         previous_first = u.first_pos
         seen.add(u.key)
