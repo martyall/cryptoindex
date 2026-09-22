@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 import signal
 from collections.abc import Mapping
@@ -10,6 +11,7 @@ from cryptoindex.core import config
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import open_pool
 from cryptoindex.core.model import Stage
+from cryptoindex.ingest.model_server import mlx_vlm_server
 from cryptoindex.ingest.parsers import build_parser
 from cryptoindex.ingest.pipeline import DEFAULT_STAGES
 from cryptoindex.ingest.runner import Runner, pool_size
@@ -20,8 +22,21 @@ async def serve(
     settings: Settings, stages: Mapping[Stage, StageFn] = DEFAULT_STAGES
 ) -> None:
     """Pipeline and HTTP API on one event loop, until SIGINT or SIGTERM. Returns
-    normally after the runner has released its in-flight claims."""
+    normally after the runner has released its in-flight claims. With the
+    PaddleOCR-VL parser, its model server runs for the same span (started
+    here unless one is already listening)."""
     settings.data_dir.mkdir(parents=True, exist_ok=True)
+    async with contextlib.AsyncExitStack() as stack:
+        if settings.parser == "paddle":
+            await stack.enter_async_context(
+                mlx_vlm_server(
+                    settings.paddle_vlm_url, settings.data_dir / "logs" / "mlx-vlm.log"
+                )
+            )
+        await _serve(settings, stages)
+
+
+async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
     pool = await open_pool(settings.ingest_dsn, pool_size(settings))
     try:
         ctx = StageContext(pool=pool, settings=settings, parser=build_parser(settings))

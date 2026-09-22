@@ -27,16 +27,16 @@ reset: .env
 test: db-up
 	$(UV_RUN) pytest
 
-# With CI_PARSER=paddle (the default, D21), parsing needs `make paddle-server`
-# running in another terminal; without it, parse attempts fail, are retried
-# with backoff, and end in `failed` after CI_MAX_ATTEMPTS.
+# With CI_PARSER=paddle (the default, D21) this also starts PaddleOCR-VL's model
+# server, or reuses one already listening; its log is data/logs/mlx-vlm.log.
 run: migrate
 	$(UV_RUN) python -m cryptoindex
 
-# PaddleOCR-VL's model server, native because it needs the Mac GPU (D21). Runs in the foreground; the parse evaluation and CI_PARSER=paddle
-# need it. Model weights download on first use.
-paddle-server:
-	uvx --python 3.12 --from mlx-vlm==0.7.2 mlx_vlm.server --host 127.0.0.1 --port 8111
+# PaddleOCR-VL's model server on CI_PADDLE_VLM_URL, native because it needs the
+# Mac GPU (D21), in the foreground. The parse evaluation needs it; `make run`
+# starts its own when CI_PARSER=paddle. Weights download on first use.
+paddle-server: .env
+	$(UV_RUN) python -m cryptoindex.ingest.model_server
 
 # Runs both real parsers on eval/parse-sample and writes the review items, page
 # images and formula counts under eval/parse-sample/local/. Local only; needs

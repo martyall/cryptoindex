@@ -7,6 +7,7 @@ from psycopg import AsyncConnection
 from cryptoindex.core.model import RevisionId, Stage
 from cryptoindex.ingest.document import ParsedDocument
 from cryptoindex.ingest.paragraphs import Paragraph, paragraphs_from
+from cryptoindex.ingest.parsers import ParserError
 from cryptoindex.ingest.stages import StageContext, TransitionConflictError, advance
 
 log = logging.getLogger(__name__)
@@ -22,7 +23,8 @@ async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
     Paragraphs, the similarity warning, parser name and version, the paper's
     title (only if unset), and the transition commit in one transaction. The
     parser and its reader run in a thread (the parser is itself
-    out-of-process, D7). Raises ParserError if the parser fails, pydantic's
+    out-of-process, D7). Raises ParserError if the revision has no stored PDF
+    or the parser fails, pydantic's
     ValidationError or UnknownBlockError if its output is rejected, and
     TransitionConflictError if the revision is gone or no longer claimed.
     """
@@ -35,6 +37,8 @@ async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
     if row is None:
         raise TransitionConflictError(f"revision {work_id} disappeared")
     pdf_path, sha256, paper_id = row
+    if pdf_path is None:
+        raise ParserError(f"revision {work_id} has no stored PDF")
 
     document = await _parsed(ctx, ctx.settings.data_dir / pdf_path, sha256)
     paragraphs = paragraphs_from(document)
