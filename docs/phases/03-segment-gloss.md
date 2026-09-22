@@ -66,8 +66,9 @@ Group each revision's paragraphs into argument units, and give each unit a plain
 - Section summaries and cross-references (D17).
 
 ## Decisions from the human (2026-09-21)
-- **Glossing model: Claude Opus 5** (`claude-opus-5`, 1M-token context), through the Anthropic API.
-  - The key is `ANTHROPIC_API_KEY` in `.env`, which the config already reads. Set `CI_LLM_BACKEND=anthropic` and `CI_LLM_MODEL=claude-opus-5`.
+- **Glossing model: Claude Opus 5** (`claude-opus-5`, 1M-token context), through the Anthropic API or, in dev mode, the human's Claude Code subscription (D22).
+  - With an API key: `ANTHROPIC_API_KEY` in `.env`, `CI_LLM_BACKEND=anthropic`, `CI_LLM_MODEL=claude-opus-5`.
+  - Dev mode: `CI_LLM_BACKEND=claude_code`, no key. Usage limits apply; batches and explicit caching do not.
   - Pricing as checked on 2026-09-21: $5 input / $25 output per million tokens, half that through the Batches API, cached reads at about a tenth of input.
   - Rough estimate, to be measured with token counting at phase start: about $3 for the evaluation sample at full price (about $1.50 through batches), and about $0.70 for a 30-page paper (about $0.35 through batches). Adaptive thinking is on by default and billed as output, so either could plausibly double.
   - At phase start, confirm the context window from the Models API (`max_input_tokens`). Enable the server-side refusal fallback recommended for Opus 5, and tell the human.

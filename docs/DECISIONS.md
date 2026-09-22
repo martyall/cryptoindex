@@ -74,3 +74,11 @@ Chosen by the human after the Phase 2 evaluation (`eval/parse-report.md`: 84 of 
   - stray tokens ("i.", "i.e.") and occasional invented words;
   - no heading levels, so section paths are at most `title > section`;
   - it needs the MLX-VLM server running natively (`make paddle-server`).
+
+### D22. Glossing runs on Claude Opus 5 through an API key, or through Claude Code as a dev mode (2026-09-21)
+Approved by the human. Extends D9 with a third backend; the two D9 backends stay as they are (Invariant 9).
+- **`anthropic` (the supported option):** Claude Opus 5 through the native SDK, with `ANTHROPIC_API_KEY` in `.env`. Billed per token to Console credits; batches and prompt caching as in D5.
+- **`claude_code` (dev mode):** the same model, reached by running the human's own logged-in Claude Code in headless mode (`claude -p` with `--json-schema`), so the calls count against their Claude subscription instead of API credits. It is for personal, local use only: Anthropic does not allow products to offer claude.ai login to other people, so a deployment for anyone else uses `anthropic`.
+  - The child process is isolated: an empty working directory, a replacement system prompt, no tools, no settings, MCP servers, or skills, and no session saved. `ANTHROPIC_API_KEY` is removed from its environment, or Claude Code would bill the API instead of the subscription. `--bare` cannot be used, because it refuses subscription login.
+  - It supports single-turn JSON requests only (what glossing needs); the agent (Phase 5) uses `anthropic` or `openai_format`.
+  - Subscription usage limits apply. A call refused for a usage limit is not counted as a failed attempt; the stage waits and retries.
