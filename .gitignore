@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Local configuration and data
+.env
+data/
+
+# Evaluation sources and everything derived from them: licensed individually,
+# recorded by hash in ids.toml (D20)
+eval/parse-sample/local/
+
+# The same for the gloss spot-check: derived from the evaluation sources
+eval/gloss-sample/local/

@@ -1,0 +1,1346 @@
+{
+  "judson-groups/0/paddle": {
+    "excerpt": "judson-groups",
+    "page": 0,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:16:48.436385+00:00"
+  },
+  "judson-groups/0/marker": {
+    "excerpt": "judson-groups",
+    "page": 0,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:16:49.689504+00:00"
+  },
+  "judson-groups/1/paddle": {
+    "excerpt": "judson-groups",
+    "page": 1,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:17:07.744384+00:00"
+  },
+  "judson-groups/1/marker": {
+    "excerpt": "judson-groups",
+    "page": 1,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:17:19.794102+00:00"
+  },
+  "judson-groups/2/marker": {
+    "excerpt": "judson-groups",
+    "page": 2,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:17:33.086670+00:00"
+  },
+  "judson-groups/2/paddle": {
+    "excerpt": "judson-groups",
+    "page": 2,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:17:35.577021+00:00"
+  },
+  "judson-groups/3/marker": {
+    "excerpt": "judson-groups",
+    "page": 3,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:18:08.802496+00:00"
+  },
+  "judson-groups/3/paddle": {
+    "excerpt": "judson-groups",
+    "page": 3,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:18:12.756479+00:00"
+  },
+  "judson-groups/4/marker": {
+    "excerpt": "judson-groups",
+    "page": 4,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:18:28.432178+00:00"
+  },
+  "judson-groups/4/paddle": {
+    "excerpt": "judson-groups",
+    "page": 4,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:18:40.573474+00:00"
+  },
+  "judson-groups/5/marker": {
+    "excerpt": "judson-groups",
+    "page": 5,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:18:50.649168+00:00"
+  },
+  "judson-groups/5/paddle": {
+    "excerpt": "judson-groups",
+    "page": 5,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:18:52.923235+00:00"
+  },
+  "judson-groups/6/paddle": {
+    "excerpt": "judson-groups",
+    "page": 6,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:19:50.304234+00:00"
+  },
+  "judson-groups/6/marker": {
+    "excerpt": "judson-groups",
+    "page": 6,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:19:51.144077+00:00"
+  },
+  "judson-groups/7/paddle": {
+    "excerpt": "judson-groups",
+    "page": 7,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:20:07.503962+00:00"
+  },
+  "judson-groups/7/marker": {
+    "excerpt": "judson-groups",
+    "page": 7,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:20:08.476961+00:00"
+  },
+  "judson-groups/8/paddle": {
+    "excerpt": "judson-groups",
+    "page": 8,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:20:22.999668+00:00"
+  },
+  "judson-groups/8/marker": {
+    "excerpt": "judson-groups",
+    "page": 8,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:20:24.857422+00:00"
+  },
+  "judson-groups/9/paddle": {
+    "excerpt": "judson-groups",
+    "page": 9,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:20:34.566217+00:00"
+  },
+  "judson-groups/9/marker": {
+    "excerpt": "judson-groups",
+    "page": 9,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:20:35.686166+00:00"
+  },
+  "hefferon-reduction/0/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 0,
+    "parser": "paddle",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:20:40.973280+00:00"
+  },
+  "hefferon-reduction/0/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 0,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:20:47.997651+00:00"
+  },
+  "hefferon-reduction/1/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 1,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:21:02.675683+00:00"
+  },
+  "hefferon-reduction/1/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 1,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:21:08.641273+00:00"
+  },
+  "hefferon-reduction/2/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 2,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:21:18.299416+00:00"
+  },
+  "hefferon-reduction/2/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 2,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:21:22.713555+00:00"
+  },
+  "hefferon-reduction/3/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 3,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:21:31.014183+00:00"
+  },
+  "hefferon-reduction/3/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 3,
+    "parser": "paddle",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:21:34.163589+00:00"
+  },
+  "hefferon-reduction/4/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 4,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:21:45.414767+00:00"
+  },
+  "hefferon-reduction/4/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 4,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:21:48.531405+00:00"
+  },
+  "hefferon-reduction/5/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 5,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:22:20.039668+00:00"
+  },
+  "hefferon-reduction/5/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 5,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:22:20.885577+00:00"
+  },
+  "hefferon-reduction/6/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 6,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:22:27.381002+00:00"
+  },
+  "hefferon-reduction/6/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 6,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:22:28.601638+00:00"
+  },
+  "hefferon-reduction/7/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 7,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:22:43.411730+00:00"
+  },
+  "hefferon-reduction/7/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 7,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:22:44.360385+00:00"
+  },
+  "hefferon-reduction/8/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 8,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:22:53.398612+00:00"
+  },
+  "hefferon-reduction/8/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 8,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:22:54.239949+00:00"
+  },
+  "hefferon-reduction/9/marker": {
+    "excerpt": "hefferon-reduction",
+    "page": 9,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:23:05.824008+00:00"
+  },
+  "hefferon-reduction/9/paddle": {
+    "excerpt": "hefferon-reduction",
+    "page": 9,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:23:07.944491+00:00"
+  },
+  "calculus-integrals/0/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 0,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:23:15.183432+00:00"
+  },
+  "calculus-integrals/0/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 0,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:23:25.773929+00:00"
+  },
+  "calculus-integrals/1/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 1,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:23:33.652014+00:00"
+  },
+  "calculus-integrals/1/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 1,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:23:35.977695+00:00"
+  },
+  "calculus-integrals/2/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 2,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:23:42.790817+00:00"
+  },
+  "calculus-integrals/2/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 2,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:23:46.011392+00:00"
+  },
+  "calculus-integrals/3/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 3,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:24:07.740628+00:00"
+  },
+  "calculus-integrals/3/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 3,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:24:09.782144+00:00"
+  },
+  "calculus-integrals/4/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 4,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:24:25.051149+00:00"
+  },
+  "calculus-integrals/4/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 4,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:24:25.792456+00:00"
+  },
+  "calculus-integrals/5/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 5,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:24:29.355544+00:00"
+  },
+  "calculus-integrals/5/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 5,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:24:31.320420+00:00"
+  },
+  "mcs-proofs/3/marker": {
+    "excerpt": "mcs-proofs",
+    "page": 3,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:25:33.433040+00:00"
+  },
+  "mcs-proofs/3/paddle": {
+    "excerpt": "mcs-proofs",
+    "page": 3,
+    "parser": "paddle",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:25:34.582061+00:00"
+  },
+  "mcs-proofs/4/marker": {
+    "excerpt": "mcs-proofs",
+    "page": 4,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:25:39.703569+00:00"
+  },
+  "mcs-proofs/4/paddle": {
+    "excerpt": "mcs-proofs",
+    "page": 4,
+    "parser": "paddle",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:25:44.444525+00:00"
+  },
+  "mcs-proofs/5/paddle": {
+    "excerpt": "mcs-proofs",
+    "page": 5,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:25:52.916534+00:00"
+  },
+  "mcs-proofs/5/marker": {
+    "excerpt": "mcs-proofs",
+    "page": 5,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:25:53.782235+00:00"
+  },
+  "mcs-proofs/6/marker": {
+    "excerpt": "mcs-proofs",
+    "page": 6,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:25:58.931822+00:00"
+  },
+  "mcs-proofs/6/paddle": {
+    "excerpt": "mcs-proofs",
+    "page": 6,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:26:01.074391+00:00"
+  },
+  "mcs-proofs/7/marker": {
+    "excerpt": "mcs-proofs",
+    "page": 7,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:26:07.720218+00:00"
+  },
+  "mcs-proofs/7/paddle": {
+    "excerpt": "mcs-proofs",
+    "page": 7,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:26:10.661898+00:00"
+  },
+  "mcs-proofs/8/marker": {
+    "excerpt": "mcs-proofs",
+    "page": 8,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:26:15.736843+00:00"
+  },
+  "mcs-proofs/8/paddle": {
+    "excerpt": "mcs-proofs",
+    "page": 8,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:26:18.420361+00:00"
+  },
+  "mcs-proofs/9/paddle": {
+    "excerpt": "mcs-proofs",
+    "page": 9,
+    "parser": "paddle",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:26:25.302082+00:00"
+  },
+  "mcs-proofs/9/marker": {
+    "excerpt": "mcs-proofs",
+    "page": 9,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:26:28.685285+00:00"
+  },
+  "erickson-dp/0/marker": {
+    "excerpt": "erickson-dp",
+    "page": 0,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:26:41.270950+00:00"
+  },
+  "erickson-dp/0/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 0,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:26:45.257123+00:00"
+  },
+  "erickson-dp/1/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 1,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:26:58.093439+00:00"
+  },
+  "erickson-dp/1/marker": {
+    "excerpt": "erickson-dp",
+    "page": 1,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:26:59.249892+00:00"
+  },
+  "erickson-dp/2/marker": {
+    "excerpt": "erickson-dp",
+    "page": 2,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:27:11.060738+00:00"
+  },
+  "erickson-dp/2/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 2,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:27:13.192667+00:00"
+  },
+  "erickson-dp/3/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 3,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:27:19.573548+00:00"
+  },
+  "erickson-dp/3/marker": {
+    "excerpt": "erickson-dp",
+    "page": 3,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:27:20.513797+00:00"
+  },
+  "erickson-dp/4/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 4,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:27:25.790103+00:00"
+  },
+  "erickson-dp/4/marker": {
+    "excerpt": "erickson-dp",
+    "page": 4,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:27:26.803200+00:00"
+  },
+  "erickson-dp/5/marker": {
+    "excerpt": "erickson-dp",
+    "page": 5,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:27:33.354778+00:00"
+  },
+  "erickson-dp/5/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 5,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:27:34.382535+00:00"
+  },
+  "erickson-dp/6/marker": {
+    "excerpt": "erickson-dp",
+    "page": 6,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:27:46.437722+00:00"
+  },
+  "erickson-dp/6/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 6,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:27:48.216048+00:00"
+  },
+  "erickson-dp/7/marker": {
+    "excerpt": "erickson-dp",
+    "page": 7,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:27:56.250559+00:00"
+  },
+  "erickson-dp/7/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 7,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:27:59.174195+00:00"
+  },
+  "erickson-dp/8/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 8,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:28:06.344682+00:00"
+  },
+  "erickson-dp/8/marker": {
+    "excerpt": "erickson-dp",
+    "page": 8,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:28:07.102373+00:00"
+  },
+  "erickson-dp/9/marker": {
+    "excerpt": "erickson-dp",
+    "page": 9,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:28:10.477536+00:00"
+  },
+  "erickson-dp/9/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 9,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:28:11.551886+00:00"
+  },
+  "erickson-dp/10/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 10,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:28:16.714603+00:00"
+  },
+  "erickson-dp/10/marker": {
+    "excerpt": "erickson-dp",
+    "page": 10,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:28:17.810168+00:00"
+  },
+  "erickson-dp/11/marker": {
+    "excerpt": "erickson-dp",
+    "page": 11,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:28:23.341597+00:00"
+  },
+  "erickson-dp/11/paddle": {
+    "excerpt": "erickson-dp",
+    "page": 11,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:28:24.259215+00:00"
+  },
+  "ods-pseudocode/0/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 0,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:28:57.638859+00:00"
+  },
+  "ods-pseudocode/0/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 0,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:28:59.287150+00:00"
+  },
+  "ods-pseudocode/1/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 1,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:06.245542+00:00"
+  },
+  "ods-pseudocode/1/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 1,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:07.790114+00:00"
+  },
+  "ods-pseudocode/2/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 2,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:29:13.190348+00:00"
+  },
+  "ods-pseudocode/2/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 2,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:14.260604+00:00"
+  },
+  "ods-pseudocode/3/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 3,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:24.095756+00:00"
+  },
+  "ods-pseudocode/3/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 3,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:25.062781+00:00"
+  },
+  "ods-pseudocode/4/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 4,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:29:28.699718+00:00"
+  },
+  "ods-pseudocode/4/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 4,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:29.582996+00:00"
+  },
+  "ods-pseudocode/5/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 5,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:33.996196+00:00"
+  },
+  "ods-pseudocode/5/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 5,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:29:35.829558+00:00"
+  },
+  "ods-pseudocode/6/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 6,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:38.288209+00:00"
+  },
+  "ods-pseudocode/6/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 6,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:29:39.870577+00:00"
+  },
+  "ods-pseudocode/7/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 7,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:29:42.118898+00:00"
+  },
+  "ods-pseudocode/7/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 7,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:29:46.312701+00:00"
+  },
+  "ods-pseudocode/8/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 8,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:12.724209+00:00"
+  },
+  "ods-pseudocode/8/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 8,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:13.564876+00:00"
+  },
+  "ods-pseudocode/9/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 9,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:15.589954+00:00"
+  },
+  "ods-pseudocode/9/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 9,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:30:18.055387+00:00"
+  },
+  "ods-pseudocode/10/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 10,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:23.031428+00:00"
+  },
+  "ods-pseudocode/10/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 10,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:23.889303+00:00"
+  },
+  "ods-pseudocode/11/marker": {
+    "excerpt": "ods-pseudocode",
+    "page": 11,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:32.740194+00:00"
+  },
+  "ods-pseudocode/11/paddle": {
+    "excerpt": "ods-pseudocode",
+    "page": 11,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:33.623766+00:00"
+  },
+  "joy-mac-hybrids/0/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 0,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:30:37.727546+00:00"
+  },
+  "joy-mac-hybrids/0/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 0,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:30:44.020237+00:00"
+  },
+  "joy-mac-hybrids/1/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 1,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:30:47.885132+00:00"
+  },
+  "joy-mac-hybrids/1/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 1,
+    "parser": "paddle",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:30:51.295375+00:00"
+  },
+  "joy-mac-hybrids/2/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 2,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:30:56.461332+00:00"
+  },
+  "joy-mac-hybrids/2/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 2,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:30:57.385758+00:00"
+  },
+  "joy-mac-hybrids/3/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 3,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:31:04.886485+00:00"
+  },
+  "joy-mac-hybrids/3/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 3,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-21T23:31:05.719339+00:00"
+  },
+  "joy-mac-hybrids/4/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 4,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-21T23:31:14.383059+00:00"
+  },
+  "joy-mac-hybrids/4/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 4,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-21T23:31:15.652891+00:00"
+  },
+  "joy-mac-hybrids/5/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 5,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:12:45.906048+00:00"
+  },
+  "joy-mac-hybrids/5/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 5,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:12:47.132912+00:00"
+  },
+  "joy-mac-hybrids/6/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 6,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:13:00.668882+00:00"
+  },
+  "joy-mac-hybrids/6/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 6,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:01.821621+00:00"
+  },
+  "joy-mac-hybrids/7/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 7,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:13:05.321567+00:00"
+  },
+  "joy-mac-hybrids/7/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 7,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:10.975339+00:00"
+  },
+  "joy-mac-hybrids/8/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 8,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:17.460087+00:00"
+  },
+  "joy-mac-hybrids/8/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 8,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-22T02:13:20.267872+00:00"
+  },
+  "joy-mac-hybrids/9/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 9,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:13:26.026784+00:00"
+  },
+  "joy-mac-hybrids/9/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 9,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:27.917571+00:00"
+  },
+  "joy-mac-hybrids/10/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 10,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:34.372426+00:00"
+  },
+  "joy-mac-hybrids/10/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 10,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:13:35.342489+00:00"
+  },
+  "joy-mac-hybrids/11/paddle": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 11,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:43.030752+00:00"
+  },
+  "joy-mac-hybrids/11/marker": {
+    "excerpt": "joy-mac-hybrids",
+    "page": 11,
+    "parser": "marker",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-22T02:13:43.962731+00:00"
+  },
+  "gb-rsa-experiments/0/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 0,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:53.240992+00:00"
+  },
+  "gb-rsa-experiments/0/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 0,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:13:55.748769+00:00"
+  },
+  "gb-rsa-experiments/1/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 1,
+    "parser": "paddle",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:14:06.306637+00:00"
+  },
+  "gb-rsa-experiments/1/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 1,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:14:07.656877+00:00"
+  },
+  "gb-rsa-experiments/2/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 2,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:14:10.556593+00:00"
+  },
+  "gb-rsa-experiments/2/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 2,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:14:14.361235+00:00"
+  },
+  "gb-rsa-experiments/3/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 3,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:14:15.103858+00:00"
+  },
+  "gb-rsa-experiments/3/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 3,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:14:22.130762+00:00"
+  },
+  "gb-rsa-experiments/4/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 4,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:14:28.962560+00:00"
+  },
+  "gb-rsa-experiments/4/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 4,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:14:32.121094+00:00"
+  },
+  "gb-rsa-experiments/5/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 5,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:12.670142+00:00"
+  },
+  "gb-rsa-experiments/5/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 5,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:44:14.223921+00:00"
+  },
+  "gb-rsa-experiments/6/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 6,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:33.875945+00:00"
+  },
+  "gb-rsa-experiments/6/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 6,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:44:35.031774+00:00"
+  },
+  "gb-rsa-experiments/7/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 7,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:44:40.899910+00:00"
+  },
+  "gb-rsa-experiments/7/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 7,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:43.324275+00:00"
+  },
+  "gb-rsa-experiments/8/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 8,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:49.845042+00:00"
+  },
+  "gb-rsa-experiments/8/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 8,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:50.794718+00:00"
+  },
+  "gb-rsa-experiments/9/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 9,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:53.720285+00:00"
+  },
+  "gb-rsa-experiments/9/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 9,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:54.987034+00:00"
+  },
+  "gb-rsa-experiments/10/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 10,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:44:56.119536+00:00"
+  },
+  "gb-rsa-experiments/10/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 10,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:45:03.412283+00:00"
+  },
+  "gb-rsa-experiments/11/paddle": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 11,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:45:08.563575+00:00"
+  },
+  "gb-rsa-experiments/11/marker": {
+    "excerpt": "gb-rsa-experiments",
+    "page": 11,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:45:09.745186+00:00"
+  },
+  "calculus-integrals/6/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 6,
+    "parser": "paddle",
+    "score": 0,
+    "note": "",
+    "at": "2026-09-22T02:45:21.179600+00:00"
+  },
+  "calculus-integrals/6/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 6,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:45:23.607826+00:00"
+  },
+  "calculus-integrals/7/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 7,
+    "parser": "marker",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:45:30.912687+00:00"
+  },
+  "calculus-integrals/7/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 7,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:45:32.752187+00:00"
+  },
+  "calculus-integrals/8/marker": {
+    "excerpt": "calculus-integrals",
+    "page": 8,
+    "parser": "marker",
+    "score": 1,
+    "note": "",
+    "at": "2026-09-22T02:45:37.627782+00:00"
+  },
+  "calculus-integrals/8/paddle": {
+    "excerpt": "calculus-integrals",
+    "page": 8,
+    "parser": "paddle",
+    "score": 2,
+    "note": "",
+    "at": "2026-09-22T02:45:39.052264+00:00"
+  }
+}

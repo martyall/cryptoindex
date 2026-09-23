@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cryptoindex</title>
+<style>
+  :root { --fg: #1b1f24; --muted: #5b6470; --bg: #fff; --line: #d8dde3; --accent: #2458c6; --bad: #b3261e; --ok: #1e7b3a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6e8eb; --muted: #9aa3ad; --bg: #15181c; --line: #2c3238; --accent: #7aa5ff; --bad: #ff8a80; --ok: #6fd08c; }
+  }
+  body { font: 15px/1.45 system-ui, sans-serif; color: var(--fg); background: var(--bg); max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.3rem; margin: 0 0 1.5rem; }
+  h2 { font-size: 1rem; margin: 2rem 0 .5rem; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: .85rem; }
+  input[type=text] { width: 100%; box-sizing: border-box; font: inherit; padding: .25rem .4rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; }
+  button { font: inherit; padding: .4rem 1rem; border: 0; border-radius: 4px; background: var(--accent); color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .muted { color: var(--muted); } .bad { color: var(--bad); } .ok { color: var(--ok); }
+  .row { display: flex; gap: 1rem; align-items: center; margin: .75rem 0; }
+</style>
+</head>
+<body>
+<h1>cryptoindex</h1>
+
+<h2>Upload</h2>
+<div class="row">
+  <input type="file" id="files" accept="application/pdf,.pdf" multiple>
+  <button id="upload" disabled>Upload</button>
+</div>
+<table id="pending" hidden>
+  <thead><tr><th>File</th><th>Name</th><th>Result</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<h2>Documents</h2>
+<table>
+  <thead><tr><th>Name</th><th>Stage</th><th>Uploaded</th></tr></thead>
+  <tbody id="documents"><tr><td colspan="3" class="muted">Loading…</td></tr></tbody>
+</table>
+
+<script>
+const filesInput = document.getElementById("files");
+const uploadButton = document.getElementById("upload");
+const pending = document.getElementById("pending");
+let rows = [];
+
+function cell(text, className) {
+  const td = document.createElement("td");
+  td.textContent = text;
+  if (className) td.className = className;
+  return td;
+}
+
+function element(tag, props) {
+  return Object.assign(document.createElement(tag), props);
+}
+
+filesInput.addEventListener("change", () => {
+  const body = pending.querySelector("tbody");
+  body.replaceChildren();
+  rows = [...filesInput.files].map((file) => {
+    const tr = document.createElement("tr");
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    // Left blank, the server names the document after the file.
+    nameInput.placeholder = file.name;
+    const nameCell = document.createElement("td");
+    nameCell.append(nameInput);
+    const result = cell("", "muted");
+    tr.append(cell(file.name), nameCell, result);
+    body.append(tr);
+    return { file, nameInput, result };
+  });
+  pending.hidden = rows.length === 0;
+  uploadButton.disabled = rows.length === 0;
+});
+
+uploadButton.addEventListener("click", async () => {
+  uploadButton.disabled = true;
+  for (const row of rows) {
+    row.result.textContent = "uploading…";
+    row.result.className = "muted";
+    const form = new FormData();
+    form.append("file", row.file);
+    form.append("name", row.nameInput.value);
+    try {
+      const response = await fetch("/documents", { method: "POST", body: form });
+      const body = await response.json();
+      if (!response.ok) {
+        row.result.textContent = body.detail ?? `error ${response.status}`;
+        row.result.className = "bad";
+      } else if (body.duplicate) {
+        row.result.textContent = `already uploaded as “${body.name}”`;
+        row.result.className = "muted";
+      } else {
+        row.result.textContent = "uploaded";
+        row.result.className = "ok";
+      }
+    } catch (err) {
+      row.result.textContent = String(err);
+      row.result.className = "bad";
+    }
+    row.nameInput.disabled = true;
+  }
+  filesInput.value = "";
+  refresh();
+});
+
+async function refresh() {
+  const tbody = document.getElementById("documents");
+  try {
+    const docs = await (await fetch("/documents")).json();
+    if (docs.length === 0) {
+      tbody.replaceChildren(document.createElement("tr"));
+      tbody.firstChild.append(Object.assign(cell("No documents yet.", "muted"), { colSpan: 3 }));
+      return;
+    }
+    tbody.replaceChildren(...docs.map((d) => {
+      const tr = document.createElement("tr");
+      const stage = d.stage === "failed" && d.error ? `failed: ${d.error}` : d.stage;
+      const cls = d.stage === "ready" ? "ok" : d.stage === "failed" ? "bad" : "muted";
+      const name = cell(d.revision > 1 ? `${d.name} (v${d.revision})` : d.name);
+      if (d.similar_to) {
+        const pct = Math.round(d.similarity * 100);
+        name.append(element("div", {
+          className: "muted",
+          textContent: `looks similar to “${d.similar_to}” (${pct}% of paragraphs shared)`,
+        }));
+      }
+      tr.append(
+        name,
+        cell(stage, cls),
+        cell(new Date(d.uploaded_at).toLocaleString(), "muted"),
+      );
+      return tr;
+    }));
+  } catch {
+    tbody.replaceChildren(document.createElement("tr"));
+    tbody.firstChild.append(Object.assign(cell("Cannot reach the server.", "bad"), { colSpan: 3 }));
+  }
+}
+
+refresh();
+setInterval(refresh, 3000);
+</script>
+</body>
+</html>

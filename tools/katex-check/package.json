@@ -1,0 +1,9 @@
+{
+  "name": "katex-check",
+  "private": true,
+  "description": "Reports which LaTeX formulas KaTeX cannot render (Phase 2 parser evaluation).",
+  "type": "module",
+  "dependencies": {
+    "katex": "0.18.7"
+  }
+}

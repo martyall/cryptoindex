@@ -1,0 +1,136 @@
+# Parser evaluation sample (docs/EVALUATION.md §1; D19, D20).
+#
+# Sources were downloaded once on 2026-09-21 into local/sources/<name>.pdf,
+# which is not in git: re-download from `url` and check `sha256`.
+#
+# Excerpts are the densest window of hard cases in each source, found by
+# scoring every page for signals (pseudocode arrows, game-box keywords,
+# integrals, matrices, diagram words, theorem/proof counts). Four were checked
+# by eye (leinster, joy, erickson, gb). Pages are 1-based PDF page indices,
+# inclusive, not the page numbers printed on the page.
+
+[[source]]
+name = "judson-aata"
+sha256 = "593e9fc425bb462b51e1258aa0ae03b941d982498ca6d21500b23b329fa46a82"
+pages = 357
+license = "GFDL 1.2+"
+url = "https://judsonbooks.org/aata-files/aata-20220728.pdf"
+
+[[source]]
+name = "hefferon-linear-algebra"
+sha256 = "5240f2782e645bc6351ad9eba69d8c19500142a5cca9c90450c17b3765a1a400"
+pages = 525
+license = "GFDL 1.2+ or CC BY 3.0 US"
+url = "https://upload.wikimedia.org/wikipedia/commons/a/a3/Jim_Hefferon_-_Linear_Algebra_%284th_Edition%29.pdf"
+
+[[source]]
+name = "active-calculus-2e"
+sha256 = "686b0f905e84c611da69b37d28ee2d7ba222ff6fc965cac2b7624d8e1f73a110"
+pages = 593
+license = "CC BY-SA 4.0"
+url = "https://activecalculus.org/wp-content/uploads/2025/08/acs2e-8-7-25.pdf"
+
+[[source]]
+name = "leinster-basic-category-theory"
+sha256 = "d9f933c65a4b5e156a0287a144fae3970466d3f4f040151ee19830aa5d139e52"
+pages = 191
+license = "CC BY-NC-SA 4.0"
+url = "https://arxiv.org/pdf/1612.09375"
+
+[[source]]
+name = "lehman-mcs"
+sha256 = "a07e73979a55f0be10633fcba12c0195f4475288a9b84331c8eb0de0e0a1571a"
+pages = 920
+license = "CC BY-SA 3.0"
+url = "https://ocw.mit.edu/courses/6-042j-mathematics-for-computer-science-spring-2015/mit6_042js15_textbook.pdf"
+
+[[source]]
+name = "erickson-algorithms"
+sha256 = "00295b82ff725c52a71351a0bb1ee1bdb1584e594a62395d3fb382aefd0f4d42"
+pages = 472
+license = "CC BY 4.0"
+url = "https://jeffe.cs.illinois.edu/teaching/algorithms/book/Algorithms-JeffE.pdf"
+
+[[source]]
+name = "morin-ods-pseudocode"
+sha256 = "2bdd7e8129fff83daf04cd594fce5236d72b1d8b8c72832fde22ea762a7e014f"
+pages = 326
+license = "CC BY"
+url = "https://opendatastructures.org/ods-python.pdf"
+
+[[source]]
+name = "rosulek-joy-of-crypto"
+sha256 = "68fcdc7cf0874fd535daa78700029c5b7ad46c22b078d3f0dbe3eb8a988245c1"
+pages = 286
+license = "Creative Commons, non-commercial (see book)"
+url = "https://joyofcryptography.com/pdf/book.pdf"
+
+[[source]]
+name = "goldwasser-bellare-notes"
+sha256 = "51f3fa54d87443e0d84bf9dde313e9222dbd242facfe116b0e45bdb20b500247"
+pages = 289
+license = "no open license stated; evaluation use only"
+url = "https://cseweb.ucsd.edu/~mihir/papers/gb.pdf"
+
+[[excerpt]]
+name = "judson-groups"
+source = "judson-aata"
+first_page = 273
+last_page = 282
+stresses = "theorem/proof runs, group notation"
+
+[[excerpt]]
+name = "hefferon-reduction"
+source = "hefferon-linear-algebra"
+first_page = 60
+last_page = 69
+stresses = "matrices, row reductions"
+
+[[excerpt]]
+name = "calculus-integrals"
+source = "active-calculus-2e"
+first_page = 197
+last_page = 206
+stresses = "integrals, limits, derivations"
+
+[[excerpt]]
+name = "leinster-functors"
+source = "leinster-basic-category-theory"
+first_page = 24
+last_page = 35
+stresses = "commutative and labelled-arrow diagrams"
+
+[[excerpt]]
+name = "mcs-proofs"
+source = "lehman-mcs"
+first_page = 798
+last_page = 807
+stresses = "proofs, theorem/lemma structure"
+
+[[excerpt]]
+name = "erickson-dp"
+source = "erickson-algorithms"
+first_page = 129
+last_page = 140
+stresses = "pseudocode, cases/recurrences, tables"
+
+[[excerpt]]
+name = "ods-pseudocode"
+source = "morin-ods-pseudocode"
+first_page = 269
+last_page = 280
+stresses = "pseudocode listings"
+
+[[excerpt]]
+name = "joy-mac-hybrids"
+source = "rosulek-joy-of-crypto"
+first_page = 199
+last_page = 210
+stresses = "side-by-side game boxes, highlighting"
+
+[[excerpt]]
+name = "gb-rsa-experiments"
+source = "goldwasser-bellare-notes"
+first_page = 186
+last_page = 197
+stresses = "older PDF, algorithms, experiments, sampling arrows"

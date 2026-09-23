@@ -1,0 +1,96 @@
+# Interfaces
+
+Signatures are illustrative Python; the shapes are the contract.
+
+## Stage function
+
+```python
+async def stage(work_id: int, ctx: StageContext) -> None
+```
+- `work_id` is a `docs.revisions.id`. The stage loads whatever it needs from the DB.
+- Must be idempotent. Must commit output and the stage transition in one transaction, then return. The runner signals the next channel after return.
+- Raise to signal failure; the runner records `last_error`, increments `attempts`.
+
+## Pipeline runner
+
+- One bounded `asyncio.Queue[int]` per stage transition; capacity is configuration.
+- Per-stage concurrency is configuration (parse: 1, gloss: N, embed: 1).
+- On startup: mark stale locks, re-seed each queue from `docs.revisions` by stage.
+- Exposes `enqueue(work_id)` and a status snapshot (counts per stage) for the API.
+
+## Parser
+
+```python
+class Parser(Protocol):
+    name: str
+    version: str
+    def parse(self, pdf_path: Path) -> str  # Markdown with LaTeX math
+```
+Runs out-of-process. Implementations: `MarkerParser`, `PaddleVLParser` (client of an MLX-VLM server), `ArxivSourceParser`. A separate pure function turns Markdown into paragraphs with section paths and block detection.
+
+## LLM backend
+
+```python
+class LLM(Protocol):
+    name: str
+    model: str   # requested; Completion.model says which model answered
+    async def complete(self, system: str, messages: list[Message],
+                       tools: list[ToolSpec] | None = None,
+                       json_schema: dict | None = None,
+                       cache_prefix: bool = False) -> Completion
+```
+`Completion` holds text, the model that produced it, parsed JSON (if a schema was given), and tool calls. Implementations: `AnthropicLLM` (native SDK; also a `BatchLLM`, whose `batch()` is used only by glossing), `OpenAIFormatLLM` (local servers), `ClaudeCodeLLM` (dev mode, single-turn JSON only, D22), `FakeLLM` (replays recorded responses keyed by request hash; used in tests), and `RecordingLLM` (wraps a real backend and writes FakeLLM recordings).
+
+## Embedder
+
+```python
+class Embedder(Protocol):
+    model: str
+    dims: int
+    def embed_documents(self, texts: list[str]) -> np.ndarray
+    def embed_queries(self, texts: list[str], instruction: str) -> np.ndarray
+```
+Qwen3 requires the instruction prefix on queries only. Vectors are L2-normalized. `FakeEmbedder` (deterministic hash-based vectors) for tests.
+
+## Retrieval
+
+```python
+async def search(pool, embedder, q: str, k: int = 10,
+                 channels: Collection[Channel] = ALL_CHANNELS,
+                 paper_ids: Sequence[UUID] | None = None) -> list[Hit]
+```
+`Hit` = one argument unit: its document and span, score, channel breakdown (each channel that found it and its rank there), the paragraphs that earned those ranks, and the unit's paragraphs. Channels: paragraph, gloss and question vectors, `simple` full text, trigram on `latex_norm`, fused by Reciprocal Rank Fusion. Only current, ready revisions are searched.
+
+## Citation
+
+```python
+@dataclass(frozen=True)
+class Citation:
+    source_type: str   # 'paper' (core); plugins add more (D12)
+    source_id: str     # paper: the cited paragraph's ID
+```
+```python
+class CitationSource(Protocol):
+    source_type: str
+    def render(self, c: Citation) -> str   # 'Kimchi specification, p. 42, §7 …, Definition 7.5'
+```
+A citation is a location, rendered from stored data only (D30). Checker: the cited source must have been returned by a tool in the same session, or the citation is removed and marked; an unknown `source_type` is removed the same way (D29).
+
+## Agent
+
+```python
+class AnswerHandler(Protocol):  # D28; the first is the Claude Agent SDK
+    async def answer(self, question: str, tools: Tools) -> AsyncIterator[AgentEvent]
+```
+Events: `tool_call`, `tool_result`, `answer` (structured), then the checker's `final`: the answer with each citation rendered or marked removed (D29). Tools, read-only: `search`, `get_unit`, `get_paragraphs`, `get_document`. Answer schema: `{answer, citations: [{marker, paragraph_id}]}`, where `answer` is prose carrying the markers.
+
+## Plugin registration (core contract v1)
+
+Entry point group `cryptoindex.plugins`; a plugin exposes `register(core: CoreAPI)` where `CoreAPI` offers: migrations hook (plugin's own schema), `add_citation_source`, `add_tools`, `subscribe(event_kind, handler)`, `embedding_model()`, and read access to `docs.*` via the query role.
+
+## HTTP API (Phase 6)
+
+- `POST /ingest/papers` (IDs or category+range) · `POST /ingest/retry` · `POST /ingest/regloss` (prompt version) · `GET /ingest/status` · `GET /ingest/events` (SSE)
+- `GET /search?q=&…` · `GET /papers/{id}` · `GET /units/{id}` · `GET /paragraphs?revision=&from=&to=`
+- `POST /agent/answer` (SSE stream of `AgentEvent`)
+- `GET /openapi.json`

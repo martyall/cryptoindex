@@ -1,0 +1,82 @@
+[project]
+name = "cryptoindex"
+version = "0.1.0"
+description = "Citation-grounded retrieval over cryptography papers"
+authors = [
+    { name = "Martin Allen", email = "martyall@protonmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1.7.0",
+    "claude-agent-sdk>=0.2.158",
+    "fastapi>=0.141.1",
+    "huggingface-hub>=1.32.0",
+    "markdown-it-py>=4.2.0",
+    "mdit-py-plugins>=0.6.1",
+    "numpy>=2.4.6",
+    "openai>=3.17.0",
+    "pgvector>=0.5.0",
+    "psycopg[binary,pool]>=3.3.6",
+    "pydantic>=2.13.5",
+    "pylatexenc>=2.11",
+    "pypdf>=6.19.0",
+    "python-json-logger>=4.2.0",
+    "python-multipart>=0.0.32",
+    "sentence-transformers>=6.1.0",
+    "torch>=2.14.0",
+    "uvicorn>=0.53.0",
+]
+
+[project.scripts]
+cryptoindex = "cryptoindex.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "httpx-sse>=0.4.3",
+    "httpx2>=2.13.0",
+    "pillow>=12.3.0",
+    "pypdfium2>=5.13.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.8",
+    "ty>=0.0.82",
+]
+
+[tool.ruff]
+# ruff formats Python code blocks in Markdown; the design docs are not ours to reflow
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ERA", "FIX"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cryptoindex"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+[tool.ty.terminal]
+error-on-warning = true
+
+# CI runs on Linux without a GPU and never loads the model (tests use
+# FakeEmbedder): the CPU-only build avoids gigabytes of CUDA wheels.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
