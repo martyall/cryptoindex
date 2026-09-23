@@ -38,6 +38,8 @@ class Settings:
     llm_backend: LLMBackend
     llm_base_url: str
     llm_model: str
+    agent_model: str  # D28: the answer handler's model, apart from glossing's
+    agent_max_turns: int
     anthropic_api_key: str | None = field(repr=False)
     claude_bin: str
     llm_record_dir: Path | None
@@ -127,6 +129,8 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         llm_backend=llm_backend,
         llm_base_url=opt("CI_LLM_BASE_URL", "http://localhost:8080/v1"),
         llm_model=opt("CI_LLM_MODEL", ""),
+        agent_model=opt("CI_AGENT_MODEL", "claude-opus-5-5"),
+        agent_max_turns=num("CI_AGENT_MAX_TURNS", "16", int, 1),
         anthropic_api_key=env.get("ANTHROPIC_API_KEY") or None,
         claude_bin=opt("CI_CLAUDE_BIN", "claude"),
         llm_record_dir=Path(env["CI_LLM_RECORD_DIR"])

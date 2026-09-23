@@ -19,13 +19,16 @@ from cryptoindex.core.embed import (
 )
 from cryptoindex.core.logs import configure as configure_logging
 from cryptoindex.core.model import Stage
+from cryptoindex.core.prompts import load_prompt
 from cryptoindex.ingest.model_server import mlx_vlm_server
 from cryptoindex.ingest.parsers import build_parser
 from cryptoindex.ingest.pipeline import DEFAULT_STAGES
 from cryptoindex.ingest.runner import Runner, pool_size
 from cryptoindex.ingest.stages import StageContext, StageFn
+from cryptoindex.query.claude_agent import ClaudeAgentHandler
 
 QUERY_POOL_SIZE = 4
+AGENT_PROMPT = "agent-v1"  # Invariant 10
 
 
 async def serve(
@@ -77,7 +80,17 @@ async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
         server = uvicorn.Server(
             uvicorn.Config(
                 create_app(
-                    runner, pool, settings, query_pool, search_embedder, searching
+                    runner,
+                    pool,
+                    settings,
+                    query_pool,
+                    search_embedder,
+                    searching,
+                    ClaudeAgentHandler(
+                        settings.agent_model,
+                        load_prompt(AGENT_PROMPT),
+                        settings.agent_max_turns,
+                    ),
                 ),
                 host=settings.api_host,
                 port=settings.api_port,

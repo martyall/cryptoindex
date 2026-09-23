@@ -8,6 +8,7 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "anthropic>=1.7.0",
+    "claude-agent-sdk>=0.2.158",
     "fastapi>=0.141.1",
     "huggingface-hub>=1.32.0",
     "markdown-it-py>=4.2.0",
@@ -36,6 +37,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "httpx-sse>=0.4.3",
     "httpx2>=2.13.0",
     "pillow>=12.3.0",
     "pypdfium2>=5.13.0",

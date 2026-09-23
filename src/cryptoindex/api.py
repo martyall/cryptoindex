@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
+from cryptoindex.evaluation.ask_page import mount_ask
 from cryptoindex.evaluation.search_page import mount_search
 from cryptoindex.ingest.importer import (
     ImportResult,
@@ -18,6 +19,7 @@ from cryptoindex.ingest.importer import (
     import_document,
 )
 from cryptoindex.ingest.runner import Runner, Status
+from cryptoindex.query.answer import AnswerHandler
 
 UPLOAD_PAGE = Path(__file__).with_name("static") / "upload.html"
 
@@ -48,12 +50,16 @@ def create_app(
     query_pool: Pool,
     embedder: Embedder,
     vectors: VectorSet = PRIMARY,
+    handler: AnswerHandler | None = None,
 ) -> FastAPI:
     """`pool` is the ci_ingest role, for uploads and status; `query_pool` is
     ci_query, for search (Invariant 7). `embedder` must be the model behind
-    `vectors` (Invariant 6, D27); the caller checks that at startup."""
+    `vectors` (Invariant 6, D27); the caller checks that at startup. The Ask
+    page is served when there is a `handler` (D28)."""
     app = FastAPI(title="cryptoindex", version="0.1.0")
     mount_search(app, query_pool, embedder, vectors)
+    if handler is not None:
+        mount_ask(app, handler, query_pool, embedder, vectors)
 
     @app.get("/", include_in_schema=False)
     async def upload_page() -> FileResponse:

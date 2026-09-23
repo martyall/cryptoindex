@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask</title>
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+  :root { --fg: #1b1f24; --muted: #5b6470; --bg: #fff; --line: #d8dde3; --accent: #2458c6; --soft: #f3f5f8; --bad: #b3261e; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg: #e6e8eb; --muted: #9aa3ad; --bg: #15181c; --line: #2c3238; --accent: #7aa5ff; --soft: #1d2126; --bad: #ff8a80; }
+  }
+  * { box-sizing: border-box; }
+  body { font: 15px/1.55 system-ui, sans-serif; color: var(--fg); background: var(--bg); margin: 0; }
+  header { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); padding: .6rem 1rem; display: flex; gap: .8rem; align-items: center; }
+  header .title { font-weight: 600; }
+  header a { color: var(--accent); }
+  #q { flex: 1; font: inherit; padding: .4rem .6rem; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); }
+  button { font: inherit; padding: .35rem .9rem; border: 1px solid var(--accent); border-radius: 4px; background: var(--accent); color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  main { max-width: 52rem; margin: 0 auto; padding: 1rem; }
+  .muted { color: var(--muted); }
+  #steps { font-size: .85rem; border-left: 3px solid var(--line); padding-left: .8rem; margin: 0 0 1rem; }
+  #steps div { margin: .15rem 0; }
+  #answer { white-space: pre-wrap; font-size: 1.02rem; }
+  #citations { margin-top: 1rem; padding: .6rem .8rem; background: var(--soft); border-radius: 6px; }
+  #citations div { margin: .25rem 0; }
+  .removed { color: var(--bad); }
+  .error { color: var(--bad); }
+</style>
+</head>
+<body>
+<header>
+  <span class="title">Ask</span>
+  <input id="q" type="text" placeholder="Ask a question about the indexed documents" autofocus>
+  <button id="go">Ask</button>
+  <a href="../search/">search</a>
+</header>
+<main>
+  <div id="steps" hidden></div>
+  <div id="answer"></div>
+  <div id="citations" hidden></div>
+</main>
+<script src="katex/katex.min.js"></script>
+<script src="katex/contrib/auto-render.min.js"></script>
+<script>
+// Each server-sent event is one AgentEvent (answer.py). Citations are shown
+// as locations only (D30); a removed one says why (D29).
+let source = null;
+
+function element(tag, props = {}, children = []) {
+  const el = Object.assign(document.createElement(tag), props);
+  el.append(...children);
+  return el;
+}
+
+function step(text, cls) {
+  const steps = document.getElementById("steps");
+  steps.hidden = false;
+  steps.append(element("div", { textContent: text, className: cls ?? "" }));
+}
+
+function show(event) {
+  if (event.kind === "tool_call") step(`→ ${event.tool} ${JSON.stringify(event.input)}`);
+  else if (event.kind === "tool_result") step(`  ${event.tool}: ${event.error ?? `${event.new_paragraphs} new paragraphs`}`, "muted");
+  else if (event.kind === "error") step(`error: ${event.result ?? event.error ?? event.subtype}`, "error");
+  else if (event.kind === "final") {
+    const answer = document.getElementById("answer");
+    answer.textContent = event.answer;
+    if (window.renderMathInElement) renderMathInElement(answer, { delimiters: [
+      { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }], throwOnError: false });
+    const list = document.getElementById("citations");
+    list.hidden = event.citations.length === 0;
+    list.replaceChildren(...event.citations.map((c) => c.rendered
+      ? element("div", { textContent: `${c.marker} ${c.rendered}` })
+      : element("div", { className: "removed", textContent: `${c.marker} removed: ${c.removed}` })));
+  }
+}
+
+function run() {
+  const q = document.getElementById("q").value.trim();
+  if (!q) return;
+  if (source) source.close();
+  document.getElementById("steps").replaceChildren();
+  document.getElementById("answer").textContent = "";
+  document.getElementById("citations").hidden = true;
+  const button = document.getElementById("go");
+  button.disabled = true;
+  step("asking…", "muted");
+  source = new EventSource(`api/ask?${new URLSearchParams({ q })}`);
+  source.onmessage = (m) => show(JSON.parse(m.data));
+  const stop = () => { source.close(); button.disabled = false; };
+  source.addEventListener("done", stop);
+  source.onerror = () => { step("connection lost", "error"); stop(); };
+}
+
+document.getElementById("go").onclick = run;
+document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+</script>
+</body>
+</html>
