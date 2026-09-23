@@ -67,3 +67,4 @@ Ask a question in plain words; an agent searches the index, reads the relevant p
 ## Deferred
 - **Showing a cited paragraph's stored text** beside the answer, for judging answer quality once answers are evaluated (D30).
 - **Printed page numbers.** PaddleOCR-VL reads them (its `number` blocks), and the parser discards them as page furniture. Keeping them per page would need a parser change and a re-parse; many documents print none.
+- **A time limit on each `claude_code` call** (for Phase 7's retry policy). Glossing the corpus (D18, `docs/CORPUS.md`) on 2026-09-22 ran into what looked like subscription throttling. One `claude -p` call sat idle for over 15 minutes, and the thesis took about seven hours instead of about twenty minutes. Nothing was lost, because each chunk's reply is stored as it arrives. But a stalled call blocks its stage with no limit and nothing in the log. The API backend has a 900 s timeout; the subprocess has none.
