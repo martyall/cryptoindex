@@ -44,8 +44,12 @@ def runner(settings: Settings, pool: Pool, tmp_path: Path) -> Runner:
 
 
 @pytest.fixture
-async def client(runner: Runner, pool: Pool) -> AsyncIterator[httpx.AsyncClient]:
-    app = create_app(runner, pool, runner._ctx.settings)
+async def client(
+    runner: Runner, pool: Pool, query_pool: Pool
+) -> AsyncIterator[httpx.AsyncClient]:
+    app = create_app(
+        runner, pool, runner._ctx.settings, query_pool, runner._ctx.embedder
+    )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as c:
         yield c
@@ -126,3 +130,12 @@ async def test_uploaded_document_reaches_ready_without_restart(
     finally:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
+
+
+async def test_the_search_page_is_served_by_the_same_process(
+    client: httpx.AsyncClient,
+) -> None:
+    page = await client.get("/search/")
+    assert page.status_code == 200 and "Search QA" in page.text
+    response = await client.get("/search/api/search", params={"q": "stub"})
+    assert response.status_code == 200 and response.json() == []  # nothing ready

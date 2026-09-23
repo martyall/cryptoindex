@@ -40,7 +40,7 @@ Make the index searchable, and let the human check by hand how well search finds
    - A matching paragraph expands to its enclosing unit or units. A matching gloss or question expands to its unit's paragraphs.
    - Filters: document IDs, kinds to keep and kinds to drop (D25), and current revisions only by default.
 
-5. **Search page for manual QA** (D24), `make search` on 127.0.0.1, in the style of the review pages.
+5. **Search page for manual QA** (D24), served by `make run` at `/search/`, in the style of the review pages. It runs in the pipeline's process and shares its embedder, so the embedding model is loaded once.
    - A query box, and per hit: the document, the locator (block label or paragraph), the rendered passage with all math rendered, the unit it expands to, and which channels found it with their ranks.
    - A switch to leave out the gloss and question channels, so their effect can be seen by hand, and the kinds present in the results as filters (D25, D26).
    - It calls the same `cryptoindex.query` functions the API and agent will use. The page itself is a QA tool, not the browser UI (which is out of scope).
@@ -62,6 +62,7 @@ Make the index searchable, and let the human check by hand how well search finds
 - Repairing parser noise; re-segmenting narrow units. Manual QA may show their effect; neither is fixed here.
 
 ## Found during the phase
+- **A separate search server doubled the embedding model's memory.** `make search` ran in its own process, so it loaded its own copy of the model: with Qwen3-Embedding-8B, 15 GB for the search page and 24 GB for the pipeline, 39 GB of this machine's 48. The page is now part of the main process (ARCHITECTURE: one process), sharing the pipeline's embedder, which takes a lock per batch so a search and an embed stage can share the GPU.
 - **Nothing could redo a finished stage.** A prompt, parser or embedding-model change meant `make reset` and uploading every document again, re-parsing for nothing; Phase 3 and Phase 4 hit this four times. `make requeue STAGE=… DOCS=…` now sends revisions back to a stage (pulled forward from roadmap Phase 7, which keeps the HTTP endpoint). The caches make the rest cheap: the stored PDF, the parser's raw output, and each chunk's reply are all reused, so only what changed is redone. A requeue to `embed` clears vectors, since the embed stage only fills missing ones.
 - **MLX-VLM 0.7.2's continuous batching corrupted PaddleOCR-VL's output.** PaddleX sends many blocks to the model server at once; when the server decoded several together, the first tokens of each changed. Display formulas lost their opening `\[`, so PaddleX left them undelimited with a stray `\]`: 32 of Halo's 56 display equations could not be rendered and were missing from notation search. The same 16 formula crops sent one at a time all began with `\[`; sent together, 2 of 16 did. The server now runs with `--max-num-seqs 1` (one sequence at a time), which gives the sequential output for concurrent requests; the parser version records the setting, so documents are parsed again. Some of the parser noise attributed to PaddleOCR-VL in Phase 2 and Phase 3 (D21, D23) may have had the same cause.
   - After the fix, Halo re-parsed in the same time (about 3 minutes); 55 of its 57 display equations render and are in notation search (24 of 56 before).

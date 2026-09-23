@@ -72,6 +72,16 @@ async def pool(settings: Settings) -> AsyncIterator[Pool]:
         await p.close()
 
 
+@pytest.fixture
+async def query_pool(settings: Settings) -> AsyncIterator[Pool]:
+    """The read-only ci_query role, as search uses it (Invariant 7)."""
+    p = await open_pool(settings.query_dsn, 2)
+    try:
+        yield p
+    finally:
+        await p.close()
+
+
 SeedFn = Callable[[list[Stage]], list[int]]
 
 

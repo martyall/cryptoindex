@@ -2,7 +2,7 @@ UV_RUN := uv run --env-file .env
 
 .PHONY: help db-up db-down migrate reset requeue test run check fmt paddle-server \
 	parse-eval parse-review parse-close-blind parse-report gloss-eval gloss-review \
-	gloss-report search
+	gloss-report
 
 .DEFAULT_GOAL := help
 
@@ -40,6 +40,7 @@ reset: .env ## Delete the database volume and CI_DATA_DIR, then migrate afresh
 ## # Pipeline
 
 run: migrate ## Start the pipeline and the API on CI_API_PORT
+    ## Upload page at /, search QA page at /search/ (D24), one process.
     ## With CI_PARSER=paddle (D21) this also starts PaddleOCR-VL's model
     ## server, or reuses one already listening: data/logs/mlx-vlm.log.
 	$(UV_RUN) python -m cryptoindex
@@ -56,9 +57,6 @@ paddle-server: .env ## Run PaddleOCR-VL's model server on its own
     ## parser evaluation needs it; `make run` starts its own. Weights
     ## download on first use.
 	$(UV_RUN) python -m cryptoindex.ingest.model_server
-
-search: .env ## Serve the search QA page on 127.0.0.1:8011 (D24)
-	$(UV_RUN) python -m cryptoindex.evaluation.search_page
 
 ## # Checks
 

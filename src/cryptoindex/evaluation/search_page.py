@@ -1,24 +1,21 @@
-"""The manual QA search page (D24), `make search`: a query box over the real
-index, using the same query functions as the API and agent will. Each hit
-shows the unit's passage with its math rendered, which channels found it at
-what rank, and the paragraphs they matched. Binds to 127.0.0.1 only."""
+"""The manual QA search page (D24), served by `make run` at /search/: a query
+box over the real index, using the same query functions as the API and agent
+will. Each hit shows the unit's passage with its math rendered, which
+channels found it at what rank, and the paragraphs they matched."""
 
-import asyncio
 import html
 from pathlib import Path
 from typing import Annotated
 
-import uvicorn
-from fastapi import FastAPI, Query
+from fastapi import APIRouter, FastAPI, Query
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from markdown_it import MarkdownIt
 from mdit_py_plugins.dollarmath import dollarmath_plugin
 from pydantic import BaseModel
 
-from cryptoindex.core import config
-from cryptoindex.core.db import Pool, open_pool
-from cryptoindex.core.embed import Embedder, build_embedder, check_embed_model
+from cryptoindex.core.db import Pool
+from cryptoindex.core.embed import Embedder
 from cryptoindex.core.latex import formulas
 from cryptoindex.evaluation.parse_eval import KATEX_TOOL
 from cryptoindex.query.search import (
@@ -30,7 +27,6 @@ from cryptoindex.query.search import (
 )
 
 PAGE = Path(__file__).with_name("search_page.html")
-PORT = 8011
 
 # Parser text is untrusted: raw HTML in it is escaped, and only tables pass
 # through as the parser's own HTML.
@@ -105,14 +101,24 @@ def hit_view(hit: Hit) -> HitView:
     )
 
 
-def create_app(pool: Pool, embedder: Embedder, katex_dir: Path) -> FastAPI:
-    app = FastAPI(title="search QA")
+KATEX_DIR = KATEX_TOOL / "node_modules" / "katex" / "dist"
 
-    @app.get("/")
+
+def mount_search(
+    app: FastAPI, pool: Pool, embedder: Embedder, katex_dir: Path = KATEX_DIR
+) -> None:
+    """Serve the page at /search/ in `app`, the pipeline's own process, so
+    searches embed queries with the model the pipeline already holds: one
+    copy per process, not one per server. `pool` is the ci_query role
+    (Invariant 7). Math renders only once `make parse-eval` has installed
+    KaTeX in tools/katex-check."""
+    router = APIRouter(prefix="/search")
+
+    @router.get("/", include_in_schema=False)
     async def page() -> FileResponse:
         return FileResponse(PAGE)
 
-    @app.get("/api/search")
+    @router.get("/api/search")
     async def run(
         q: str,
         generated: bool = True,
@@ -133,33 +139,7 @@ def create_app(pool: Pool, embedder: Embedder, katex_dir: Path) -> FastAPI:
         )
         return [hit_view(h) for h in hits]
 
-    app.mount("/katex", StaticFiles(directory=katex_dir), name="katex")
-    return app
-
-
-async def serve(settings: config.Settings) -> None:
-    """Refuses to start if the index was embedded with another model."""
-    pool = await open_pool(settings.query_dsn, 4)
-    try:
-        async with pool.connection() as conn:
-            await check_embed_model(conn, settings.embed_model)  # Invariant 6
-        app = create_app(
-            pool,
-            build_embedder(settings),
-            KATEX_TOOL / "node_modules" / "katex" / "dist",
-        )
-        print(f"search page: http://127.0.0.1:{PORT}/")
-        server = uvicorn.Server(
-            uvicorn.Config(app, host="127.0.0.1", port=PORT, log_level="warning")
-        )
-        await server.serve()
-    finally:
-        await pool.close()
-
-
-def main() -> None:
-    asyncio.run(serve(config.settings))
-
-
-if __name__ == "__main__":
-    main()
+    app.include_router(router)
+    app.mount(
+        "/search/katex", StaticFiles(directory=katex_dir, check_dir=False), "katex"
+    )

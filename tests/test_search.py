@@ -1,14 +1,15 @@
-from collections.abc import AsyncIterator, Callable
+from collections.abc import Callable
 from pathlib import Path
 from typing import LiteralString
 
 import httpx
 import psycopg
 import pytest
+from fastapi import FastAPI
 from psycopg.rows import TupleRow
 
 from cryptoindex.core.config import Settings
-from cryptoindex.core.db import Pool, open_pool
+from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import (
     EmbedModelMismatchError,
     FakeEmbedder,
@@ -17,7 +18,7 @@ from cryptoindex.core.embed import (
 )
 from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
-from cryptoindex.evaluation.search_page import create_app, paragraph_html
+from cryptoindex.evaluation.search_page import mount_search, paragraph_html
 from cryptoindex.ingest.embedding import embed_stage
 from cryptoindex.ingest.paragraphs import content_hash
 from cryptoindex.ingest.parsers import StubParser
@@ -108,15 +109,6 @@ def ctx(pool: Pool, settings: Settings, embedder: FakeEmbedder) -> StageContext:
         llm=FakeLLM({}),
         embedder=embedder,
     )
-
-
-@pytest.fixture
-async def query_pool(settings: Settings) -> AsyncIterator[Pool]:
-    p = await open_pool(settings.query_dsn, 2)
-    try:
-        yield p
-    finally:
-        await p.close()
 
 
 async def test_embed_stage_fills_vectors_and_latex_and_makes_ready(
@@ -247,18 +239,19 @@ async def test_search_page_returns_rendered_hits(
     settings: Settings, pool: Pool, query_pool: Pool, work_id: int, tmp_path: Path
 ) -> None:
     await indexed(settings, pool, work_id)
-    app = create_app(query_pool, FakeEmbedder(), tmp_path)
+    app = FastAPI()
+    mount_search(app, query_pool, FakeEmbedder(), tmp_path)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as client:
-        response = await client.get("/api/search", params={"q": "nonconstant"})
+        response = await client.get("/search/api/search", params={"q": "nonconstant"})
         without = await client.get(
-            "/api/search", params={"q": ASKED, "generated": "false"}
+            "/search/api/search", params={"q": ASKED, "generated": "false"}
         )
         refs = await client.get(
-            "/api/search", params={"q": "Bootle", "references": "true"}
+            "/search/api/search", params={"q": "Bootle", "references": "true"}
         )
         kinds = await client.get(
-            "/api/search", params={"q": "nonconstant", "kinds": "theorem"}
+            "/search/api/search", params={"q": "nonconstant", "kinds": "theorem"}
         )
     (hit, *_) = response.json()
     assert hit["anchor_label"] == "Theorem 1" and hit["first_pos"] == 0

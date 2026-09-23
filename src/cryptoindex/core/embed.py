@@ -64,7 +64,8 @@ class Qwen3Embedder:
     dimensions: the models are trained so that a prefix of the vector is
     itself an embedding, and the index's columns are fixed at CI_EMBED_DIMS.
     The model is loaded on first use, so starting the process stays fast;
-    loading and encoding block, so call through `asyncio.to_thread`."""
+    loading and encoding block, so call through `asyncio.to_thread`. Safe to
+    share between threads."""
 
     def __init__(self, model: str, revision: str, dims: int, device: str) -> None:
         self.model = model
@@ -73,6 +74,11 @@ class Qwen3Embedder:
         self._device = device
         self._loaded: SentenceTransformer | None = None
         self._lock = threading.Lock()
+        # One model serves the embed stage and searches, from different
+        # threads, and torch on MPS is not safe to drive from two at once.
+        # Taken per batch, so a search waits for one batch of a long
+        # ingestion, not for all of it.
+        self._encoding = threading.Lock()
 
     def _model(self) -> "SentenceTransformer":
         with self._lock:
@@ -102,16 +108,19 @@ class Qwen3Embedder:
     def _encode(self, texts: list[str], prompt: str | None) -> Vectors:
         if not texts:
             return np.empty((0, self.dims), dtype=np.float32)
-        vectors = (
-            self._model()
-            .encode(
-                texts,
-                prompt=prompt,
-                batch_size=BATCH_SIZE,
-                convert_to_numpy=True,
-            )
-            .astype(np.float32)
-        )
+        model = self._model()
+        batches = []
+        for start in range(0, len(texts), BATCH_SIZE):
+            with self._encoding:
+                batches.append(
+                    model.encode(
+                        texts[start : start + BATCH_SIZE],
+                        prompt=prompt,
+                        batch_size=BATCH_SIZE,
+                        convert_to_numpy=True,
+                    )
+                )
+        vectors = np.concatenate(batches).astype(np.float32)
         if vectors.shape[1] != self.dims:
             raise ConfigError(
                 f"{self.model} gives {vectors.shape[1]} dimensions,"

@@ -19,6 +19,8 @@ from cryptoindex.ingest.pipeline import DEFAULT_STAGES
 from cryptoindex.ingest.runner import Runner, pool_size
 from cryptoindex.ingest.stages import StageContext, StageFn
 
+QUERY_POOL_SIZE = 4
+
 
 async def serve(
     settings: Settings, stages: Mapping[Stage, StageFn] = DEFAULT_STAGES
@@ -40,20 +42,24 @@ async def serve(
 
 async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
     pool = await open_pool(settings.ingest_dsn, pool_size(settings))
+    query_pool = await open_pool(settings.query_dsn, QUERY_POOL_SIZE)
     try:
         async with pool.connection() as conn:
             await check_embed_model(conn, settings.embed_model)  # Invariant 6
+        # One embedder for the embed stage and for searches: the model is the
+        # largest thing in memory, and this process loads it once.
+        embedder = build_embedder(settings)
         ctx = StageContext(
             pool=pool,
             settings=settings,
             parser=build_parser(settings),
             llm=build_llm(settings),
-            embedder=build_embedder(settings),
+            embedder=embedder,
         )
         runner = Runner(ctx, stages)
         server = uvicorn.Server(
             uvicorn.Config(
-                create_app(runner, pool, settings),
+                create_app(runner, pool, settings, query_pool, embedder),
                 host=settings.api_host,
                 port=settings.api_port,
                 log_config=None,
@@ -70,6 +76,7 @@ async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
             await server.serve()
             runner_task.cancel()
     finally:
+        await query_pool.close()
         await pool.close()
 
 
