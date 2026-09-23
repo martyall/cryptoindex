@@ -114,3 +114,10 @@ Decided by the human, to compare Qwen3-Embedding 0.6B and 8B on real searches (D
 - **The embed stage fills both** when `CI_EMBED_MODEL_ALT` is set.
 - **Which set searches use is global, fixed at startup** (`CI_SEARCH_VECTORS=primary|alt`), never chosen per query, so there is no doubt which model produced a result. Comparing is a restart.
 - **Removal:** a migration dropping the three `_alt` columns and their indexes, and deleting `embed_model_alt` from `docs.meta`; `CI_EMBED_MODEL_ALT` and `CI_SEARCH_VECTORS` leave the settings.
+
+### D28. Answers come from an answer handler; the first is the Claude Agent SDK (2026-09-22)
+Decided by the human when planning Phase 5. Supersedes D10's hand-written tool-use loop, and defers Invariant 9 for the agent (not for glossing).
+- **The agent is a handler behind one interface:** a question in; a stream of steps, then claims with citations, out. The tools it may call, the citation checker, and the HTTP layer sit outside the handler, so a handler can be replaced without touching them.
+- **The first handler is the Claude Agent SDK.** Writing our own loop would rewrite what the SDK already does: run the loop, call tools, keep the session. Our tools are registered with it as in-process functions; its built-in file and shell tools are disabled; the final answer comes back in our claims schema as structured output. Checked on 2026-09-22: with no `ANTHROPIC_API_KEY`, it runs on the human's Claude Code subscription (dev mode, as D22), and with a key, on the API.
+- **The model never writes SQL.** It calls our tools, which run fixed queries on the read-only role (Invariant 7).
+- **Invariant 9 is deferred for the agent:** a local-model handler (a loop of our own over the OpenAI format) can be added later behind the same interface; nothing now depends on its absence.

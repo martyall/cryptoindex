@@ -76,13 +76,13 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 ## Phase 5 — Agent and citation checker
 
-**Goal:** cited answers or abstention.
+**Goal:** cited answers or abstention, with citations a person can follow (document, page, section, numbered block).
 
-**In scope:** tools (`search`, `get_unit`, `get_paragraphs`, `get_paper`), tool-use loop for both backends, structured claim output, citation checker (in-session source, normalized quote match), abstention path, step streaming (as an async iterator; the API consumes it in Phase 6), agent system prompt `prompts/agent-v1.md`.
+**In scope:** an answer-handler interface with a Claude Agent SDK handler (D28), read-only tools (`search`, `get_unit`, `get_paragraphs`, `get_document`), structured claims, the server-side citation checker (in-session source, normalized quote match), abstention, human-findable citation rendering, an Ask page streaming the steps, agent prompt `prompts/agent-v1.md`. See `docs/phases/05-agent-citations.md`.
 
 **Acceptance:**
-- Tests with the fake backend: a fabricated quote is dropped; a claim citing a unit not retrieved in-session is dropped; an all-dropped answer becomes an abstention listing nearest units.
-- Manual run on 10 evaluation questions with each backend produces verified citations that a human confirms.
+- Tests with a scripted handler: a fabricated quote is dropped; a claim citing a paragraph not retrieved in-session is dropped; an all-dropped answer becomes an abstention listing nearest units.
+- Manual run on about ten of the human's questions about the indexed documents produces citations the human confirms are right and findable, and abstains where they cannot be answered.
 
 ## Phase 6 — HTTP API
 
