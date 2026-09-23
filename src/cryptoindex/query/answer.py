@@ -1,4 +1,4 @@
-"""Answering a question (Phase 5, D28-D30): the tools an answer handler may
+"""Answering a question (D28-D30): the tools an answer handler may
 call, the handler interface, and the citation checker that runs after it.
 
 A handler only chooses which tools to call and writes the answer. The tools
@@ -40,7 +40,7 @@ class Location:
     """Where a person finds a paragraph: all read from stored data (D30)."""
 
     document: str
-    page: int  # 1-based, the PDF's own page numbering
+    page: int  # 1-based index of the page in the PDF file, not its printed label
     section: tuple[str, ...]
     label: str | None  # its block label, or the anchor of a unit holding it
 
@@ -240,14 +240,14 @@ class AnswerHandler(Protocol):
 async def ask(
     handler: AnswerHandler, tools: Tools, question: str
 ) -> AsyncGenerator[AgentEvent]:
-    """The handler's events, then a `final` event: the answer with each
-    citation located, or marked removed if its paragraph was never returned
-    by a tool in this session (D29, D30). The answer itself is never
-    dropped. Logs `answer_done` with the question and what came of it, also
-    when the handler fails or the caller stops early."""
+    """The handler's events, then, if it answered, a `final` event: the
+    answer with each citation located, or marked removed if its paragraph was
+    never returned by a tool in this session (D29, D30). The answer itself is
+    never dropped. Logs `answer_done` with the question and what came of it,
+    also when the handler fails or the caller stops early."""
     started = time.monotonic()
     reply: AnswerReply | None = None
-    outcome: dict[str, object] = {"outcome": "stopped"}  # the caller went away
+    outcome: dict[str, object] | None = None
     calls = 0
     try:
         async for event in handler.answer(question, tools):
@@ -259,6 +259,7 @@ async def ask(
             elif event.kind == "error":
                 outcome = {"outcome": "error", "error": event.data}
         if reply is None:
+            outcome = outcome or {"outcome": "no_answer"}
             return
         final, removed = await _final(reply, tools)
         outcome = {
@@ -275,7 +276,7 @@ async def ask(
                 "seconds": round(time.monotonic() - started, 1),
                 "tool_calls": calls,
                 "paragraphs_read": len(tools.retrieved),
-                **outcome,
+                **(outcome or {"outcome": "stopped"}),  # the caller went away
             },
         )
 

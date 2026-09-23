@@ -1,6 +1,6 @@
-"""The Ask page (Phase 5), served by `make run` at /ask/: a question, the
-agent's steps as it works, and the answer with its citations located (D28-D30).
-A QA tool like the search page; the HTTP API proper is Phase 6."""
+"""The Ask page, served by `make run` at /ask/: a question, the agent's steps
+as it works, and the answer with its citations located (D28-D30). A QA tool
+like the search page, not the HTTP API."""
 
 import json
 from collections.abc import AsyncIterator
@@ -48,8 +48,8 @@ def mount_ask(
 
 
 def cited_places(citations: object) -> list[dict[str, object]]:
-    """The citations grouped by what the reader sees: markers citing
-    different paragraphs of the same block share one line. Removed citations
+    """The citations grouped by what the reader sees: markers whose
+    paragraphs render to the same location share one line. Removed citations
     keep a line each, with the reason."""
     markers_at: dict[str, list[str]] = {}
     removed: list[dict[str, object]] = []

@@ -23,7 +23,13 @@ from claude_agent_sdk import (
 )
 
 from cryptoindex.core.prompts import Prompt
-from cryptoindex.query.answer import ANSWER_SCHEMA, AgentEvent, Tools
+from cryptoindex.query.answer import (
+    ANSWER_SCHEMA,
+    MAX_PARAGRAPHS,
+    SEARCH_K,
+    AgentEvent,
+    Tools,
+)
 
 log = logging.getLogger(__name__)
 
@@ -39,8 +45,8 @@ def _schema(properties: dict, required: list[str]) -> dict:
 
 class ClaudeAgentHandler:
     """An AnswerHandler on the Claude Agent SDK: our tools as in-process
-    functions, Claude Code's own tools, settings and session files off, the
-    answer as structured output in ANSWER_SCHEMA."""
+    functions, Claude Code's own tools and settings off, run in a throwaway
+    working directory, the answer as structured output in ANSWER_SCHEMA."""
 
     def __init__(self, model: str, prompt: Prompt, max_turns: int) -> None:
         self.model = model
@@ -173,7 +179,8 @@ def _sdk_tools(tools: Tools, results: asyncio.Queue[AgentEvent]) -> list[SdkMcpT
     return [
         tool(
             "search",
-            "Hybrid search over the indexed documents. Returns up to six passages,"
+            "Hybrid search over the indexed documents. Returns up to"
+            f" {SEARCH_K} passages,"
             " each with its paragraphs: paragraph_id, where it is, and its text."
             " `kinds` keeps only blocks of those kinds, e.g. definition, theorem.",
             _schema(
@@ -187,7 +194,8 @@ def _sdk_tools(tools: Tools, results: asyncio.Queue[AgentEvent]) -> list[SdkMcpT
         )(wrap("get_unit", lambda a: tools.get_unit(a["unit_id"]))),
         tool(
             "get_paragraphs",
-            "Paragraphs first..last (positions, at most 20) of a document, to"
+            f"Paragraphs first..last (positions, at most {MAX_PARAGRAPHS}) of a"
+            " document, to"
             " read around a hit.",
             _schema(
                 {"document_id": _STRING, "first": _INT, "last": _INT},

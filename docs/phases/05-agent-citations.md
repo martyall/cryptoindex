@@ -1,6 +1,6 @@
 # Phase 5 — Agent and citation checker
 
-Status: ready (reviewed 2026-09-22)
+Status: built (2026-09-22); the manual run of about ten questions is pending
 
 ## Goal
 Ask a question in plain words; an agent searches the index, reads the relevant passages of the original documents, and answers in prose, citing its main points where a person can find them: document, page, section, and the numbered block (Theorem 3.1, Definition 7.5). Every citation is checked before the answer is shown, and a question the documents cannot answer gets a plain "not found", not a guess (ARCHITECTURE data flow 7; D28, D29, D30).
@@ -37,7 +37,7 @@ Ask a question in plain words; an agent searches the index, reads the relevant p
 
 5. **Human-findable citations.** Each citation that stays is rendered from stored data only: document name, PDF page (1-based), section path, and the paragraph's block label or its unit's anchor label when there is one. For example: *Kimchi specification, p. 42, §7 Polynomial commitment, Definition 7.5*.
 
-6. **Prompt** `prompts/agent-v1.md` (Invariant 10): answer only from what the tools return; cite the main points, preferring the anchored block (the theorem, the definition); say plainly when the documents do not answer the question rather than guess.
+6. **Prompt** `prompts/agent-v1.md`, then `agent-v2` (math in LaTeX, typeset on the page) and `agent-v3` (only short expressions inline, longer ones displayed) (Invariant 10): answer only from what the tools return; cite the main points, preferring the anchored block (the theorem, the definition); say plainly when the documents do not answer the question rather than guess.
 
 7. **An Ask page** in the main process, beside the search page: a question box, the steps as they happen (streamed as server-sent events), and the answer with its citations. It is a QA tool like the search page; the full HTTP API stays Phase 6.
 
@@ -60,7 +60,9 @@ Ask a question in plain words; an agent searches the index, reads the relevant p
 ## Found during the phase
 - **Turning Claude Code's settings off does not remove the claude.ai account's connectors.** The first trial session offered, beside our four tools, eight tools of a "Claude Docs" connector on the human's account, which can read and change documents there; `allowed_tools` pre-approves tools but does not restrict to them. The agent did not call them. The handler now loads only our MCP server (`strict_mcp_config`) and refuses a session that offers anything beyond our tools and the structured-output tool, before the model runs; every session's tool list is logged (`agent_session`). The built-in web, shell and file tools were off throughout.
 - **The agent reads data only through our tools.** Measured on 2026-09-22 by sampling, every 0.1 s during a 23 s question, the network connections of the agent's Claude Code process and its children: Anthropic (the model, `api.anthropic.com`, and the login, `claude.ai`, by whois and forward lookup) and Datadog's log intake (`http-intake.logs.us5.datadoghq.com`, Claude Code's telemetry, which the human accepts). No other host. The session check above is what enforces it; the measurement is evidence, not proof (very short connections can fall between samples). The model's trained knowledge is the one source besides the tools; a citation cannot point at it.
-- **Trial questions** (Opus 5.5 on the subscription): "What is nested amortization in Halo?" took 36 s, two searches, and cited eight points of Halo, all kept; "What does an IPA opening proof consist of in the Kimchi specification?" took 23 s, a search and a read around the hit, and cited Definitions 7.5 to 7.7 and 8.1, all kept.
+- **Trial questions** (Opus 5.5 on the subscription): "What is nested amortization in Halo?" took 36 s, two searches, and cited eight points of Halo, all kept; "What does an IPA opening proof consist of in the Kimchi specification?" took 23 s, a search and a read around the hit, and cited Definitions 7.5 to 7.7 and 8.1, all kept; "What is the difference between the IPA PCS in halo2 and Mina/Kimchi?" cited 27 points, all kept, and said that halo2 itself is not among the documents.
+- **Closing the page stops the agent within about 5 s.** Starlette cancels the stream when the client goes; the SDK then closes the Claude Code process's input and gives it 5 s to exit before terminating it. Measured twice on 2026-09-22: the process was gone 5.5 s after the client, and `answer_done` logged `outcome: stopped`.
+- **Every question is logged** once it ends, however it ends: `answer_done` with the question, seconds, tool calls, paragraphs read, and the outcome (`answered` with citation and removed counts, `error`, `no_answer` when the handler ends with neither, or `stopped` when the caller goes).
 
 ## Deferred
 - **Showing a cited paragraph's stored text** beside the answer, for judging answer quality once answers are evaluated (D30).

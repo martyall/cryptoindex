@@ -9,7 +9,7 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 | 2 | Parse | done |
 | 3 | Segment and gloss | done (Anthropic manual run pending an API key) |
 | 4 | Embed and retrieve | done |
-| 5 | Agent and citation checker | todo |
+| 5 | Agent and citation checker | done (manual run of ten questions pending) |
 | 6 | HTTP API | todo |
 | 7 | Operations and backfill | todo |
 | 8+ | Plugins (code first) | todo |
@@ -78,7 +78,7 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 **Goal:** answers whose main points cite where a person can find them (document, page, section, numbered block), or a plain "not found".
 
-**In scope:** an answer-handler interface with a Claude Agent SDK handler (D28), read-only tools (`search`, `get_unit`, `get_paragraphs`, `get_document`), a prose answer citing its main points, the server-side citation checker (in-session source, D29, D30), human-findable citation rendering, an Ask page streaming the steps, agent prompt `prompts/agent-v1.md`. See `docs/phases/05-agent-citations.md`.
+**In scope:** an answer-handler interface with a Claude Agent SDK handler (D28), read-only tools (`search`, `get_unit`, `get_paragraphs`, `get_document`), a prose answer citing its main points, the server-side citation checker (in-session source, D29, D30), human-findable citation rendering, an Ask page streaming the steps, agent prompts `prompts/agent-v1.md` to `agent-v3.md`. See `docs/phases/05-agent-citations.md`.
 
 **Acceptance:**
 - Tests with a scripted handler: a citation of a paragraph not retrieved in-session is removed and marked; the answer is never dropped.

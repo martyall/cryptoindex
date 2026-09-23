@@ -286,3 +286,19 @@ async def test_a_question_abandoned_by_the_caller_is_logged_as_stopped(
     await anext(events)  # the first step, then the page is closed
     await events.aclose()
     assert answer_done(caplog)["outcome"] == "stopped"
+
+
+class Silent:
+    """An AnswerHandler whose session ends with neither an answer nor an error."""
+
+    async def answer(self, question: str, tools: Tools) -> AsyncIterator[AgentEvent]:
+        yield AgentEvent("tool_call", {"tool": "search", "input": {"q": question}})
+
+
+async def test_a_handler_that_ends_without_answering_is_logged_as_such(
+    tools: Tools, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO, logger="cryptoindex.query.answer")
+    events = [e async for e in ask(Silent(), tools, "amortization")]
+    assert [e.kind for e in events] == ["tool_call"]
+    assert answer_done(caplog)["outcome"] == "no_answer"
