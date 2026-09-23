@@ -1,14 +1,16 @@
 # cryptoindex
 
-Citation-grounded retrieval over cryptography papers (primarily the IACR ePrint archive), running locally, with an optional code-analysis plugin planned for later.
+Citation-grounded retrieval and answering over mathematics, computer science and cryptography documents that you upload (D18, D19), running locally. An agent answers questions from the index with citations a person can find (D28–D30). An optional code-analysis plugin is planned for later.
 
-The design documents in `docs/` drive the build. See `docs/ROADMAP.md` for which phases are done, and `CLAUDE.md` for the `make` commands.
+To run it, see `docs/RUNNING.md`. The design documents in `docs/` drive the build; `docs/ROADMAP.md` says which phases are done.
 
 ## Reading order
 
 | Document | Purpose | Read when |
 |---|---|---|
 | `CLAUDE.md` | How a coding agent should work in this repo | Every session |
+| `docs/RUNNING.md` | Starting the service, ingesting the corpus, the pages | Before running it |
+| `docs/CORPUS.md` | The documents to index | Before ingesting |
 | `docs/ARCHITECTURE.md` | The system and its invariants | Every session |
 | `docs/DECISIONS.md` | Settled choices and why | Before changing anything structural |
 | `docs/ROADMAP.md` | Phases, scope, acceptance criteria | Start of each phase |
@@ -25,7 +27,7 @@ cryptoindex/
   README.md
   docs/            design documents
   docs/phases/     one detailed spec per phase, written just before it starts
-  eval/            evaluation data (sample PDFs, questions) — populated in Phase 2+
+  eval/            evaluation data (sample PDFs, parsed excerpts, review scores)
   prompts/         versioned prompt files (glossing, segmentation, agent)
 ```
 

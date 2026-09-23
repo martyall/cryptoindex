@@ -17,6 +17,12 @@
 - **Both LLM backends must keep working.** Anthropic (native SDK) and local OpenAI-format servers. Never add a feature that only one backend can use without a fallback.
 - **No string munging.** When a tool or source offers structured output (JSON, a Python API, typed results), use it. When data is in a format with a real parser (Markdown, HTML, dotenv, TOML/CSV/JSON, DSNs, paths), use that parser. Never extract structure with regexes, `split`, prefix checks, line scanning, scraped CLI output, or globbing a tool's output directory. If something truly has no structure (free prose that needs classifying), say so and leave it to the human or to the phase built for it (e.g. Phase 3's LLM segmentation) rather than writing a heuristic.
 - **Ingestion writes, queries read.** Use the `ci_ingest` role in ingestion code and `ci_query` in retrieval/agent code. Query code must not import ingestion modules.
+- **`docs/RUNNING.md` stays true.** It is how a person or an agent starts the service, ingests the corpus and finds the pages. A change to any of these updates it in the same commit:
+  - a `make` target, or a setting in `.env.example`;
+  - a page or an endpoint;
+  - the upload procedure, or the corpus in `docs/CORPUS.md`.
+
+  `tests/test_running_doc.py` checks its commands and URLs. Keep each command on one line so that the test can read it.
 
 ## Conventions
 
@@ -47,7 +53,7 @@ Default to no comment. Write one only if deleting it would lose something a comp
 
 Needs only Docker and uv. The first `make` target copies `.env.example` to `.env`; every `uv run` in the Makefile reads `.env`.
 
-`make` (no target) prints every command with its options, read from the Makefile's own `##` annotations; annotate a new target there rather than listing it here. The ones you need most:
+`make` (no target) prints every command with its options, read from the Makefile's own `##` annotations; annotate a new target there rather than listing it here. `docs/RUNNING.md` gives the order to run them in, from first start to an ingested corpus. The ones you need most:
 
 ```
 make run          # migrate, then start the single process (pipeline + API on CI_API_PORT)
@@ -63,6 +69,7 @@ Tests need the `.env` settings, so run them through `make test` (or `uv run --en
 - All acceptance criteria in `docs/ROADMAP.md` pass and are demonstrated (tests or a recorded run).
 - `make check` passes. Run the `pr-review-toolkit:comment-analyzer` agent over the phase's diff and resolve its findings against "Comments and docstrings" above.
 - Update the phase status in `docs/ROADMAP.md`.
+- Read `docs/RUNNING.md` against what the phase changed, and correct it.
 - Write the next phase's spec in `docs/phases/` from the roadmap entry plus what this phase taught you. Ask the human to review it before starting.
 
 # Python Project Rules

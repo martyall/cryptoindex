@@ -41,7 +41,8 @@ reset: .env ## Delete the database volume and CI_DATA_DIR, then migrate afresh
 ## # Pipeline
 
 run: migrate ## Start the pipeline and the API on CI_API_PORT
-    ## Upload page at /, search QA page at /search/ (D24), one process.
+    ## Upload page at /, search page at /search/ (D24), Ask page at /ask/ (D28),
+    ## one process. docs/RUNNING.md: first start, ingesting the corpus.
     ## Embedding models come from .env: CI_EMBED_MODEL (primary), optional
     ## CI_EMBED_MODEL_ALT (D27), and CI_SEARCH_VECTORS=primary|alt, which
     ## picks the one searches use for the whole run: change it and restart.
