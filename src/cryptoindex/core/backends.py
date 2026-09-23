@@ -5,12 +5,11 @@ pydantic."""
 import asyncio
 import json
 import logging
-import os
 import tempfile
-from collections.abc import Mapping, Sequence
-from typing import Literal
+from collections.abc import AsyncIterator, Callable, Sequence
 
 import anthropic
+import claude_agent_sdk
 import openai
 from anthropic.types.beta import (
     BetaMessage,
@@ -23,6 +22,13 @@ from anthropic.types.beta.message_create_params import (
     MessageCreateParamsNonStreaming,
 )
 from anthropic.types.beta.messages.batch_create_params import Request
+from claude_agent_sdk import (
+    ClaudeAgentOptions,
+    ClaudeSDKError,
+    ResultError,
+    ResultMessage,
+)
+from claude_agent_sdk import Message as SdkMessage
 from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionToolParam,
@@ -31,7 +37,6 @@ from openai.types.shared_params import (
     ResponseFormatJSONObject,
     ResponseFormatJSONSchema,
 )
-from pydantic import BaseModel, Field
 
 from cryptoindex.core.config import ConfigError, Settings
 from cryptoindex.core.llm import (
@@ -339,39 +344,29 @@ def _openai_messages(
     return out
 
 
-class ClaudeCodeResult(BaseModel):
-    """The fields of `claude -p --output-format json` this backend uses."""
-
-    type: Literal["result"]
-    subtype: str
-    is_error: bool
-    result: str | None = None
-    structured_output: object | None = None
-    api_error_status: int | None = None
-    model_usage: dict[str, object] = Field(default={}, alias="modelUsage")
-
-
 # Environment variables that make Claude Code bill the API instead of the
-# logged-in subscription (D22).
+# logged-in subscription (D22). The SDK layers `env` over the inherited
+# environment, so they are blanked rather than removed.
 _API_CREDENTIALS = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
 USAGE_LIMIT_WAIT_S = 300.0
 
+Query = Callable[..., AsyncIterator[SdkMessage]]
+
 
 class ClaudeCodeLLM:
-    """Dev mode (D22): a headless `claude -p` subprocess, isolated as D22
-    describes. Single-turn JSON requests only. A usage-limit refusal (HTTP
-    429) is retried every USAGE_LIMIT_WAIT_S without limit, so it does not
-    count as a failed attempt. Raises LLMError for any other reported failure
-    or for a request with tools or more than one message, pydantic's
-    ValidationError if the output is not the expected JSON, and OSError if
-    the binary cannot be started.
+    """Dev mode (D22, D31): Claude Code through the Claude Agent SDK and its
+    bundled CLI, isolated as D22 describes. Single-turn JSON requests only. A
+    usage-limit refusal (HTTP 429) is retried every USAGE_LIMIT_WAIT_S without
+    limit, so it does not count as a failed attempt. Raises LLMError for any
+    other reported failure, for an SDK error, or for a request with tools or
+    more than one message.
     """
 
     name = "claude_code"
 
-    def __init__(self, model: str, binary: str = "claude") -> None:
+    def __init__(self, model: str, query: Query = claude_agent_sdk.query) -> None:
         self.model = model
-        self._binary = binary
+        self._query = query
 
     async def complete(
         self,
@@ -383,23 +378,8 @@ class ClaudeCodeLLM:
     ) -> Completion:
         if tools or len(messages) != 1 or messages[0].role != "user":
             raise LLMError("the claude_code backend takes one user message, no tools")
-        args = [
-            self._binary,
-            "-p",
-            "--output-format=json",
-            f"--model={self.model}",
-            f"--system-prompt={system}",
-            "--tools=",
-            "--setting-sources=",
-            "--strict-mcp-config",
-            "--disable-slash-commands",
-            "--no-session-persistence",
-        ]
-        if json_schema is not None:
-            args.append(f"--json-schema={json.dumps(json_schema)}")
-        env = {k: v for k, v in os.environ.items() if k not in _API_CREDENTIALS}
         while True:
-            result = await self._run(args, messages[0].content, env)
+            result = await self._run(system, messages[0].content, json_schema)
             if result.api_error_status != 429:
                 break
             log.warning(
@@ -409,12 +389,12 @@ class ClaudeCodeLLM:
             await asyncio.sleep(USAGE_LIMIT_WAIT_S)
         if result.is_error:
             raise LLMError(
-                f"claude -p failed ({result.subtype},"
+                f"Claude Code failed ({result.subtype},"
                 f" status {result.api_error_status}): {result.result}"
             )
         if json_schema is not None and result.structured_output is None:
-            raise LLMError("claude -p returned no structured output")
-        served = list(result.model_usage)
+            raise LLMError("Claude Code returned no structured output")
+        served = list(result.model_usage or {})
         return Completion(
             text=result.result or "",
             model=served[0] if len(served) == 1 else self.model,
@@ -422,28 +402,42 @@ class ClaudeCodeLLM:
         )
 
     async def _run(
-        self, args: list[str], prompt: str, env: Mapping[str, str]
-    ) -> ClaudeCodeResult:
+        self, system: str, prompt: str, json_schema: dict[str, object] | None
+    ) -> ResultMessage:
+        result: ResultMessage | None = None
         with tempfile.TemporaryDirectory(prefix="ci-claude-") as cwd:
-            proc = await asyncio.create_subprocess_exec(
-                *args,
+            options = ClaudeAgentOptions(
+                system_prompt=system,
+                model=self.model,
+                tools=[],
+                setting_sources=[],
+                strict_mcp_config=True,
                 cwd=cwd,
-                env=env,
-                stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+                env=dict.fromkeys(_API_CREDENTIALS, ""),
+                extra_args={
+                    "disable-slash-commands": None,
+                    "no-session-persistence": None,
+                },
+                output_format=(
+                    {"type": "json_schema", "schema": json_schema}
+                    if json_schema is not None
+                    else None
+                ),
             )
             try:
-                stdout, stderr = await proc.communicate(prompt.encode())
-            except asyncio.CancelledError:
-                proc.kill()
-                await proc.wait()
-                raise
-        if not stdout:
-            raise LLMError(
-                f"claude -p exited {proc.returncode}: {stderr.decode(errors='replace')}"
-            )
-        return ClaudeCodeResult.model_validate_json(stdout)
+                async for message in self._query(prompt=prompt, options=options):
+                    if isinstance(message, ResultMessage):
+                        result = message
+            except ResultError:
+                # The CLI exits non-zero after an error result, on purpose;
+                # the result already says what went wrong.
+                if result is None:
+                    raise
+            except ClaudeSDKError as e:
+                raise LLMError(f"Claude Code failed: {e!r}") from e
+        if result is None:
+            raise LLMError("Claude Code ended without a result")
+        return result
 
 
 def build_llm(settings: Settings) -> LLM:
@@ -467,7 +461,7 @@ def build_llm(settings: Settings) -> LLM:
         )
         llm = OpenAIFormatLLM(client, settings.llm_model)
     elif settings.llm_backend == "claude_code":
-        llm = ClaudeCodeLLM(settings.llm_model, settings.claude_bin)
+        llm = ClaudeCodeLLM(settings.llm_model)
     else:
         llm = FakeLLM.from_dir(settings.data_dir / "llm-recordings")
     if settings.llm_record_dir is not None:

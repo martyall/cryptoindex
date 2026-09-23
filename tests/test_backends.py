@@ -1,7 +1,6 @@
 import dataclasses
 import json
-import sys
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +8,13 @@ import anthropic
 import httpx2
 import openai
 import pytest
+from claude_agent_sdk import (
+    ClaudeAgentOptions,
+    ModelUsage,
+    ResultError,
+    ResultMessage,
+)
+from claude_agent_sdk import Message as SdkMessage
 
 from cryptoindex.core import backends
 from cryptoindex.core.backends import (
@@ -33,79 +39,79 @@ SCHEMA: dict[str, object] = {
 }
 ASK = [Message(role="user", content="What is 2+2?")]
 
-# A stand-in for `claude`: records how it was called, then prints the next
-# queued result (the last one repeats).
-FAKE_CLAUDE = """\
-import json, os, sys
-from pathlib import Path
-state = Path(os.environ["FAKE_CLAUDE_STATE"])
-calls = json.loads(state.read_text()) if state.exists() else []
-calls.append({
-    "argv": sys.argv[1:],
-    "stdin": sys.stdin.read(),
-    "cwd_entries": os.listdir("."),
-    "api_key_seen": "ANTHROPIC_API_KEY" in os.environ,
-})
-state.write_text(json.dumps(calls))
-results = json.loads(os.environ["FAKE_CLAUDE_RESULTS"])
-print(json.dumps(results[min(len(calls), len(results)) - 1]))
-"""
+
+ANSWERED = ResultMessage(
+    subtype="success",
+    duration_ms=1,
+    duration_api_ms=1,
+    is_error=False,
+    num_turns=1,
+    session_id="s",
+    result='{"answer": "4"}',
+    structured_output={"answer": "4"},
+    model_usage={
+        "claude-opus-5": ModelUsage(
+            inputTokens=5,
+            outputTokens=3,
+            cacheReadInputTokens=0,
+            cacheCreationInputTokens=0,
+            webSearchRequests=0,
+            costUSD=0.0,
+            contextWindow=200_000,
+            maxOutputTokens=32_000,
+        )
+    },
+)
 
 
-def result(**fields: object) -> dict[str, object]:
-    return {
-        "type": "result",
-        "subtype": "success",
-        "is_error": False,
-        "result": '{"answer": "4"}',
-        "structured_output": {"answer": "4"},
-        "api_error_status": None,
-        "modelUsage": {"claude-opus-5": {"outputTokens": 3}},
-    } | fields
+def result(**fields: Any) -> ResultMessage:
+    return dataclasses.replace(ANSWERED, **fields)
 
 
-@pytest.fixture
-def fake_claude(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
-    script = tmp_path / "claude"
-    script.write_text(f"#!{sys.executable}\n{FAKE_CLAUDE}")
-    script.chmod(0o755)
-    state = tmp_path / "calls.json"
-    monkeypatch.setenv("FAKE_CLAUDE_STATE", str(state))
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-must-not-leak")
-    return script, state
+@dataclasses.dataclass
+class FakeQuery:
+    """A stand-in for the SDK's `query`: records each call's prompt and
+    options, then yields the next queued result (the last one repeats). After
+    an error result it raises ResultError, as the SDK does when the CLI exits."""
+
+    results: list[ResultMessage]
+    calls: list[tuple[str, ClaudeAgentOptions]] = dataclasses.field(
+        default_factory=list
+    )
+
+    async def __call__(
+        self, *, prompt: str, options: ClaudeAgentOptions
+    ) -> AsyncIterator[SdkMessage]:
+        self.calls.append((prompt, options))
+        reply = self.results[min(len(self.calls), len(self.results)) - 1]
+        yield reply
+        if reply.is_error:
+            raise ResultError("Claude Code returned an error result", exit_code=1)
 
 
-async def test_claude_code_runs_isolated_and_reads_structured_output(
-    fake_claude: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
-) -> None:
-    script, state = fake_claude
-    monkeypatch.setenv("FAKE_CLAUDE_RESULTS", json.dumps([result()]))
-    llm = ClaudeCodeLLM("claude-opus-5", str(script))
+async def test_claude_code_runs_isolated_and_reads_structured_output() -> None:
+    query = FakeQuery([result()])
+    llm = ClaudeCodeLLM("claude-opus-5", query)
     got = await llm.complete("Be brief.", ASK, json_schema=SCHEMA)
 
     assert got.parsed == {"answer": "4"} and got.model == "claude-opus-5"
-    (call,) = json.loads(state.read_text())
-    assert call["stdin"] == "What is 2+2?"
-    assert call["cwd_entries"] == []
-    assert call["api_key_seen"] is False  # D22: bill the subscription, not the API
-    assert call["argv"] == [
-        "-p",
-        "--output-format=json",
-        "--model=claude-opus-5",
-        "--system-prompt=Be brief.",
-        "--tools=",
-        "--setting-sources=",
-        "--strict-mcp-config",
-        "--disable-slash-commands",
-        "--no-session-persistence",
-        f"--json-schema={json.dumps(SCHEMA)}",
-    ]
+    ((prompt, options),) = query.calls
+    assert prompt == "What is 2+2?"
+    assert (options.system_prompt, options.model) == ("Be brief.", "claude-opus-5")
+    assert options.tools == [] and options.setting_sources == []
+    assert options.strict_mcp_config
+    # D22: bill the subscription, not the API.
+    assert options.env == {"ANTHROPIC_API_KEY": "", "ANTHROPIC_AUTH_TOKEN": ""}
+    assert options.extra_args == {
+        "disable-slash-commands": None,
+        "no-session-persistence": None,
+    }
+    assert options.output_format == {"type": "json_schema", "schema": SCHEMA}
 
 
 async def test_claude_code_waits_out_a_usage_limit(
-    fake_claude: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    script, state = fake_claude
     limited = result(
         subtype="error_during_execution",
         is_error=True,
@@ -113,32 +119,30 @@ async def test_claude_code_waits_out_a_usage_limit(
         structured_output=None,
         api_error_status=429,
     )
-    monkeypatch.setenv("FAKE_CLAUDE_RESULTS", json.dumps([limited, limited, result()]))
+    query = FakeQuery([limited, limited, result()])
     monkeypatch.setattr(backends, "USAGE_LIMIT_WAIT_S", 0.0)
-    got = await ClaudeCodeLLM("claude-opus-5", str(script)).complete(
+    got = await ClaudeCodeLLM("claude-opus-5", query).complete(
         "s", ASK, json_schema=SCHEMA
     )
     assert got.parsed == {"answer": "4"}
-    assert len(json.loads(state.read_text())) == 3
+    assert len(query.calls) == 3
 
 
-async def test_claude_code_reports_other_errors(
-    fake_claude: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
-) -> None:
-    script, _ = fake_claude
+async def test_claude_code_reports_other_errors() -> None:
     failed = result(
         subtype="error_during_execution",
         is_error=True,
         result="Not logged in",
         structured_output=None,
     )
-    monkeypatch.setenv("FAKE_CLAUDE_RESULTS", json.dumps([failed]))
     with pytest.raises(LLMError, match="Not logged in"):
-        await ClaudeCodeLLM("m", str(script)).complete("s", ASK, json_schema=SCHEMA)
+        await ClaudeCodeLLM("m", FakeQuery([failed])).complete(
+            "s", ASK, json_schema=SCHEMA
+        )
 
 
 async def test_claude_code_takes_one_user_message_and_no_tools() -> None:
-    llm = ClaudeCodeLLM("m", "/nonexistent/claude")
+    llm = ClaudeCodeLLM("m", FakeQuery([]))
     two = [*ASK, Message(role="assistant", content="4")]
     with pytest.raises(LLMError, match="one user message"):
         await llm.complete("s", two)
@@ -394,13 +398,9 @@ def test_build_llm_picks_the_configured_backend(tmp_path: Path) -> None:
     assert isinstance(build_llm(recorded), RecordingLLM)
 
 
-async def test_recordings_replay_offline(
-    fake_claude: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    script, _ = fake_claude
-    monkeypatch.setenv("FAKE_CLAUDE_RESULTS", json.dumps([result()]))
+async def test_recordings_replay_offline(tmp_path: Path) -> None:
     recording = RecordingLLM(
-        ClaudeCodeLLM("claude-opus-5", str(script)), tmp_path / "r"
+        ClaudeCodeLLM("claude-opus-5", FakeQuery([result()])), tmp_path / "r"
     )
     live = await recording.complete("s", ASK, json_schema=SCHEMA)
     replayed = await FakeLLM.from_dir(tmp_path / "r").complete(

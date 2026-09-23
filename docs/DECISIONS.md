@@ -136,3 +136,12 @@ Decided by the human when reviewing the Phase 5 spec. Supersedes D29's optional 
 - **The agent gives no quotes.** A model rarely reproduces text exactly, least of all LaTeX and OCR noise, so checking quotes would mostly remove correct citations.
 - **The checker's one rule:** a cited paragraph must be one a tool returned in the session; a citation that fails it is removed and its marker shown as removed.
 - **Showing the cited paragraph's text** beside the answer is deferred, as a way to judge answer quality when answers are evaluated.
+
+### D31. Dev-mode glossing goes through the Claude Agent SDK, not the `claude` CLI (2026-09-23)
+Decided by the human: the server must not depend on an installed Claude Code CLI. This supersedes D22's mechanism, the `claude -p` subprocess; D22's intent and rules stand (subscription billing, personal use only, isolation, usage-limit waits).
+- The `claude_code` backend calls the SDK's one-shot `query()` with structured output, as the answer agent (D28) uses the SDK. Both run the CLI bundled with the SDK, pinned by `uv.lock`, so one Claude Code version serves the whole process, and `CI_CLAUDE_BIN` is gone.
+- The isolation is the same, set through SDK options:
+  - no tools, no settings sources, only our (empty) MCP config;
+  - an empty working directory;
+  - no slash commands and no saved session (`extra_args`);
+  - the API credentials blanked in its environment, so it bills the subscription.
