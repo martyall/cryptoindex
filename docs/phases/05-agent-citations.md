@@ -1,6 +1,6 @@
 # Phase 5 — Agent and citation checker
 
-Status: draft, for the human's review
+Status: ready (reviewed 2026-09-22)
 
 ## Goal
 Ask a question in plain words; an agent searches the index, reads the relevant passages of the original documents, and answers in prose, citing its main points where a person can find them: document, page, section, and the numbered block (Theorem 3.1, Definition 7.5). Every citation is checked before the answer is shown, and a question the documents cannot answer gets a plain "not found", not a guess (ARCHITECTURE data flow 7; D28, D29, D30).
@@ -46,10 +46,10 @@ Ask a question in plain words; an agent searches the index, reads the relevant p
 - The tools are tested against the test database like search is.
 - Manual run: about ten questions you write about Halo and the Kimchi specification, including one they cannot answer, answered on your subscription; you confirm that the cited points are right and findable, and that the unanswerable one says so.
 
-## Decisions for the human
-1. **Page numbers:** the PDF's page (what a viewer shows), available now; or the number printed on the page, which PaddleOCR reads but the parser currently discards as furniture and would need a re-parse. Recommendation: PDF pages now; printed numbers deferred.
-2. **Quotes:** decided (D30): none; a citation is a location.
-3. **Model:** Opus 5 for the agent, as for glossing. Recommendation: yes; the subscription covers it.
+## Decisions from the human (2026-09-22)
+1. **Page numbers:** the PDF's page (1-based), which is what a viewer shows. The numbers printed on the page are deferred: viewers number pages their own way anyway, and many documents print none.
+2. **Quotes:** none; a citation is a location (D30).
+3. **Model:** Claude Opus 5.5 for the agent, set by its own setting, `CI_AGENT_MODEL`; glossing stays on Opus 5 (`CI_LLM_MODEL`). The model ID is to be confirmed with one small call, with the human's go-ahead, before the manual run.
 
 ## Out of scope
 - A local-model handler (D28 defers it).
@@ -59,3 +59,4 @@ Ask a question in plain words; an agent searches the index, reads the relevant p
 
 ## Deferred
 - **Showing a cited paragraph's stored text** beside the answer, for judging answer quality once answers are evaluated (D30).
+- **Printed page numbers.** PaddleOCR-VL reads them (its `number` blocks), and the parser discards them as page furniture. Keeping them per page would need a parser change and a re-parse; many documents print none.
