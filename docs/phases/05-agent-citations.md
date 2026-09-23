@@ -57,6 +57,10 @@ Ask a question in plain words; an agent searches the index, reads the relevant p
 - Multi-turn conversation: one question, one answer.
 - Uploading the other three documents is not needed for acceptance, but nothing stops it.
 
+## Found during the phase
+- **Turning Claude Code's settings off does not remove the claude.ai account's connectors.** The first trial session offered, beside our four tools, eight tools of a "Claude Docs" connector on the human's account, which can read and change documents there; `allowed_tools` pre-approves tools but does not restrict to them. The agent did not call them. The handler now loads only our MCP server (`strict_mcp_config`) and refuses a session that offers anything beyond our tools and the structured-output tool, before the model runs; every session's tool list is logged (`agent_session`). The built-in web, shell and file tools were off throughout.
+- **Trial questions** (Opus 5.5 on the subscription): "What is nested amortization in Halo?" took 36 s, two searches, and cited eight points of Halo, all kept; "What does an IPA opening proof consist of in the Kimchi specification?" took 23 s, a search and a read around the hit, and cited Definitions 7.5 to 7.7 and 8.1, all kept.
+
 ## Deferred
 - **Showing a cited paragraph's stored text** beside the answer, for judging answer quality once answers are evaluated (D30).
 - **Printed page numbers.** PaddleOCR-VL reads them (its `number` blocks), and the parser discards them as page furniture. Keeping them per page would need a parser change and a re-parse; many documents print none.

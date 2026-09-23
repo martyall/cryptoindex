@@ -5,8 +5,9 @@ which case the API."""
 
 import asyncio
 import json
+import logging
 import tempfile
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 
 from claude_agent_sdk import (
     AssistantMessage,
@@ -15,6 +16,7 @@ from claude_agent_sdk import (
     ClaudeSDKError,
     ResultMessage,
     SdkMcpTool,
+    SystemMessage,
     ToolUseBlock,
     create_sdk_mcp_server,
     tool,
@@ -22,6 +24,8 @@ from claude_agent_sdk import (
 
 from cryptoindex.core.prompts import Prompt
 from cryptoindex.query.answer import ANSWER_SCHEMA, AgentEvent, Tools
+
+log = logging.getLogger(__name__)
 
 SERVER = "cryptoindex"
 
@@ -63,6 +67,9 @@ class ClaudeAgentHandler:
                 tools=[],
                 allowed_tools=list(ours),
                 setting_sources=[],
+                # Settings off do not cover MCP servers that come from the
+                # claude.ai account (its connectors): only ours are loaded.
+                strict_mcp_config=True,
                 max_turns=self._max_turns,
                 cwd=cwd,
                 output_format={"type": "json_schema", "schema": ANSWER_SCHEMA},
@@ -81,8 +88,43 @@ class ClaudeAgentHandler:
                                 )
                     elif isinstance(message, ResultMessage):
                         yield _result_event(message)
+                    elif (
+                        isinstance(message, SystemMessage) and message.subtype == "init"
+                    ):
+                        refusal = _check_session(message, ours)
+                        if refusal is not None:
+                            yield refusal
+                            return
                 while not results.empty():
                     yield results.get_nowait()
+
+
+# Claude Code's own tool for returning structured output.
+STRUCTURED_OUTPUT = "StructuredOutput"
+
+
+def unexpected_tools(offered: list[str], ours: Mapping[str, str]) -> list[str]:
+    """The tools a session offers beyond ours and the structured-output tool.
+    Anything here would let the model act outside the index, for example
+    through a connector of the claude.ai account (D28), so the handler stops
+    before the model runs."""
+    return sorted(set(offered) - set(ours) - {STRUCTURED_OUTPUT})
+
+
+def _check_session(
+    message: SystemMessage, ours: Mapping[str, str]
+) -> AgentEvent | None:
+    """Log what the session offers, and an error event if it is more than ours."""
+    offered = message.data.get("tools", [])
+    log.info(
+        "agent_session", extra={"model": message.data.get("model"), "tools": offered}
+    )
+    extra = unexpected_tools(offered, ours)
+    if not extra:
+        return None
+    return AgentEvent(
+        "error", {"error": f"the session offered tools beyond ours: {extra}"}
+    )
 
 
 def _result_event(message: ResultMessage) -> AgentEvent:

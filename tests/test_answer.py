@@ -23,7 +23,7 @@ from cryptoindex.query.answer import (
     ask,
     locations,
 )
-from cryptoindex.query.claude_agent import _sdk_tools
+from cryptoindex.query.claude_agent import _sdk_tools, unexpected_tools
 
 INTRO = ("Intro",)
 OPENING = ("3 Commitments", "3.1 Opening")
@@ -223,3 +223,13 @@ async def test_sdk_tools_return_json_and_report_what_was_new(
 
     bad = await by_name["get_document"].handler({"document_id": "not-a-uuid"})
     assert "error" in json.loads(bad["content"][0]["text"])
+
+
+def test_a_session_with_tools_beyond_ours_is_refused() -> None:
+    ours = {"mcp__cryptoindex__search": "search"}
+    assert (
+        unexpected_tools(["StructuredOutput", "mcp__cryptoindex__search"], ours) == []
+    )
+    assert unexpected_tools(
+        ["mcp__cryptoindex__search", "WebFetch", "mcp__claude_ai_Docs__read"], ours
+    ) == ["WebFetch", "mcp__claude_ai_Docs__read"]
