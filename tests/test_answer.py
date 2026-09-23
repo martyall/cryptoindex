@@ -13,7 +13,7 @@ from httpx_sse import aconnect_sse
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import FakeEmbedder
-from cryptoindex.evaluation.ask_page import mount_ask
+from cryptoindex.evaluation.ask_page import cited_places, mount_ask
 from cryptoindex.ingest.paragraphs import content_hash
 from cryptoindex.query.answer import (
     MAX_PARAGRAPHS,
@@ -219,6 +219,7 @@ async def test_sdk_tools_return_json_and_report_what_was_new(
     assert len(json.loads(content["text"])["paragraphs"]) == 2
     assert queue.get_nowait().data == {
         "tool": "get_paragraphs",
+        "input": {"document_id": str(paper), "first": 0, "last": 1},
         "new_paragraphs": 2,
         "error": None,
     }
@@ -235,3 +236,24 @@ def test_a_session_with_tools_beyond_ours_is_refused() -> None:
     assert unexpected_tools(
         ["mcp__cryptoindex__search", "WebFetch", "mcp__claude_ai_Docs__read"], ours
     ) == ["WebFetch", "mcp__claude_ai_Docs__read"]
+
+
+def test_citations_of_the_same_block_share_a_line() -> None:
+    def cite(marker: str, rendered: str | None) -> dict[str, object]:
+        removed = None if rendered else "not among the paragraphs the tools returned"
+        return {"marker": marker, "rendered": rendered, "removed": removed}
+
+    places = cited_places(
+        [
+            cite("[1]", "Doc, p. 23, 7.2, Definition 7.4"),
+            cite("[2]", "Doc, p. 24, Proposition 7.9"),
+            cite("[3]", "Doc, p. 23, 7.2, Definition 7.4"),
+            cite("[1]", "Doc, p. 23, 7.2, Definition 7.4"),
+            cite("[4]", None),
+        ]
+    )
+    assert places == [
+        {"markers": ["[1]", "[3]"], "rendered": "Doc, p. 23, 7.2, Definition 7.4"},
+        {"markers": ["[2]"], "rendered": "Doc, p. 24, Proposition 7.9"},
+        {"markers": ["[4]"], "removed": "not among the paragraphs the tools returned"},
+    ]

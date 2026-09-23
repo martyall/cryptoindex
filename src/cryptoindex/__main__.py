@@ -28,7 +28,7 @@ from cryptoindex.ingest.stages import StageContext, StageFn
 from cryptoindex.query.claude_agent import ClaudeAgentHandler
 
 QUERY_POOL_SIZE = 4
-AGENT_PROMPT = "agent-v2"  # Invariant 10
+AGENT_PROMPT = "agent-v3"  # Invariant 10
 
 
 async def serve(

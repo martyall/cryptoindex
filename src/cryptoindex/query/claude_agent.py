@@ -141,8 +141,9 @@ def _result_event(message: ResultMessage) -> AgentEvent:
 
 def _sdk_tools(tools: Tools, results: asyncio.Queue[AgentEvent]) -> list[SdkMcpTool]:
     """The tools as the SDK takes them. Each returns its result as JSON text,
-    and queues a `tool_result` event saying how many paragraphs it returned
-    that the session had not seen."""
+    and queues a `tool_result` event with the call's input, so it can be paired
+    with its `tool_call`, and how many paragraphs it returned that the session
+    had not seen."""
 
     def wrap(
         name: str, run: Callable[[dict], Awaitable[dict]]
@@ -159,6 +160,7 @@ def _sdk_tools(tools: Tools, results: asyncio.Queue[AgentEvent]) -> list[SdkMcpT
                     "tool_result",
                     {
                         "tool": name,
+                        "input": args,
                         "new_paragraphs": len(tools.retrieved) - seen,
                         "error": out.get("error"),
                     },

@@ -24,6 +24,7 @@
   #steps div { margin: .15rem 0; }
   #answer { font-size: 1.02rem; }
   #answer p { margin: .6rem 0; }
+  #answer .math.block { overflow-x: auto; overflow-y: hidden; padding: .2rem 0; }
   #citations { margin-top: 1rem; padding: .6rem .8rem; background: var(--soft); border-radius: 6px; }
   #citations div { margin: .25rem 0; }
   .removed { color: var(--bad); }
@@ -47,6 +48,7 @@
 // Each server-sent event is one AgentEvent (answer.py). Citations are shown
 // as locations only (D30); a removed one says why (D29).
 let source = null;
+let calls = new Map();  // a call's tool and input → its line, for its result
 
 function element(tag, props = {}, children = []) {
   const el = Object.assign(document.createElement(tag), props);
@@ -57,12 +59,21 @@ function element(tag, props = {}, children = []) {
 function step(text, cls) {
   const steps = document.getElementById("steps");
   steps.hidden = false;
-  steps.append(element("div", { textContent: text, className: cls ?? "" }));
+  const line = element("div", { textContent: text, className: cls ?? "" });
+  steps.append(line);
+  return line;
 }
 
 function show(event) {
-  if (event.kind === "tool_call") step(`→ ${event.tool} ${JSON.stringify(event.input)}`);
-  else if (event.kind === "tool_result") step(`  ${event.tool}: ${event.error ?? `${event.new_paragraphs} new paragraphs`}`, "muted");
+  if (event.kind === "tool_call") {
+    const line = step(`→ ${event.tool} ${JSON.stringify(event.input)}`);
+    calls.set(event.tool + JSON.stringify(event.input), line);
+  } else if (event.kind === "tool_result") {
+    const outcome = event.error ?? `${event.new_paragraphs} new paragraphs`;
+    const line = calls.get(event.tool + JSON.stringify(event.input));
+    if (line) line.append(element("span", { className: "muted", textContent: `  ⇒ ${outcome}` }));
+    else step(`  ${event.tool}: ${outcome}`, "muted");
+  }
   else if (event.kind === "error") step(`error: ${event.result ?? event.error ?? event.subtype}`, "error");
   else if (event.kind === "final") {
     const answer = document.getElementById("answer");
@@ -71,10 +82,10 @@ function show(event) {
       katex.render(el.textContent, el, { displayMode: el.classList.contains("block"), throwOnError: false });
     }
     const list = document.getElementById("citations");
-    list.hidden = event.citations.length === 0;
-    list.replaceChildren(...event.citations.map((c) => c.rendered
-      ? element("div", { textContent: `${c.marker} ${c.rendered}` })
-      : element("div", { className: "removed", textContent: `${c.marker} removed: ${c.removed}` })));
+    list.hidden = event.cited.length === 0;
+    list.replaceChildren(...event.cited.map((c) => c.rendered
+      ? element("div", { textContent: `${c.markers.join(" ")} ${c.rendered}` })
+      : element("div", { className: "removed", textContent: `${c.markers.join(" ")} removed: ${c.removed}` })));
   }
 }
 
@@ -83,6 +94,7 @@ function run() {
   if (!q) return;
   if (source) source.close();
   document.getElementById("steps").replaceChildren();
+  calls = new Map();
   document.getElementById("answer").textContent = "";
   document.getElementById("citations").hidden = true;
   const button = document.getElementById("go");

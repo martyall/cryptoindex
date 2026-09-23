@@ -47,12 +47,30 @@ def mount_ask(
     app.mount("/ask/katex", StaticFiles(directory=katex_dir, check_dir=False))
 
 
+def cited_places(citations: object) -> list[dict[str, object]]:
+    """The citations grouped by what the reader sees: markers citing
+    different paragraphs of the same block share one line. Removed citations
+    keep a line each, with the reason."""
+    markers_at: dict[str, list[str]] = {}
+    removed: list[dict[str, object]] = []
+    for c in citations if isinstance(citations, list) else []:
+        if c["rendered"] is None:
+            removed.append({"markers": [c["marker"]], "removed": c["removed"]})
+        elif c["marker"] not in markers_at.setdefault(c["rendered"], []):
+            markers_at[c["rendered"]].append(c["marker"])
+    kept: list[dict[str, object]] = [
+        {"markers": m, "rendered": where} for where, m in markers_at.items()
+    ]
+    return kept + removed
+
+
 async def _events(handler: AnswerHandler, tools: Tools, q: str) -> AsyncIterator[str]:
     async for event in ask(handler, tools, q):
         data: dict[str, object] = {"kind": event.kind, **event.data}
         if event.kind == "final":
             # Model output: rendered with raw HTML escaped, math left for KaTeX.
             data["answer_html"] = paragraph_html(str(event.data["answer"]), None)
+            data["cited"] = cited_places(event.data["citations"])
         yield f"data: {json.dumps(data)}\n\n"
     # EventSource reconnects when a stream ends; `done` tells the page to stop.
     yield "event: done\ndata: {}\n\n"
