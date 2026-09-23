@@ -7,7 +7,9 @@ it names one of those paragraphs; a citation is then shown by its location,
 read from the stored paragraph (D30). Read-only, on the ci_query role
 (Invariant 7)."""
 
-from collections.abc import AsyncIterator, Collection, Sequence
+import logging
+import time
+from collections.abc import AsyncGenerator, AsyncIterator, Collection, Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Literal, Protocol
 from uuid import UUID
@@ -18,6 +20,8 @@ from pydantic import BaseModel
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
 from cryptoindex.query.search import EXCLUDED_BY_DEFAULT, search
+
+log = logging.getLogger(__name__)
 
 SEARCH_K = 6
 MAX_PARAGRAPHS = 20  # per get_paragraphs call, to keep one reply readable
@@ -235,42 +239,71 @@ class AnswerHandler(Protocol):
 
 async def ask(
     handler: AnswerHandler, tools: Tools, question: str
-) -> AsyncIterator[AgentEvent]:
+) -> AsyncGenerator[AgentEvent]:
     """The handler's events, then a `final` event: the answer with each
     citation located, or marked removed if its paragraph was never returned
     by a tool in this session (D29, D30). The answer itself is never
-    dropped."""
+    dropped. Logs `answer_done` with the question and what came of it, also
+    when the handler fails or the caller stops early."""
+    started = time.monotonic()
     reply: AnswerReply | None = None
-    async for event in handler.answer(question, tools):
-        yield event
-        if event.kind == "answer":
-            reply = AnswerReply.model_validate(event.data)
-    if reply is None:
-        return
+    outcome: dict[str, object] = {"outcome": "stopped"}  # the caller went away
+    calls = 0
+    try:
+        async for event in handler.answer(question, tools):
+            yield event
+            if event.kind == "tool_call":
+                calls += 1
+            elif event.kind == "answer":
+                reply = AnswerReply.model_validate(event.data)
+            elif event.kind == "error":
+                outcome = {"outcome": "error", "error": event.data}
+        if reply is None:
+            return
+        final, removed = await _final(reply, tools)
+        outcome = {
+            "outcome": "answered",
+            "citations": len(reply.citations),
+            "removed": removed,
+        }
+        yield AgentEvent("final", final)
+    finally:
+        log.info(
+            "answer_done",
+            extra={
+                "question": question,
+                "seconds": round(time.monotonic() - started, 1),
+                "tool_calls": calls,
+                "paragraphs_read": len(tools.retrieved),
+                **outcome,
+            },
+        )
+
+
+async def _final(reply: AnswerReply, tools: Tools) -> tuple[dict[str, object], int]:
+    """The `final` event's data, and how many citations it removed."""
     kept = [
         c.paragraph_id for c in reply.citations if c.paragraph_id in tools.retrieved
     ]
     async with tools.pool.connection() as conn:
         where = await locations(conn, kept)
-    yield AgentEvent(
-        "final",
-        {
-            "answer": reply.answer,
-            "citations": [
-                {
-                    "marker": c.marker,
-                    "paragraph_id": c.paragraph_id,
-                    "location": asdict(where[c.paragraph_id])
-                    if c.paragraph_id in where
-                    else None,
-                    "rendered": where[c.paragraph_id].render()
-                    if c.paragraph_id in where
-                    else None,
-                    "removed": None
-                    if c.paragraph_id in where
-                    else "not among the paragraphs the tools returned",
-                }
-                for c in reply.citations
-            ],
-        },
-    )
+    removed = sum(1 for c in reply.citations if c.paragraph_id not in where)
+    return {
+        "answer": reply.answer,
+        "citations": [
+            {
+                "marker": c.marker,
+                "paragraph_id": c.paragraph_id,
+                "location": asdict(where[c.paragraph_id])
+                if c.paragraph_id in where
+                else None,
+                "rendered": where[c.paragraph_id].render()
+                if c.paragraph_id in where
+                else None,
+                "removed": None
+                if c.paragraph_id in where
+                else "not among the paragraphs the tools returned",
+            }
+            for c in reply.citations
+        ],
+    }, removed

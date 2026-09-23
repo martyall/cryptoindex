@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from collections.abc import AsyncIterator
 from pathlib import Path
 from uuid import UUID
@@ -257,3 +258,31 @@ def test_citations_of_the_same_block_share_a_line() -> None:
         {"markers": ["[2]"], "rendered": "Doc, p. 24, Proposition 7.9"},
         {"markers": ["[4]"], "removed": "not among the paragraphs the tools returned"},
     ]
+
+
+def answer_done(caplog: pytest.LogCaptureFixture) -> dict[str, object]:
+    """The `answer_done` line's fields, which logging keeps as record attributes."""
+    (record,) = [r for r in caplog.records if r.getMessage() == "answer_done"]
+    return vars(record)
+
+
+async def test_each_question_is_logged_with_what_came_of_it(
+    tools: Tools, document: tuple[UUID, list[int]], caplog: pytest.LogCaptureFixture
+) -> None:
+    _, ids = document
+    caplog.set_level(logging.INFO, logger="cryptoindex.query.answer")
+    [e async for e in ask(Scripted(invented=ids[1]), tools, "amortization")]
+    done = answer_done(caplog)
+    assert (done["question"], done["outcome"]) == ("amortization", "answered")
+    assert (done["tool_calls"], done["citations"], done["removed"]) == (1, 2, 1)
+
+
+async def test_a_question_abandoned_by_the_caller_is_logged_as_stopped(
+    tools: Tools, document: tuple[UUID, list[int]], caplog: pytest.LogCaptureFixture
+) -> None:
+    _, ids = document
+    caplog.set_level(logging.INFO, logger="cryptoindex.query.answer")
+    events = ask(Scripted(invented=ids[1]), tools, "amortization")
+    await anext(events)  # the first step, then the page is closed
+    await events.aclose()
+    assert answer_done(caplog)["outcome"] == "stopped"
