@@ -109,7 +109,9 @@ async def _make_ready(conn: AsyncConnection, work_id: RevisionId) -> None:
 async def _noop(stage: Stage, work_id: RevisionId, ctx: StageContext) -> None:
     async with ctx.pool.connection() as conn, conn.transaction():
         await advance(conn, work_id, stage)
-    log.info("stage_done work_id=%d stage=%s noop=true", work_id, stage)
+    log.info(
+        "stage_done", extra={"work_id": work_id, "stage": str(stage), "noop": True}
+    )
 
 
 def noop_stage(stage: Stage) -> StageFn:

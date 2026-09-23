@@ -86,6 +86,10 @@ class Qwen3Embedder:
             if self._loaded is None:
                 import torch
                 from sentence_transformers import SentenceTransformer
+                from transformers.utils import logging as transformers_logging
+
+                # Its progress bar writes to stderr, outside the JSON lines.
+                transformers_logging.disable_progress_bar()
 
                 self._loaded = SentenceTransformer(
                     self.model,

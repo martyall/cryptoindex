@@ -57,11 +57,14 @@ async def parse_stage(work_id: RevisionId, ctx: StageContext) -> None:
             )
         await advance(conn, work_id, Stage.PARSE)
     log.info(
-        "stage_done work_id=%d stage=parse paragraphs=%d pages=%d parser=%s",
-        work_id,
-        len(paragraphs),
-        document.page_count,
-        ctx.parser.name,
+        "stage_done",
+        extra={
+            "work_id": work_id,
+            "stage": "parse",
+            "paragraphs": len(paragraphs),
+            "pages": document.page_count,
+            "parser": ctx.parser.name,
+        },
     )
 
 

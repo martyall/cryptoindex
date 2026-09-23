@@ -111,7 +111,7 @@ class Runner:
         try:
             await self.enqueue(work_id)
         except Exception:
-            log.exception("notify_failed work_id=%d", work_id)
+            log.exception("notify_failed", extra={"work_id": work_id})
 
     async def status(self) -> Status:
         async with self._ctx.pool.connection() as conn:
@@ -144,7 +144,10 @@ class Runner:
                 },
             )
             for work_id, stage in await cur.fetchall():
-                log.warning("stale_claim_released work_id=%d stage=%s", work_id, stage)
+                log.warning(
+                    "stale_claim_released",
+                    extra={"work_id": work_id, "stage": str(stage)},
+                )
 
     async def _seed(self) -> None:
         async with self._ctx.pool.connection() as conn:
@@ -154,7 +157,7 @@ class Runner:
                 ([stage.value for stage in WORK_STAGES],),
             )
             rows = await cur.fetchall()
-        log.info("seeding revisions=%d", len(rows))
+        log.info("seeding", extra={"revisions": len(rows)})
         for work_id, stage in rows:
             await self._queues[Stage(stage)].put(RevisionId(work_id))
 
@@ -214,7 +217,7 @@ class Runner:
                 " WHERE id = %s AND stage = %s",
                 (work_id, stage.value),
             )
-        log.info("claim_released work_id=%d stage=%s", work_id, stage)
+        log.info("claim_released", extra={"work_id": work_id, "stage": str(stage)})
 
     async def _record_failure(
         self, stage: Stage, work_id: RevisionId, exc: Exception
@@ -237,17 +240,20 @@ class Runner:
             row = await cur.fetchone()
         if row is None:
             log.error(
-                "failure_unrecorded work_id=%d stage=%s error=%r", work_id, stage, exc
+                "failure_unrecorded",
+                extra={"work_id": work_id, "stage": str(stage), "error": repr(exc)},
             )
             return
         new_stage, attempts = row
         log.warning(
-            "stage_failed work_id=%d stage=%s attempts=%d gave_up=%s error=%r",
-            work_id,
-            stage,
-            attempts,
-            new_stage == Stage.FAILED,
-            exc,
+            "stage_failed",
+            extra={
+                "work_id": work_id,
+                "stage": str(stage),
+                "attempts": attempts,
+                "gave_up": new_stage == Stage.FAILED,
+                "error": repr(exc),
+            },
         )
         if new_stage != Stage.FAILED and self._tg is not None:
             delay = self._retry_base_s * 2 ** (attempts - 1)

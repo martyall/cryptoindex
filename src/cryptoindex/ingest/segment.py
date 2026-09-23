@@ -65,11 +65,13 @@ async def segment_stage(work_id: RevisionId, ctx: StageContext) -> None:
     missing = [i for i in range(len(chunks)) if i not in replies]
     if missing:
         log.info(
-            "segment_calls work_id=%d chunks=%d missing=%d backend=%s",
-            work_id,
-            len(chunks),
-            len(missing),
-            ctx.llm.name,
+            "segment_calls",
+            extra={
+                "work_id": work_id,
+                "chunks": len(chunks),
+                "missing": len(missing),
+                "backend": ctx.llm.name,
+            },
         )
     requests = {i: gloss_request(chunks[i], title, prompt) for i in missing}
     failure: Exception | None = None
@@ -106,12 +108,15 @@ async def segment_stage(work_id: RevisionId, ctx: StageContext) -> None:
         )
         await advance(conn, work_id, Stage.SEGMENT)
     log.info(
-        "stage_done work_id=%d stage=segment chunks=%d calls=%d units=%d flagged=%d",
-        work_id,
-        len(chunks),
-        len(missing),
-        len(units),
-        sum(1 for u in units if quality_flags(u, text)),
+        "stage_done",
+        extra={
+            "work_id": work_id,
+            "stage": "segment",
+            "chunks": len(chunks),
+            "calls": len(missing),
+            "units": len(units),
+            "flagged": sum(1 for u in units if quality_flags(u, text)),
+        },
     )
 
 

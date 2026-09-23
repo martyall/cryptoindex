@@ -65,7 +65,7 @@ def normalize(tex: str) -> str | None:
     try:
         nodes, _, _ = LatexWalker(tex, tolerant_parsing=False).get_latex_nodes()
     except LatexWalkerError as e:
-        log.debug("latex_unparsed error=%s", e)
+        log.debug("latex_unparsed", extra={"error": str(e)})
         return None
     return _emit(nodes).strip() or None
 

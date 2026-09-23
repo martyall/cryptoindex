@@ -107,6 +107,13 @@ async def test_upload_rejects_non_pdf(client: httpx.AsyncClient) -> None:
     assert "not a readable PDF" in response.json()["detail"]
 
 
+def seeded(caplog: pytest.LogCaptureFixture) -> bool:
+    return any(
+        r.getMessage() == "seeding" and getattr(r, "revisions", None) == 0
+        for r in caplog.records
+    )
+
+
 async def test_uploaded_document_reaches_ready_without_restart(
     client: httpx.AsyncClient, runner: Runner, caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -115,10 +122,10 @@ async def test_uploaded_document_reaches_ready_without_restart(
     try:
         # Upload only after startup seeding, so notify() must deliver it.
         for _ in range(100):
-            if "seeding revisions=0" in caplog.messages:
+            if seeded(caplog):
                 break
             await asyncio.sleep(0.02)
-        assert "seeding revisions=0" in caplog.messages
+        assert seeded(caplog)
         response = await client.post("/documents", files={"file": ("a.pdf", PDF)})
         assert response.status_code == 201
         for _ in range(100):

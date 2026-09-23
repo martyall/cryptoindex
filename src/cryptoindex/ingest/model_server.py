@@ -16,6 +16,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from cryptoindex.core import config
+from cryptoindex.core.logs import configure as configure_logging
 from cryptoindex.ingest.parsers import MLX_VLM_MAX_NUM_SEQS, MLX_VLM_VERSION
 
 log = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ async def mlx_vlm_server(
     """
     host, port = address(url)
     if await asyncio.to_thread(listening, host, port):
-        log.info("model_server reused url=%s", url)
+        log.info("model_server_reused", extra={"url": url})
         yield False
         return
 
@@ -82,10 +83,13 @@ async def mlx_vlm_server(
             stderr=output,
             start_new_session=True,  # its own group: stopped by us, not by Ctrl-C
         )
-    log.info("model_server starting url=%s pid=%d log=%s", url, proc.pid, log_path)
+    log.info(
+        "model_server_starting",
+        extra={"url": url, "pid": proc.pid, "log_path": str(log_path)},
+    )
     try:
         await _wait_until_listening(proc, host, port, startup_timeout_s, log_path)
-        log.info("model_server ready url=%s", url)
+        log.info("model_server_ready", extra={"url": url})
         yield True
     finally:
         await _stop(proc)
@@ -121,7 +125,7 @@ async def _stop(proc: asyncio.subprocess.Process) -> None:
     except TimeoutError:
         os.killpg(proc.pid, signal.SIGKILL)
         await proc.wait()
-    log.info("model_server stopped pid=%d", proc.pid)
+    log.info("model_server_stopped", extra={"pid": proc.pid})
 
 
 async def _serve_forever() -> None:
@@ -136,7 +140,7 @@ async def _serve_forever() -> None:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="level=%(levelname)s %(message)s")
+    configure_logging(config.settings.log_level)
     try:
         asyncio.run(_serve_forever())
     except KeyboardInterrupt:

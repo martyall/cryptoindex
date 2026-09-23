@@ -104,7 +104,10 @@ class AnthropicLLM:
         created = await self._client.beta.messages.batches.create(
             requests=batch_requests
         )
-        log.info("llm_batch_created batch_id=%s requests=%d", created.id, len(requests))
+        log.info(
+            "llm_batch_created",
+            extra={"batch_id": created.id, "requests": len(requests)},
+        )
         try:
             while True:
                 batch = await self._client.beta.messages.batches.retrieve(created.id)
@@ -231,7 +234,10 @@ class OpenAIFormatLLM:
             # gives no structured reason, and the flag stays off for this
             # backend's lifetime.
             except openai.BadRequestError as e:
-                log.warning("llm_json_schema_rejected model=%s error=%s", self.model, e)
+                log.warning(
+                    "llm_json_schema_rejected",
+                    extra={"model": self.model, "error": str(e)},
+                )
                 self._schema_supported = False
         if json_schema is not None:
             json_mode: ResponseFormatJSONObject = {"type": "json_object"}
@@ -397,7 +403,8 @@ class ClaudeCodeLLM:
             if result.api_error_status != 429:
                 break
             log.warning(
-                "llm_usage_limit backend=claude_code wait_s=%d", USAGE_LIMIT_WAIT_S
+                "llm_usage_limit",
+                extra={"backend": "claude_code", "wait_s": USAGE_LIMIT_WAIT_S},
             )
             await asyncio.sleep(USAGE_LIMIT_WAIT_S)
         if result.is_error:

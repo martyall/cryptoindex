@@ -1,6 +1,5 @@
 import asyncio
 import contextlib
-import logging
 import signal
 from collections.abc import Mapping
 
@@ -18,6 +17,7 @@ from cryptoindex.core.embed import (
     build_embedder,
     check_embed_model,
 )
+from cryptoindex.core.logs import configure as configure_logging
 from cryptoindex.core.model import Stage
 from cryptoindex.ingest.model_server import mlx_vlm_server
 from cryptoindex.ingest.parsers import build_parser
@@ -101,10 +101,7 @@ async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
 
 def main() -> None:
     settings = config.settings
-    logging.basicConfig(
-        level=settings.log_level,
-        format="%(asctime)s level=%(levelname)s logger=%(name)s %(message)s",
-    )
+    configure_logging(settings.log_level)
     asyncio.run(serve(settings))
 
 

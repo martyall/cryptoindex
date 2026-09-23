@@ -19,6 +19,7 @@ dependencies = [
     "pydantic>=2.13.5",
     "pylatexenc>=2.11",
     "pypdf>=6.19.0",
+    "python-json-logger>=4.2.0",
     "python-multipart>=0.0.32",
     "sentence-transformers>=6.1.0",
     "torch>=2.14.0",

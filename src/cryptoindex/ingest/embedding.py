@@ -55,13 +55,15 @@ async def embed_stage(work_id: RevisionId, ctx: StageContext) -> None:
         await advance(conn, work_id, Stage.EMBED)
     for p in pending:
         log.info(
-            "stage_done work_id=%d stage=embed vectors=%s paragraphs=%d"
-            " glosses=%d questions=%d",
-            work_id,
-            p.vectors.name,
-            len(p.paragraphs),
-            len(p.glosses),
-            len(p.questions),
+            "stage_done",
+            extra={
+                "work_id": work_id,
+                "stage": "embed",
+                "vectors": p.vectors.name,
+                "paragraphs": len(p.paragraphs),
+                "glosses": len(p.glosses),
+                "questions": len(p.questions),
+            },
         )
 
 

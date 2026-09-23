@@ -26,7 +26,7 @@
 - Async: one asyncio event loop runs the pipeline and the HTTP API. Blocking work (parsing, embedding) goes through `asyncio.to_thread` or a subprocess.
 - Configuration from environment variables via `cryptoindex.core.config.settings`. No config files with secrets.
 - Migrations are numbered SQL files in `db/migrations/`, applied in order, never edited after being applied.
-- Logging via the standard library, structured key=value messages, work ID included on every pipeline log line.
+- Logging via the standard library's `logging`, as JSON lines (`cryptoindex.core.logs.configure`, python-json-logger). The message is the event name; its fields go in `extra`, never formatted into the text: `log.info("stage_done", extra={"work_id": w, "stage": "parse"})`. Work ID on every pipeline log line.
 
 ## Comments and docstrings
 

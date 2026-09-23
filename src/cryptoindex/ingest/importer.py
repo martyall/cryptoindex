@@ -82,7 +82,8 @@ async def import_document(
         tmp.unlink(missing_ok=True)
 
     log.info(
-        "document_imported work_id=%d paper_id=%s bytes=%d", revision_id, paper_id, size
+        "document_imported",
+        extra={"work_id": revision_id, "paper_id": str(paper_id), "bytes": size},
     )
     return ImportResult(paper_id, name, revision_id, duplicate=False)
 

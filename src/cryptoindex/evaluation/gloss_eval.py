@@ -27,6 +27,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 from cryptoindex.core import config
 from cryptoindex.core.backends import build_llm
 from cryptoindex.core.llm import LLM
+from cryptoindex.core.logs import configure as configure_logging
 from cryptoindex.core.prompts import Prompt, load_prompt
 from cryptoindex.evaluation import parse_eval
 from cryptoindex.ingest.document import Block
@@ -211,11 +212,13 @@ async def gloss_all(
         for attempt in range(ATTEMPTS):
             async with limit:
                 log.info(
-                    "gloss_call excerpt=%s span=%d-%d attempt=%d",
-                    excerpt.name,
-                    chunk.first_pos,
-                    chunk.last_pos,
-                    attempt + 1,
+                    "gloss_call",
+                    extra={
+                        "excerpt": excerpt.name,
+                        "first_pos": chunk.first_pos,
+                        "last_pos": chunk.last_pos,
+                        "attempt": attempt + 1,
+                    },
                 )
                 completion = await llm.complete(
                     request.system,
@@ -227,7 +230,9 @@ async def gloss_all(
                 units = validate_reply(completion.parsed, chunk)
             except (ValidationError, InvalidReplyError) as e:
                 error = str(e)
-                log.warning("gloss_rejected excerpt=%s error=%s", excerpt.name, e)
+                log.warning(
+                    "gloss_rejected", extra={"excerpt": excerpt.name, "error": str(e)}
+                )
                 continue
             path.write_text(
                 CachedReply(
@@ -317,7 +322,7 @@ def select(
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    configure_logging(config.settings.log_level)
     settings = config.settings
     llm = build_llm(settings)
     prompt = load_prompt(GLOSS_PROMPT)
