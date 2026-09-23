@@ -86,7 +86,7 @@ Checker: quote must appear in `fetch(...)` after normalization (whitespace, LaTe
 class AnswerHandler(Protocol):  # D28; the first is the Claude Agent SDK
     async def answer(self, question: str, tools: Tools) -> AsyncIterator[AgentEvent]
 ```
-Events: `tool_call`, `tool_result`, `answer` (structured), then the checker's `final`: the answer with each citation rendered or marked removed (D29). Tools, read-only: `search`, `get_unit`, `get_paragraphs`, `get_document`. Answer schema: `{answer, citations: [{marker, paragraph_id, quote?}]}`, where `answer` is prose carrying the markers.
+Events: `tool_call`, `tool_result`, `answer` (structured), then the checker's `final`: the answer with each citation rendered or marked removed (D29). Tools, read-only: `search`, `get_unit`, `get_paragraphs`, `get_document`. Answer schema: `{answer, citations: [{marker, paragraph_id}]}`, where `answer` is prose carrying the markers.
 
 ## Plugin registration (core contract v1)
 

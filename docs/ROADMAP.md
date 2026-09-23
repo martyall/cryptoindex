@@ -78,10 +78,10 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 **Goal:** answers whose main points cite where a person can find them (document, page, section, numbered block), or a plain "not found".
 
-**In scope:** an answer-handler interface with a Claude Agent SDK handler (D28), read-only tools (`search`, `get_unit`, `get_paragraphs`, `get_document`), a prose answer citing its main points, the server-side citation checker (in-session source, optional quote match, D29), human-findable citation rendering, an Ask page streaming the steps, agent prompt `prompts/agent-v1.md`. See `docs/phases/05-agent-citations.md`.
+**In scope:** an answer-handler interface with a Claude Agent SDK handler (D28), read-only tools (`search`, `get_unit`, `get_paragraphs`, `get_document`), a prose answer citing its main points, the server-side citation checker (in-session source, D29, D30), human-findable citation rendering, an Ask page streaming the steps, agent prompt `prompts/agent-v1.md`. See `docs/phases/05-agent-citations.md`.
 
 **Acceptance:**
-- Tests with a scripted handler: a citation of a paragraph not retrieved in-session is removed and marked; a quote not in its paragraph is removed and its citation kept; the answer is never dropped.
+- Tests with a scripted handler: a citation of a paragraph not retrieved in-session is removed and marked; the answer is never dropped.
 - Manual run on about ten of the human's questions about the indexed documents produces cited points the human confirms are right and findable, and says so where the documents cannot answer.
 
 ## Phase 6 — HTTP API

@@ -129,3 +129,10 @@ Decided by the human when reviewing the Phase 5 spec. Supersedes D11's strictnes
 - **The checker's rules:** a cited paragraph must be one a tool returned in this session, which stops invented or guessed IDs; a quote, if given, must appear in that paragraph's stored text after normalization. A citation failing the first rule is removed; a quote failing the second is removed and the citation kept. Either way the answer stays, with the removals marked, and nothing is dropped silently.
 - **No forced abstention.** An answer with no citations is allowed; the prompt tells the agent to say plainly when the documents do not answer the question.
 - **What this cannot catch:** a real paragraph cited for a point it does not make. Only a reader can judge that; the optional quote is what helps them.
+
+### D30. A citation is a location; the agent gives no quotes (2026-09-22)
+Decided by the human when reviewing the Phase 5 spec. Supersedes D29's optional quotes; the rest of D29 stands.
+- **A citation's job is to let a person find the passage:** document, page, section, and the block label where there is one, all read from the stored paragraph the agent cited.
+- **The agent gives no quotes.** A model rarely reproduces text exactly, least of all LaTeX and OCR noise, so checking quotes would mostly remove correct citations.
+- **The checker's one rule:** a cited paragraph must be one a tool returned in the session; a citation that fails it is removed and its marker shown as removed.
+- **Showing the cited paragraph's text** beside the answer is deferred, as a way to judge answer quality when answers are evaluated.
