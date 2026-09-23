@@ -2,6 +2,8 @@
 
 Citation-grounded retrieval and answering over mathematics, computer science and cryptography documents that you upload (D18, D19), running locally. An agent answers questions from the index with citations a person can find (D28–D30). An optional code-analysis plugin is planned for later.
 
+An overview of where it stands (architecture, an example answer, the corpus, the roadmap): https://claude.ai/artifact/AXKBZvz32PUQXuSN7VYCoo
+
 To run it, see `docs/RUNNING.md`. The design documents in `docs/` drive the build; `docs/ROADMAP.md` says which phases are done.
 
 ## Reading order
