@@ -30,13 +30,23 @@ TOKENS = MarkdownIt().parse(RUNNING.read_text())
 
 
 def _commands() -> list[list[str]]:
-    """Every command in the page's `sh` blocks, one per line as the shell reads
-    them, split into words by shlex."""
+    """Every simple command in the page's `sh` blocks: each line as the shell
+    reads it, split by shlex into words and cut at its operators (`|`, `|&`,
+    `&&`, `;`), which shlex returns as tokens of their own."""
     blocks = [t.content for t in TOKENS if t.type == "fence" and t.info == "sh"]
-    lines = [
-        shlex.split(line, comments=True) for b in blocks for line in b.splitlines()
-    ]
-    return [argv for argv in lines if argv]
+    commands: list[list[str]] = []
+    for line in (line for b in blocks for line in b.splitlines()):
+        lexer = shlex.shlex(line, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True
+        command: list[str] = []
+        for token in lexer:
+            if set(token) <= set(lexer.punctuation_chars):
+                commands.append(command)
+                command = []
+            else:
+                command.append(token)
+        commands.append(command)
+    return [c for c in commands if c]
 
 
 def _make_targets() -> list[str]:

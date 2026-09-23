@@ -35,7 +35,7 @@ make run
 ```
 
 - **`make fetch-models`** downloads the pinned embedding weights once. It resumes an interrupted download.
-- **`make run`** starts Postgres, migrates, and starts PaddleOCR-VL's model server. It then runs the pipeline and the web server in one process, in the foreground, logging JSON lines.
+- **`make run`** starts Postgres, migrates, and starts PaddleOCR-VL's model server. It then runs the pipeline and the web server in one process, in the foreground, logging JSON lines to the terminal (see [Logs](#logs)).
   - The model server's log is `data/logs/mlx-vlm.log`.
   - Ctrl-C stops everything, including the model server if `make run` started it.
 
@@ -44,6 +44,25 @@ The service is ready when this returns `{"status": "ok"}`:
 ```sh
 curl -s http://127.0.0.1:8000/health
 ```
+
+## Logs
+
+`make run` writes one JSON object per line to the terminal (stderr). Each line has `time`, `level`, `logger`, `event` and the event's own fields. `CI_LOG_LEVEL` in `.env` sets the level. To keep a copy that you can follow from another terminal:
+
+```sh
+make run |& tee -a data/logs/run.log
+tail -f data/logs/run.log | jq -R -c 'fromjson? | select(.level != "INFO" or .event == "stage_done" or .event == "answer_done")'
+```
+
+`make`, Docker and uv print lines of their own at startup, so `jq` reads raw lines and keeps those that parse as JSON (`-R`, `fromjson?`). The filter shows every warning and error, plus one line each time a document finishes a stage or a question is answered. Replace the `select(...)` with `.` to see every log line. Events worth knowing:
+
+| Event | Meaning |
+|---|---|
+| `stage_done` | a document finished a stage, with counts |
+| `stage_failed` | an attempt at a stage failed, with the error; `gave_up` says whether it will be retried |
+| `llm_usage_limit` | glossing is waiting out a subscription usage limit |
+| `agent_session` | the model and the tools an answer session was offered |
+| `answer_done` | one per question: seconds, tool calls, paragraphs read, outcome |
 
 ## The pages
 
@@ -73,10 +92,10 @@ curl -s http://127.0.0.1:8000/documents
 
 ## When something goes wrong
 
-- **A document in `failed`:** its `error` in `/documents` says why, and the `stage_failed` log lines give each attempt. Fix the cause, stop `make run`, and send it back to the stage that failed, with the ID from `/documents`:
+- **A document in `failed`:** its `error` in `/documents` says why, and the `stage_failed` log lines give each attempt. Fix the cause, stop `make run`, and send it back to the stage that failed. Pass the document's `id` from `/documents` as `DOCS`; the one below is an example:
 
   ```sh
-  make requeue STAGE=parse DOCS=<document-id>
+  make requeue STAGE=parse DOCS=8b009488-fd4d-4c76-8db7-eb913057b957
   ```
 
 - **After a parser, prompt or model change:** send every document back to that stage, then `make run` again. Glossing replies are cached by input hash, so only what changed is redone.
