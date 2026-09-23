@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
 from cryptoindex.core.latex import formulas
+from cryptoindex.core.rerank import Reranker
 from cryptoindex.evaluation.parse_eval import KATEX_TOOL
 from cryptoindex.query.search import (
     ALL_CHANNELS,
@@ -70,6 +71,7 @@ class HitView(BaseModel):
     anchor_label: str | None
     gloss: str
     score: float
+    rerank_score: float | None
     channels: dict[str, int]
     paragraphs: list[ParagraphView]
 
@@ -86,6 +88,7 @@ def hit_view(hit: Hit) -> HitView:
         anchor_label=hit.anchor_label,
         gloss=hit.gloss,
         score=hit.score,
+        rerank_score=hit.rerank_score,
         channels={str(c): r for c, r in hit.channels.items()},
         paragraphs=[
             ParagraphView(
@@ -109,11 +112,13 @@ def mount_search(
     pool: Pool,
     embedder: Embedder,
     vectors: VectorSet = PRIMARY,
+    reranker: Reranker | None = None,
     katex_dir: Path = KATEX_DIR,
 ) -> None:
     """Serve the search QA page at /search/ on `app`. `pool` must be the
     ci_query role (Invariant 7) and `embedder` the model that filled
-    `vectors` (Invariant 6, D27); neither is checked here. Math renders only
+    `vectors` (Invariant 6, D27); neither is checked here. With a
+    `reranker`, each search can be run with or without it (D32). Math renders only
     once `make parse-eval` has installed KaTeX in tools/katex-check; until
     then the app starts without it (check_dir=False)."""
     router = APIRouter(prefix="/search")
@@ -123,9 +128,13 @@ def mount_search(
         return FileResponse(PAGE)
 
     @router.get("/api/info")
-    async def info() -> dict[str, str]:
-        """Which model answers, for the whole run (D27)."""
-        return {"model": embedder.model, "vectors": vectors.name}
+    async def info() -> dict[str, str | None]:
+        """Which models answer, for the whole run (D27, D32)."""
+        return {
+            "model": embedder.model,
+            "vectors": vectors.name,
+            "reranker": reranker.model if reranker is not None else None,
+        }
 
     @router.get("/api/search")
     async def run(
@@ -134,9 +143,11 @@ def mount_search(
         k: int = 10,
         kinds: Annotated[list[str] | None, Query()] = None,
         references: bool = False,
+        rerank: bool = True,
     ) -> list[HitView]:
         """`kinds` keeps only those kinds; references are left out unless
-        `references` is set (D25)."""
+        `references` is set (D25). `rerank` off gives the fused order, to
+        compare with the reranked one (D32)."""
         hits = await search(
             pool,
             embedder,
@@ -146,6 +157,7 @@ def mount_search(
             kinds=kinds or None,
             exclude=() if references else EXCLUDED_BY_DEFAULT,
             vectors=vectors,
+            reranker=reranker if rerank else None,
         )
         return [hit_view(h) for h in hits]
 

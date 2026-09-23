@@ -11,6 +11,7 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 | 4 | Embed and retrieve | done |
 | 5 | Agent and citation checker | done (manual run of ten questions pending) |
 | 5b | References: follow citations between documents | todo (spec drafted, not scheduled) |
+| 5c | Reranker (D32) | built on feature-reranker, off by default; evaluation open |
 | 6 | HTTP API | parked (2026-09-22) |
 | 7 | Operations and backfill | todo |
 | 8+ | Plugins (code first) | todo |

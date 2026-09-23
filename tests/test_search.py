@@ -19,6 +19,7 @@ from cryptoindex.core.embed import (
 )
 from cryptoindex.core.llm import FakeLLM
 from cryptoindex.core.model import RevisionId, Stage
+from cryptoindex.core.rerank import FakeReranker
 from cryptoindex.evaluation.search_page import mount_search, paragraph_html
 from cryptoindex.ingest.embedding import embed_stage
 from cryptoindex.ingest.paragraphs import content_hash
@@ -29,6 +30,7 @@ from cryptoindex.query.search import (
     GENERATED,
     QUERY_INSTRUCTION,
     Channel,
+    rerank_text,
     search,
 )
 
@@ -344,3 +346,54 @@ async def test_search_reads_only_the_chosen_vectors(
         query_pool, ALT_MODEL, ASKED, channels=vector_only, vectors=ALT
     )
     assert hit.channels == {Channel.PARAGRAPH: 1}
+
+
+async def test_a_reranker_reorders_the_fused_hits(
+    settings: Settings, pool: Pool, query_pool: Pool, work_id: int
+) -> None:
+    await indexed(settings, pool, work_id)
+    fused = await search(query_pool, FakeEmbedder(), ASKED)
+    assert all(h.rerank_score is None for h in fused)
+    # FakeReranker scores the candidates in reverse, and all of them fit
+    # within RERANK_CANDIDATES.
+    reranked = await search(query_pool, FakeEmbedder(), ASKED, reranker=FakeReranker())
+    assert [h.first_pos for h in reranked] == [h.first_pos for h in reversed(fused)]
+    scores = [h.rerank_score for h in reranked if h.rerank_score is not None]
+    assert len(scores) == len(reranked) and scores == sorted(scores, reverse=True)
+    top = await search(query_pool, FakeEmbedder(), ASKED, k=1, reranker=FakeReranker())
+    assert [h.first_pos for h in top] == [fused[-1].first_pos]
+
+
+async def test_the_reranker_reads_the_gloss_before_the_text(
+    settings: Settings, pool: Pool, query_pool: Pool, work_id: int
+) -> None:
+    await indexed(settings, pool, work_id)
+    (hit, *_) = await search(
+        query_pool, FakeEmbedder(), "nonconstant", channels={Channel.FULL_TEXT}
+    )
+    text = rerank_text(hit)
+    assert text.index(hit.name) < text.index(hit.gloss)
+    assert text.index(hit.gloss) < text.index(hit.paragraphs[0].text)
+
+
+async def test_the_search_page_can_switch_the_reranker_off(
+    settings: Settings, pool: Pool, query_pool: Pool, work_id: int, tmp_path: Path
+) -> None:
+    await indexed(settings, pool, work_id)
+    app = FastAPI()
+    mount_search(
+        app, query_pool, FakeEmbedder(), reranker=FakeReranker(), katex_dir=tmp_path
+    )
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://t") as client:
+        info = (await client.get("/search/api/info")).json()
+        on = (await client.get("/search/api/search", params={"q": ASKED})).json()
+        off = (
+            await client.get(
+                "/search/api/search", params={"q": ASKED, "rerank": "false"}
+            )
+        ).json()
+    assert info["reranker"] == "fake-reranker"
+    assert all(h["rerank_score"] is not None for h in on)
+    assert all(h["rerank_score"] is None for h in off)
+    assert [h["first_pos"] for h in on] == [h["first_pos"] for h in reversed(off)]

@@ -1,7 +1,7 @@
 """Hybrid search (ARCHITECTURE data flow 6): five channels over the current,
 ready revisions, fused with Reciprocal Rank Fusion per argument unit, or per
-paragraph that belongs to none. Read-only, on the ci_query role
-(Invariant 7)."""
+paragraph that belongs to none, then optionally reordered by a cross-encoder
+(D32). Read-only, on the ci_query role (Invariant 7)."""
 
 import asyncio
 import dataclasses
@@ -16,6 +16,7 @@ from psycopg import AsyncConnection, sql
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
 from cryptoindex.core.latex import normalize
+from cryptoindex.core.rerank import Reranker
 
 QUERY_INSTRUCTION = (
     "Given a question about mathematics, computer science or cryptography,"
@@ -23,6 +24,7 @@ QUERY_INSTRUCTION = (
 )
 CHANNEL_K = 50  # candidates each channel contributes before fusion
 RRF_K = 60  # the usual Reciprocal Rank Fusion constant
+RERANK_CANDIDATES = 30  # fused hits a reranker rescores (D32)
 
 
 class Channel(StrEnum):
@@ -58,7 +60,9 @@ class Hit:
     """One argument unit, or a single paragraph that belongs to none (a
     footnote, caption or reference). `channels` maps each channel that found
     it to its best rank there (1 = first); `matched_positions` are the
-    paragraphs that earned those ranks in the paragraph-level channels."""
+    paragraphs that earned those ranks in the paragraph-level channels.
+    `score` is the fused score; `rerank_score` is the reranker's, when one
+    ordered the hits (D32)."""
 
     unit_id: int | None
     anchor_kind: str | None
@@ -74,6 +78,7 @@ class Hit:
     channels: dict[Channel, int]
     matched_positions: tuple[int, ...]
     paragraphs: tuple[Paragraph, ...] = field(default=())
+    rerank_score: float | None = None
 
 
 async def search(
@@ -86,6 +91,7 @@ async def search(
     kinds: Collection[str] | None = None,
     exclude: Collection[str] = EXCLUDED_BY_DEFAULT,
     vectors: VectorSet = PRIMARY,
+    reranker: Reranker | None = None,
 ) -> list[Hit]:
     """The `k` best units, or paragraphs belonging to none, for `q` over
     current, ready revisions, optionally only those of `paper_ids`. A score
@@ -101,7 +107,11 @@ async def search(
 
     The vector channels read `vectors`; `embedder` must be the model that
     filled them (Invariant 6, D27). Nothing here checks that: the caller
-    does, against `docs.meta`, once at startup."""
+    does, against `docs.meta`, once at startup.
+
+    With a `reranker`, the best RERANK_CANDIDATES fused hits are rescored
+    against `q`, in a thread, and the `k` best by that score are returned
+    (D32)."""
     wanted = frozenset(channels)
     vector = None
     if wanted & {Channel.PARAGRAPH, Channel.GLOSS, Channel.QUESTION}:
@@ -205,9 +215,31 @@ async def search(
             item: sum(1.0 / (RRF_K + r) for r in ranks.values())
             for item, ranks in best.items()
         }
-        top = sorted(scores, key=lambda i: (-scores[i], i))[:k]
+        wanted_hits = k if reranker is None else max(k, RERANK_CANDIDATES)
+        top = sorted(scores, key=lambda i: (-scores[i], i))[:wanted_hits]
         matched = {i: set(at.values()) for i, at in best_at.items()}
-        return await _hits(conn, top, scores, best, matched)
+        hits = await _hits(conn, top, scores, best, matched)
+    # Outside the connection: the query pool is small, and scoring is slow.
+    if reranker is None:
+        return hits
+    return await _rerank(reranker, q, hits, k)
+
+
+def rerank_text(hit: Hit) -> str:
+    """What a reranker reads for a hit: the document's name, the gloss, then
+    the original paragraphs. The gloss comes first because it states the
+    passage in plain words where the paragraphs are LaTeX and OCR, and
+    because it then survives the cut at MAX_TOKENS."""
+    parts = (hit.name, hit.gloss, *(p.text for p in hit.paragraphs))
+    return "\n\n".join(part for part in parts if part)
+
+
+async def _rerank(reranker: Reranker, q: str, hits: list[Hit], k: int) -> list[Hit]:
+    scores = await asyncio.to_thread(
+        reranker.score, q, [rerank_text(h) for h in hits], QUERY_INSTRUCTION
+    )
+    ranked = sorted(zip(scores, hits, strict=True), key=lambda pair: -pair[0])
+    return [dataclasses.replace(hit, rerank_score=s) for s, hit in ranked[:k]]
 
 
 _CURRENT_P: LiteralString = (

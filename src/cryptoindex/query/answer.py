@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
+from cryptoindex.core.rerank import Reranker
 from cryptoindex.query.search import EXCLUDED_BY_DEFAULT, search
 
 log = logging.getLogger(__name__)
@@ -95,6 +96,7 @@ class Tools:
     pool: Pool
     embedder: Embedder
     vectors: VectorSet = PRIMARY
+    reranker: Reranker | None = None
     retrieved: set[int] = field(default_factory=set)
 
     async def search(self, q: str, kinds: Collection[str] | None = None) -> dict:
@@ -106,6 +108,7 @@ class Tools:
             kinds=kinds or None,
             exclude=EXCLUDED_BY_DEFAULT,
             vectors=self.vectors,
+            reranker=self.reranker,
         )
         rows = [await self._rows(h.paper_id, h.first_pos, h.last_pos) for h in hits]
         where = await self._locations([r[0] for unit in rows for r in unit])

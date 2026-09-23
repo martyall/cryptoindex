@@ -41,6 +41,7 @@
   <span id="model" class="muted" title="Fixed for the run by CI_SEARCH_VECTORS (D27)"></span>
   <input id="q" type="search" placeholder="Ask a question, name a result, or type notation" autofocus>
   <label title="Search the glosses and questions the model wrote at ingestion time"><input id="generated" type="checkbox" checked> gloss and question channels</label>
+  <label id="rerank-switch" hidden title="Reorder the fused results with the cross-encoder (D32)"><input id="rerank" type="checkbox" checked> rerank</label>
   <button id="go">Search</button>
   <div id="filters" class="muted"></div>
 </header>
@@ -100,7 +101,9 @@ function hitCard(hit, n) {
     element("div", { className: "head" }, [
       element("span", { className: "rank", textContent: `${n}.` }),
       element("span", { textContent: `${hit.name} (v${hit.revision}) · ${where}` }),
-      element("span", { className: "muted", textContent: `score ${hit.score.toFixed(4)}` }),
+      element("span", { className: "muted", textContent: hit.rerank_score === null
+        ? `score ${hit.score.toFixed(4)}`
+        : `rerank ${hit.rerank_score.toFixed(2)} · fused ${hit.score.toFixed(4)}` }),
       ...badges,
     ]),
     element("div", { className: "gloss", textContent: hit.gloss }),
@@ -112,10 +115,11 @@ async function run() {
   const q = document.getElementById("q").value.trim();
   if (!q) return;
   const generated = document.getElementById("generated").checked;
+  const rerank = document.getElementById("rerank").checked;
   const main = document.getElementById("main");
   main.replaceChildren(element("p", { className: "empty muted", textContent: "searching…" }));
   try {
-    const params = new URLSearchParams({ q, generated });
+    const params = new URLSearchParams({ q, generated, rerank });
     for (const k of only) params.append("kinds", k);
     if (withRefs || only.has("reference")) params.set("references", "true");
     const response = await fetch(`api/search?${params}`);
@@ -130,12 +134,15 @@ async function run() {
 }
 
 fetch("api/info").then((r) => r.json()).then((i) => {
-  document.getElementById("model").textContent = `${i.model} (${i.vectors} vectors)`;
+  document.getElementById("model").textContent = `${i.model} (${i.vectors} vectors)`
+    + (i.reranker ? ` · reranked by ${i.reranker}` : "");
+  document.getElementById("rerank-switch").hidden = !i.reranker;
 }).catch(() => {});
 
 document.getElementById("go").onclick = run;
 document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
 document.getElementById("generated").onchange = run;
+document.getElementById("rerank").onchange = run;
 </script>
 </body>
 </html>

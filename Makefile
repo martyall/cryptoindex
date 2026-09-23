@@ -46,6 +46,8 @@ run: migrate ## Start the pipeline and the API on CI_API_PORT
     ## Embedding models come from .env: CI_EMBED_MODEL (primary), optional
     ## CI_EMBED_MODEL_ALT (D27), and CI_SEARCH_VECTORS=primary|alt, which
     ## picks the one searches use for the whole run: change it and restart.
+    ## Optional CI_RERANK_MODEL (D32) reorders search results after fusion;
+    ## empty for none. A new model: make fetch-models, then restart.
     ## With CI_PARSER=paddle (D21) this also starts PaddleOCR-VL's model
     ## server, or reuses one already listening: data/logs/mlx-vlm.log.
 	$(UV_RUN) python -m cryptoindex
@@ -60,7 +62,7 @@ requeue: .env ## Send documents back to STAGE so the pipeline redoes it
     ## Both vector sets are cleared and refilled.
 	$(UV_RUN) python -m cryptoindex.ingest.requeue $(STAGE) $(DOCS)
 
-fetch-models: .env ## Download the pinned weights of the embedding models .env names
+fetch-models: .env ## Download the pinned weights of the embedding models and reranker .env names
     ## Once, into the Hugging Face cache; nothing is fetched at run time.
     ## Resumes an interrupted download.
 	$(UV_RUN) python -m cryptoindex.core.fetch_models

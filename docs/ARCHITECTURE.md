@@ -55,4 +55,4 @@ LLM backends (behind one small interface): Anthropic via the native SDK; local m
 
 ## Not in the minimal system (slots in later without changing boundaries)
 
-Reranker, section-level summaries, cross-reference resolution between units, notation extraction, HyDE, the browser UI, the code plugin.
+Section-level summaries, cross-reference resolution between units, notation extraction, HyDE, the browser UI, the code plugin. A reranker exists as an option, off by default (D32).

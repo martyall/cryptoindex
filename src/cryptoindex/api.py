@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
+from cryptoindex.core.rerank import Reranker
 from cryptoindex.evaluation.ask_page import mount_ask
 from cryptoindex.evaluation.search_page import mount_search
 from cryptoindex.ingest.importer import (
@@ -51,15 +52,17 @@ def create_app(
     embedder: Embedder,
     vectors: VectorSet = PRIMARY,
     handler: AnswerHandler | None = None,
+    reranker: Reranker | None = None,
 ) -> FastAPI:
     """`pool` is the ci_ingest role, for uploads and status; `query_pool` is
     ci_query, for search (Invariant 7). `embedder` must be the model behind
     `vectors` (Invariant 6, D27); the caller checks that at startup. The Ask
-    page is served when there is a `handler` (D28)."""
+    page is served when there is a `handler` (D28). Both pages' searches are
+    reordered by `reranker` when there is one (D32)."""
     app = FastAPI(title="cryptoindex", version="0.1.0")
-    mount_search(app, query_pool, embedder, vectors)
+    mount_search(app, query_pool, embedder, vectors, reranker)
     if handler is not None:
-        mount_ask(app, handler, query_pool, embedder, vectors)
+        mount_ask(app, handler, query_pool, embedder, vectors, reranker)
 
     @app.get("/", include_in_schema=False)
     async def upload_page() -> FileResponse:

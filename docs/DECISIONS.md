@@ -145,3 +145,10 @@ Decided by the human: the server must not depend on an installed Claude Code CLI
   - an empty working directory;
   - no slash commands and no saved session (`extra_args`);
   - the API credentials blanked in its environment, so it bills the subscription.
+
+### D32. An optional cross-encoder reranker after fusion, off by default (2026-09-23)
+Requested by the human. This lifts D17's deferral of the reranker; the rest of D17 stands.
+- **Setting:** `CI_RERANK_MODEL` names a cross-encoder with a pinned revision. The candidates are Qwen3-Reranker 0.6B and 4B (the embedder's family) and bge-reranker-v2-m3. When it is empty, search is unchanged.
+- **What it does:** it rescores the best 30 fused hits against the question and returns the best `k` by its score. It reads the document's name, then the gloss, then the original paragraphs, up to 1024 tokens. Hits are only reordered: a citation still names original paragraphs (Invariant 3).
+- **Where it applies:** the same search serves the agent's tool and the search page. The page can switch the reranker off for one query, to compare by hand (D24).
+- **Status:** development only, like D27, until it is shown to help. With the 0.6B model, the first comparison on this corpus found a mixed ordering and 4.5–8 s added to each search (`docs/phases/05c-reranker.md`).

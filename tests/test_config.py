@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from cryptoindex.core.config import ConfigError, load_settings
+from cryptoindex.core.rerank import CrossEncoderReranker, build_reranker
 
 MINIMAL = {
     "CI_ADMIN_DSN": "postgresql://a@h/db",
@@ -52,3 +53,13 @@ def test_searching_the_alternate_vectors_needs_an_alternate_model() -> None:
         load_settings(MINIMAL | {"CI_SEARCH_VECTORS": "both"})
     s = load_settings(MINIMAL | {"CI_SEARCH_VECTORS": "alt", "CI_EMBED_MODEL_ALT": "m"})
     assert (s.search_vectors, s.embed_model_alt) == ("alt", "m")
+
+
+def test_a_reranker_is_off_unless_named() -> None:
+    assert load_settings(MINIMAL).rerank_model is None
+    assert load_settings(MINIMAL | {"CI_RERANK_MODEL": ""}).rerank_model is None
+    named = load_settings(MINIMAL | {"CI_RERANK_MODEL": "Qwen/Qwen3-Reranker-0.6B"})
+    assert build_reranker(load_settings(MINIMAL)) is None
+    assert isinstance(build_reranker(named), CrossEncoderReranker)
+    with pytest.raises(ConfigError, match="no pinned revision"):
+        build_reranker(load_settings(MINIMAL | {"CI_RERANK_MODEL": "some/model"}))

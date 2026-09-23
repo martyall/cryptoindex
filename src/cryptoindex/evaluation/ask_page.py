@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
+from cryptoindex.core.rerank import Reranker
 from cryptoindex.evaluation.search_page import KATEX_DIR, paragraph_html
 from cryptoindex.query.answer import AnswerHandler, Tools, ask
 
@@ -24,11 +25,13 @@ def mount_ask(
     pool: Pool,
     embedder: Embedder,
     vectors: VectorSet = PRIMARY,
+    reranker: Reranker | None = None,
     katex_dir: Path = KATEX_DIR,
 ) -> None:
     """Serve the Ask page at /ask/ on `app`. Each question gets its own Tools
     session on `pool`, which must be the ci_query role (Invariant 7), with
-    `embedder` the model behind `vectors` (Invariant 6, D27)."""
+    `embedder` the model behind `vectors` (Invariant 6, D27), and searches
+    reordered by `reranker` when there is one (D32)."""
     router = APIRouter(prefix="/ask")
 
     @router.get("/", include_in_schema=False)
@@ -39,7 +42,7 @@ def mount_ask(
     async def run(q: str) -> StreamingResponse:
         """Server-sent events, one per AgentEvent, then `done`."""
         return StreamingResponse(
-            _events(handler, Tools(pool, embedder, vectors), q),
+            _events(handler, Tools(pool, embedder, vectors, reranker), q),
             media_type="text/event-stream",
         )
 

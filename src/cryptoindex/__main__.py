@@ -20,6 +20,7 @@ from cryptoindex.core.embed import (
 from cryptoindex.core.logs import configure as configure_logging
 from cryptoindex.core.model import Stage
 from cryptoindex.core.prompts import load_prompt
+from cryptoindex.core.rerank import build_reranker
 from cryptoindex.ingest.model_server import mlx_vlm_server
 from cryptoindex.ingest.parsers import build_parser
 from cryptoindex.ingest.pipeline import DEFAULT_STAGES
@@ -91,6 +92,7 @@ async def _serve(settings: Settings, stages: Mapping[Stage, StageFn]) -> None:
                         load_prompt(AGENT_PROMPT),
                         settings.agent_max_turns,
                     ),
+                    build_reranker(settings),
                 ),
                 host=settings.api_host,
                 port=settings.api_port,

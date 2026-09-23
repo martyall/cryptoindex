@@ -35,6 +35,7 @@ class Settings:
     search_vectors: SearchVectors  # D27: which set searches use, for the whole run
     embed_dims: int
     embed_device: str
+    rerank_model: str | None  # D32: a cross-encoder after fusion; None for none
     llm_backend: LLMBackend
     llm_base_url: str
     llm_model: str
@@ -125,6 +126,7 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         search_vectors=search_vectors,
         embed_dims=num("CI_EMBED_DIMS", "1024", int, 1),
         embed_device=opt("CI_EMBED_DEVICE", "mps"),
+        rerank_model=env.get("CI_RERANK_MODEL") or None,
         llm_backend=llm_backend,
         llm_base_url=opt("CI_LLM_BASE_URL", "http://localhost:8080/v1"),
         llm_model=opt("CI_LLM_MODEL", ""),

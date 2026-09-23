@@ -24,8 +24,28 @@ This copies `.env.example`, whose comments explain each setting. The setup used 
 | `CI_EMBED_MODEL` | `Qwen/Qwen3-Embedding-8B` | primary vectors |
 | `CI_EMBED_MODEL_ALT` | `Qwen/Qwen3-Embedding-0.6B` | second vector set, for comparison (D27, development only) |
 | `CI_SEARCH_VECTORS` | `primary` | which set searches use; change it and restart to switch |
+| `CI_RERANK_MODEL` | empty, or `Qwen/Qwen3-Reranker-0.6B` to compare | optional reranker after fusion, off by default (D32); the search page can switch it off per query |
 
 Changing an embedding model after documents are indexed means re-embedding. See `make requeue` in the `make` help.
+
+### Run options
+
+These are fixed for a run: change `.env`, then restart `make run`.
+
+| Option | Setting | Effect |
+|---|---|---|
+| Which vectors searches use | `CI_SEARCH_VECTORS=primary` or `alt` | `alt` searches the 0.6B vectors instead of the 8B ones (D27); it needs `CI_EMBED_MODEL_ALT` |
+| Reranker on | `CI_RERANK_MODEL=Qwen/Qwen3-Reranker-0.6B`, `Qwen/Qwen3-Reranker-4B` or `BAAI/bge-reranker-v2-m3` | a cross-encoder reorders the best 30 fused hits for the search page and the agent (D32); adds about 5–8 s per search with the 0.6B |
+| Reranker off | `CI_RERANK_MODEL=` (empty) | fused order only, as before D32 |
+
+A model not yet downloaded must be fetched before the restart:
+
+```sh
+make fetch-models
+make run |& tee -a data/logs/run.log
+```
+
+The search page's `/search/api/info` names the models the run uses. The page also has switches for a single query: "gloss and question channels", to leave out what the model wrote at ingestion, and "rerank", shown when a reranker is set, to see the fused order instead.
 
 ## Start
 
