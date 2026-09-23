@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
-from cryptoindex.evaluation.search_page import KATEX_DIR
+from cryptoindex.evaluation.search_page import KATEX_DIR, paragraph_html
 from cryptoindex.query.answer import AnswerHandler, Tools, ask
 
 PAGE = Path(__file__).with_name("ask_page.html")
@@ -49,6 +49,10 @@ def mount_ask(
 
 async def _events(handler: AnswerHandler, tools: Tools, q: str) -> AsyncIterator[str]:
     async for event in ask(handler, tools, q):
-        yield f"data: {json.dumps({'kind': event.kind, **event.data})}\n\n"
+        data: dict[str, object] = {"kind": event.kind, **event.data}
+        if event.kind == "final":
+            # Model output: rendered with raw HTML escaped, math left for KaTeX.
+            data["answer_html"] = paragraph_html(str(event.data["answer"]), None)
+        yield f"data: {json.dumps(data)}\n\n"
     # EventSource reconnects when a stream ends; `done` tells the page to stop.
     yield "event: done\ndata: {}\n\n"

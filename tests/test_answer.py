@@ -200,6 +200,8 @@ async def test_the_ask_page_streams_the_events_then_done(
         ("message", "final"),
     ]
     assert events[-1].event == "done"
+    html = events[-2].json()["answer_html"]
+    assert "<p>" in html and "<script" not in html
 
 
 async def test_sdk_tools_return_json_and_report_what_was_new(

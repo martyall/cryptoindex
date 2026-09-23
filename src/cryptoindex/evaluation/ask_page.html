@@ -22,7 +22,8 @@
   .muted { color: var(--muted); }
   #steps { font-size: .85rem; border-left: 3px solid var(--line); padding-left: .8rem; margin: 0 0 1rem; }
   #steps div { margin: .15rem 0; }
-  #answer { white-space: pre-wrap; font-size: 1.02rem; }
+  #answer { font-size: 1.02rem; }
+  #answer p { margin: .6rem 0; }
   #citations { margin-top: 1rem; padding: .6rem .8rem; background: var(--soft); border-radius: 6px; }
   #citations div { margin: .25rem 0; }
   .removed { color: var(--bad); }
@@ -42,7 +43,6 @@
   <div id="citations" hidden></div>
 </main>
 <script src="katex/katex.min.js"></script>
-<script src="katex/contrib/auto-render.min.js"></script>
 <script>
 // Each server-sent event is one AgentEvent (answer.py). Citations are shown
 // as locations only (D30); a removed one says why (D29).
@@ -66,9 +66,10 @@ function show(event) {
   else if (event.kind === "error") step(`error: ${event.result ?? event.error ?? event.subtype}`, "error");
   else if (event.kind === "final") {
     const answer = document.getElementById("answer");
-    answer.textContent = event.answer;
-    if (window.renderMathInElement) renderMathInElement(answer, { delimiters: [
-      { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false }], throwOnError: false });
+    answer.innerHTML = event.answer_html;  // ask_page._events: Markdown with raw HTML escaped
+    for (const el of answer.querySelectorAll(".math")) {
+      katex.render(el.textContent, el, { displayMode: el.classList.contains("block"), throwOnError: false });
+    }
     const list = document.getElementById("citations");
     list.hidden = event.citations.length === 0;
     list.replaceChildren(...event.citations.map((c) => c.rendered
