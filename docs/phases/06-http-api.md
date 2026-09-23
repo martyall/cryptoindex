@@ -1,6 +1,6 @@
 # Phase 6 — HTTP API
 
-Status: draft, for the human's review
+Status: parked (2026-09-22): no UI or outside client needs it yet; the draft stands for when one does
 
 ## Goal
 One documented HTTP contract that a browser UI (TypeScript, D1) can be built against: ingest control, pipeline status, search, and the agent streaming its steps and its cited answer. The QA pages become clients of it.
