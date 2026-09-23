@@ -1,6 +1,6 @@
 UV_RUN := uv run --env-file .env
 
-.PHONY: help db-up db-down migrate reset requeue fetch-models test run check fmt \
+.PHONY: help db-up db-down migrate reset requeue fetch-models test smoke run check fmt \
 	paddle-server \
 	parse-eval parse-review parse-close-blind parse-report gloss-eval gloss-review \
 	gloss-report
@@ -73,6 +73,15 @@ paddle-server: .env ## Run PaddleOCR-VL's model server on its own
 
 test: db-up ## Run the offline test suite against cryptoindex_test
 	$(UV_RUN) pytest
+
+smoke: db-up ## Run the service end to end in the modes we use (real models)
+    ## Uploads 2 pages of PDF to a fresh cryptoindex_test on port 8001,
+    ## waits for ready and searches, once per vector set (D27). Local only;
+    ## your index is untouched. Stop `make run` first: the smoke service
+    ## loads its own models, and two copies do not fit in memory. Not
+    ## alongside `make test` either: both use cryptoindex_test.
+    ##   make smoke PDF=path/to/some.pdf
+	$(UV_RUN) python -m cryptoindex.evaluation.smoke $(PDF)
 
 check: ## Lint, formatting and types, read-only: what CI runs
 	uv run ruff check .

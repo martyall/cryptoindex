@@ -119,6 +119,7 @@ class Qwen3Embedder:
                         prompt=prompt,
                         batch_size=BATCH_SIZE,
                         convert_to_numpy=True,
+                        show_progress_bar=False,
                     )
                 )
         vectors = np.concatenate(batches).astype(np.float32)
