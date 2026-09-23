@@ -9,6 +9,7 @@ requires-python = ">=3.11"
 dependencies = [
     "anthropic>=1.7.0",
     "fastapi>=0.141.1",
+    "huggingface-hub>=1.32.0",
     "markdown-it-py>=4.2.0",
     "mdit-py-plugins>=0.6.1",
     "numpy>=2.4.6",

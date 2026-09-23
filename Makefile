@@ -1,6 +1,7 @@
 UV_RUN := uv run --env-file .env
 
-.PHONY: help db-up db-down migrate reset requeue test run check fmt paddle-server \
+.PHONY: help db-up db-down migrate reset requeue fetch-models test run check fmt \
+	paddle-server \
 	parse-eval parse-review parse-close-blind parse-report gloss-eval gloss-review \
 	gloss-report
 
@@ -41,6 +42,9 @@ reset: .env ## Delete the database volume and CI_DATA_DIR, then migrate afresh
 
 run: migrate ## Start the pipeline and the API on CI_API_PORT
     ## Upload page at /, search QA page at /search/ (D24), one process.
+    ## Embedding models come from .env: CI_EMBED_MODEL (primary), optional
+    ## CI_EMBED_MODEL_ALT (D27), and CI_SEARCH_VECTORS=primary|alt, which
+    ## picks the one searches use for the whole run: change it and restart.
     ## With CI_PARSER=paddle (D21) this also starts PaddleOCR-VL's model
     ## server, or reuses one already listening: data/logs/mlx-vlm.log.
 	$(UV_RUN) python -m cryptoindex
@@ -50,7 +54,14 @@ requeue: .env ## Send documents back to STAGE so the pipeline redoes it
     ## DOCS="<id> <id>"; every document when empty. Stop `make run` first.
     ##   make requeue STAGE=segment
     ##   make requeue STAGE=embed DOCS=8b009488-fd4d-4c76-8db7-eb913057b957
+    ## A new CI_EMBED_MODEL(_ALT): make fetch-models, stop make run, then
+    ## make requeue STAGE=embed; re-embedding redoes no parsing or glossing.
 	$(UV_RUN) python -m cryptoindex.ingest.requeue $(STAGE) $(DOCS)
+
+fetch-models: .env ## Download the pinned weights of the embedding models .env names
+    ## Once, into the Hugging Face cache; nothing is fetched at run time.
+    ## Resumes an interrupted download.
+	$(UV_RUN) python -m cryptoindex.core.fetch_models
 
 paddle-server: .env ## Run PaddleOCR-VL's model server on its own
     ## Native, because it needs the Mac GPU (D21), in the foreground. The
