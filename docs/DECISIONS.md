@@ -121,3 +121,11 @@ Decided by the human when planning Phase 5. Supersedes D10's hand-written tool-u
 - **The first handler is the Claude Agent SDK.** Writing our own loop would rewrite what the SDK already does: run the loop, call tools, keep the session. Our tools are registered with it as in-process functions; its built-in file and shell tools are disabled; the final answer comes back in our claims schema as structured output. Checked on 2026-09-22: with no `ANTHROPIC_API_KEY`, it runs on the human's Claude Code subscription (dev mode, as D22), and with a key, on the API.
 - **The model never writes SQL.** It calls our tools, which run fixed queries on the read-only role (Invariant 7).
 - **Invariant 9 is deferred for the agent:** a local-model handler (a loop of our own over the OpenAI format) can be added later behind the same interface; nothing now depends on its absence.
+
+### D29. Citations mark the main points; the checker removes bad citations, not claims (2026-09-22)
+Decided by the human when reviewing the Phase 5 spec. Supersedes D11's strictness (every claim cited with a verbatim quote, failing claims dropped); D11's core stands: citations are checked mechanically, server-side, before an answer is shown (Invariant 4).
+- **An answer is prose; the agent cites its main points**, not every sentence.
+- **A citation is a paragraph ID**, and optionally a verbatim quote. What a reader sees (document, page, section, block label) is read from the stored paragraph, so the model cannot invent a location.
+- **The checker's rules:** a cited paragraph must be one a tool returned in this session, which stops invented or guessed IDs; a quote, if given, must appear in that paragraph's stored text after normalization. A citation failing the first rule is removed; a quote failing the second is removed and the citation kept. Either way the answer stays, with the removals marked, and nothing is dropped silently.
+- **No forced abstention.** An answer with no citations is allowed; the prompt tells the agent to say plainly when the documents do not answer the question.
+- **What this cannot catch:** a real paragraph cited for a point it does not make. Only a reader can judge that; the optional quote is what helps them.

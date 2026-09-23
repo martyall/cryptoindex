@@ -38,7 +38,7 @@ LLM backends (behind one small interface): Anthropic via the native SDK; local m
 4. **Segment and gloss.** A strong LLM groups a section's paragraphs into *argument units* (spans of consecutive paragraphs making one self-contained point), writes a 1–3 sentence plain-English gloss, key terms, and 3–5 questions each unit answers → `docs.units`, `docs.unit_questions`. Formal blocks (Theorem, Definition, Algorithm, Game) are recorded as anchors within units, not as the units themselves.
 5. **Embed.** Local vectors for paragraphs, glosses, and questions. The revision becomes `ready` and current; a `revision_ready` event is written.
 6. **Retrieve.** Hybrid search (paragraph vectors, gloss vectors, question vectors, full-text with the `simple` config, trigram on normalized LaTeX) fused with Reciprocal Rank Fusion; matches expand to their enclosing unit.
-7. **Answer.** The agent loop calls retrieval tools, reads originals, and returns structured claims with verbatim quotes. The citation checker verifies every quote against stored text; unverifiable claims are dropped. Abstaining is a valid answer.
+7. **Answer.** An answer handler (D28) calls retrieval tools, reads originals, and answers in prose whose main points cite paragraphs, optionally with verbatim quotes (D29). The citation checker removes any citation of a paragraph the tools did not return in the session, and any quote not found in its paragraph; the answer stays. Saying the documents do not answer the question is a valid answer.
 
 ## Invariants (never broken, in any phase)
 
