@@ -5,7 +5,7 @@ Status: planned, not scheduled (2026-09-23). The questions below are open until 
 ## Goal
 The agent follows a paper's citations. Each document's bibliography is indexed as references. Each reference points at a document in the corpus when we have that document. Each passage records which references it cites. When a passage the agent reads rests on a cited work that is indexed, the agent is encouraged to consider whether that work's own statement would improve the answer, and if so to read it there. When the cited work is not indexed, the traversal ends at the bibliography entry, which is itself citable original text.
 
-## Why now
+## Why
 - The corpus is sealed at six documents on one theme (`docs/CORPUS.md`), and they cite each other: Halo cites Bulletproofs, and PlonK and the PCD thesis cite the cycles paper.
 - Today the agent reaches another paper only by a separate topical search. Its search tool excludes bibliography entries, it cannot restrict a search to one document, and it cannot see which documents exist.
 - `ARCHITECTURE.md` lists "cross-reference resolution between units" as a later slot. This is that slot between documents. It changes no boundary: a new stage, new tables, and more tools for the agent.
