@@ -22,7 +22,7 @@
   - a page or an endpoint;
   - the upload procedure, or the corpus in `docs/CORPUS.md`.
 
-  `tests/test_running_doc.py` checks its commands and URLs. Keep each command on one line so that the test can read it.
+  `tests/test_running_doc.py` checks its commands and URLs. Keep each command on one line so that the test can read it. The `corpus` skill (`.claude/skills/corpus/`) uses these commands and follows `docs/CORPUS.md`'s naming; update it with them.
 
 ## Conventions
 

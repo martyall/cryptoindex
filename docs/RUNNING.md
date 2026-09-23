@@ -74,7 +74,11 @@ All the pages are served by `make run`; there is no separate UI to host.
 
 ## Ingest the corpus
 
-`docs/CORPUS.md` lists the documents, their sources, and the name each is uploaded under. That name is the document's title everywhere (D18). For each row, download the source if it is a URL, then upload it under its name. For example:
+`docs/CORPUS.md` lists the documents, their sources, and the name each is uploaded under. That name is the document's title everywhere (D18).
+
+The easy way is to ask Claude Code in this repository, however loosely: "add the Nova paper to the corpus", or "make sure everything in CORPUS.md is uploaded". The `corpus` skill (`.claude/skills/corpus/SKILL.md`) pins down the document, names it, adds its row, and uploads it with the commands below.
+
+By hand: for each row, download the source if it is a URL, then upload it under its name. For example:
 
 ```sh
 curl -fL -o /tmp/2019-1021.pdf https://eprint.iacr.org/2019/1021.pdf
