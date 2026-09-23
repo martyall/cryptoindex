@@ -32,7 +32,7 @@ class Settings:
     data_dir: Path
     embed_model: str
     embed_model_alt: str | None  # D27: a second model, for comparison
-    search_vectors: SearchVectors  # which set searches use, for the whole run
+    search_vectors: SearchVectors  # D27: which set searches use, for the whole run
     embed_dims: int
     embed_device: str
     llm_backend: LLMBackend

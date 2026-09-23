@@ -111,11 +111,11 @@ def mount_search(
     vectors: VectorSet = PRIMARY,
     katex_dir: Path = KATEX_DIR,
 ) -> None:
-    """Serve the page at /search/ in `app`, the pipeline's own process, so
-    searches embed queries with the model the pipeline already holds: one
-    copy per process, not one per server. `pool` is the ci_query role
-    (Invariant 7). Math renders only once `make parse-eval` has installed
-    KaTeX in tools/katex-check."""
+    """Serve the search QA page at /search/ on `app`. `pool` must be the
+    ci_query role (Invariant 7) and `embedder` the model that filled
+    `vectors` (Invariant 6, D27); neither is checked here. Math renders only
+    once `make parse-eval` has installed KaTeX in tools/katex-check; until
+    then the app starts without it (check_dir=False)."""
     router = APIRouter(prefix="/search")
 
     @router.get("/", include_in_schema=False)

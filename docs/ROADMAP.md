@@ -8,7 +8,7 @@ Each phase ends with something runnable and testable. Detailed specs go in `docs
 | 1 | Upload | done |
 | 2 | Parse | done |
 | 3 | Segment and gloss | done (Anthropic manual run pending an API key) |
-| 4 | Embed and retrieve | todo |
+| 4 | Embed and retrieve | done |
 | 5 | Agent and citation checker | todo |
 | 6 | HTTP API | todo |
 | 7 | Operations and backfill | todo |
@@ -67,7 +67,7 @@ A remote source (OAI-PMH harvest, polite PDF fetch, arXiv cross-match) is deferr
 
 **Goal:** searchable index, checked by hand (D24).
 
-**In scope:** local embedding (Qwen3-Embedding-0.6B, `mps`), model registry in `docs.meta`, HNSW indexes, hybrid search (paragraph/gloss/question vectors + full-text + trigram) with RRF, expansion to enclosing unit, a local search page for manual QA. The retrieval evaluation harness and the 0.6B vs 8B comparison wait for real questions (D24).
+**In scope:** local embedding (Qwen3-Embedding, 0.6B and 8B cut to 1024 dimensions), model registry in `docs.meta`, HNSW indexes, hybrid search (paragraph/gloss/question vectors + full-text + trigram on normalized LaTeX) with RRF, expansion to enclosing unit, search by block and anchor kind (D25), a search QA page in the main process (D24), `make requeue` to redo a stage, a second vector set for comparing models (D27, development only), `make smoke`. The retrieval evaluation harness waits for real questions (D24).
 
 **Acceptance:**
 - The nine evaluation excerpts are indexed end to end, and the human has tried searches of each kind on the search page (lookup, assumption, near-miss, and one the excerpts cannot answer) and judged the results usable.

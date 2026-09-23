@@ -3,9 +3,9 @@ parser and models, against the test database and a scratch data directory
 (port 8001), so the working index is untouched. Local only: it calls real
 models, which CI never does.
 
-It uploads the first two pages of PDF, waits for `ready`, and searches, once
-searching the primary vectors and once, after a restart, the alternate ones
-(D27).
+It uploads the first two pages of PDF, waits for `ready`, and searches the
+primary vectors; when CI_EMBED_MODEL_ALT is set, it restarts and searches the
+alternate ones too (D27).
 """
 
 import os
@@ -62,8 +62,7 @@ def main() -> None:
 
 
 def _run(env: dict[str, str], pdf: Path, upload: bool) -> str | None:
-    """Start the service, (upload and) wait for ready, search, stop it. Returns
-    what went wrong, or None."""
+    """Returns what went wrong, or None."""
     proc = subprocess.Popen(
         [sys.executable, "-m", "cryptoindex"], env=env, start_new_session=True
     )

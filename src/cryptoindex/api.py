@@ -49,10 +49,9 @@ def create_app(
     embedder: Embedder,
     vectors: VectorSet = PRIMARY,
 ) -> FastAPI:
-    """`pool` is the ci_ingest role, used for uploads and status;
-    `query_pool` is ci_query, used for search (Invariant 7). Searches use
-    `vectors` and its model's embedder, the pipeline's own, so the model is
-    loaded once in this process (D27)."""
+    """`pool` is the ci_ingest role, for uploads and status; `query_pool` is
+    ci_query, for search (Invariant 7). `embedder` must be the model behind
+    `vectors` (Invariant 6, D27); the caller checks that at startup."""
     app = FastAPI(title="cryptoindex", version="0.1.0")
     mount_search(app, query_pool, embedder, vectors)
 

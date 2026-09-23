@@ -1,6 +1,6 @@
 # Phase 4 — Embed and retrieve
 
-Status: draft, for the human's review
+Status: done (2026-09-22)
 
 ## Goal
 Make the index searchable, and let the human check by hand how well search finds the right passage, with and without the gloss and question channels (D3, D15, D24, Invariant 6).
@@ -60,6 +60,10 @@ Make the index searchable, and let the human check by hand how well search finds
 - Reranker, HyDE, section summaries (D17).
 - The agent and citation checker (Phase 5); the HTTP search endpoint (Phase 6).
 - Repairing parser noise; re-segmenting narrow units. Manual QA may show their effect; neither is fixed here.
+
+## Outcome
+- **Acceptance, by manual QA (D24):** Halo (ePrint 2019/1021) and the Kimchi specification indexed end to end; the human searched them on the QA page, lookups, notation and near-misses included, and judged the results good. Every hit shows the channels and ranks that found it, and a switch leaves out the gloss and question channels. The pipeline, the embed stage and the search page refuse a model other than the one recorded (`test_a_different_embedding_model_is_refused`, per vector set).
+- **Embedding model:** undecided between 0.6B and 8B; both are indexed (D27), 8B is primary. Ten made-up queries favoured 8B slightly on conceptual questions; the choice waits for real ones.
 
 ## Found during the phase
 - **A separate search server doubled the embedding model's memory.** `make search` ran in its own process, so it loaded its own copy of the model: with Qwen3-Embedding-8B, 15 GB for the search page and 24 GB for the pipeline, 39 GB of this machine's 48. The page is now part of the main process (ARCHITECTURE: one process), sharing the pipeline's embedder, which takes a lock per batch so a search and an embed stage can share the GPU.

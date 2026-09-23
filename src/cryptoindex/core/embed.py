@@ -51,8 +51,9 @@ class FakeEmbedder:
         return out
 
 
-# Weights are downloaded once, at these revisions, into the Hugging Face cache
-# (`hf download <model> --revision <rev>`); nothing is fetched at run time.
+# Pinned revisions: `make fetch-models` downloads them into the Hugging Face
+# cache, and the embedder loads with local_files_only, so nothing is fetched
+# at run time.
 EMBED_REVISIONS = {  # D3
     "Qwen/Qwen3-Embedding-0.6B": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
     "Qwen/Qwen3-Embedding-8B": "1d8ad4ca9b3dd8059ad90a75d4983776a23d44af",
@@ -63,7 +64,8 @@ BATCH_SIZE = 16
 class Qwen3Embedder:
     """Qwen3-Embedding through sentence-transformers (D3), cut to `dims`
     dimensions: the models are trained so that a prefix of the vector is
-    itself an embedding, and the index's columns are fixed at CI_EMBED_DIMS.
+    itself an embedding; the index's halfvec columns have a fixed width (the
+    migrations), which CI_EMBED_DIMS must match.
     The model is loaded on first use, so starting the process stays fast;
     loading and encoding block, so call through `asyncio.to_thread`. Safe to
     share between threads."""
@@ -88,7 +90,8 @@ class Qwen3Embedder:
                 from sentence_transformers import SentenceTransformer
                 from transformers.utils import logging as transformers_logging
 
-                # Its progress bar writes to stderr, outside the JSON lines.
+                # transformers' checkpoint-loading progress bar writes to
+                # stderr, outside the JSON lines.
                 transformers_logging.disable_progress_bar()
 
                 self._loaded = SentenceTransformer(
@@ -97,8 +100,7 @@ class Qwen3Embedder:
                     device=self._device,
                     local_files_only=True,
                     truncate_dim=self.dims,
-                    # 8B weights at full precision would take 32 GB of this
-                    # machine's 48; half precision keeps them at 16.
+                    # 8B weights take ~32 GB at float32; float16 halves that.
                     model_kwargs={"torch_dtype": torch.float16},
                 )
             return self._loaded

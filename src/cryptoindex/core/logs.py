@@ -1,7 +1,5 @@
-"""Logging for every entry point: the standard library's `logging`, one JSON
-object per line (python-json-logger). A call site names the event as the
-message and passes its fields as `extra`, never formatted into the text, so
-each field is a JSON value; pipeline events include `work_id`."""
+"""JSON-lines logging for every entry point (CLAUDE.md, Conventions:
+logging)."""
 
 import logging
 

@@ -99,8 +99,9 @@ async def search(
     both is dropped. A paragraph kept by kind still expands to its enclosing
     unit, whatever that unit's kind.
 
-    The vector channels read `vectors`, whose model `embedder` must be
-    (D27); the caller checks that against `docs.meta` once, at startup."""
+    The vector channels read `vectors`; `embedder` must be the model that
+    filled them (Invariant 6, D27). Nothing here checks that: the caller
+    does, against `docs.meta`, once at startup."""
     wanted = frozenset(channels)
     vector = None
     if wanted & {Channel.PARAGRAPH, Channel.GLOSS, Channel.QUESTION}:

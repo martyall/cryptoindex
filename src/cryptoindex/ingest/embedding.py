@@ -28,7 +28,8 @@ async def embed_stage(work_id: RevisionId, ctx: StageContext) -> None:
     """Embed the revision's paragraphs, glosses and questions that have no
     vector yet, in each configured vector set (the primary one, and the
     alternate one when there is an alternate model, D27), fill `latex_norm`
-    for the paragraphs, and advance the revision to `ready`.
+    for the paragraphs the primary set lacked, and advance the revision to
+    `ready`.
 
     Idempotent: only rows without a vector are embedded, so re-running on
     unchanged input embeds nothing (Invariant 2). The vectors, latex_norm,
@@ -74,7 +75,9 @@ class _Pending:
     paragraphs: list[tuple[int, Vector]]
     glosses: list[tuple[int, Vector]]
     questions: list[tuple[int, Vector]]
-    latex: list[tuple[int, str, str | None]]  # paragraphs embedded here
+    # the paragraphs this set lacked; the stage fills latex_norm from
+    # PRIMARY's only
+    latex: list[tuple[int, str, str | None]]
 
 
 async def _embed(

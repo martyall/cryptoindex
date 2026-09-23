@@ -56,6 +56,7 @@ requeue: .env ## Send documents back to STAGE so the pipeline redoes it
     ##   make requeue STAGE=embed DOCS=8b009488-fd4d-4c76-8db7-eb913057b957
     ## A new CI_EMBED_MODEL(_ALT): make fetch-models, stop make run, then
     ## make requeue STAGE=embed; re-embedding redoes no parsing or glossing.
+    ## Both vector sets are cleared and refilled.
 	$(UV_RUN) python -m cryptoindex.ingest.requeue $(STAGE) $(DOCS)
 
 fetch-models: .env ## Download the pinned weights of the embedding models .env names
@@ -76,7 +77,8 @@ test: db-up ## Run the offline test suite against cryptoindex_test
 
 smoke: db-up ## Run the service end to end in the modes we use (real models)
     ## Uploads 2 pages of PDF to a fresh cryptoindex_test on port 8001,
-    ## waits for ready and searches, once per vector set (D27). Local only;
+    ## waits for ready and searches, then again on the alternate vectors
+    ## when CI_EMBED_MODEL_ALT is set (D27). Local only;
     ## your index is untouched. Stop `make run` first: the smoke service
     ## loads its own models, and two copies do not fit in memory. Not
     ## alongside `make test` either: both use cryptoindex_test.
