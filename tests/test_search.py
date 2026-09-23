@@ -11,6 +11,7 @@ from psycopg.rows import TupleRow
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
 from cryptoindex.core.embed import (
+    ALT,
     EmbedModelMismatchError,
     FakeEmbedder,
     Vectors,
@@ -101,13 +102,19 @@ def work_id(settings: Settings, seed: Callable[[list[Stage]], list[int]]) -> int
     return work_id
 
 
-def ctx(pool: Pool, settings: Settings, embedder: FakeEmbedder) -> StageContext:
+def ctx(
+    pool: Pool,
+    settings: Settings,
+    embedder: FakeEmbedder,
+    alt: FakeEmbedder | None = None,
+) -> StageContext:
     return StageContext(
         pool=pool,
         settings=settings,
         parser=StubParser(),
         llm=FakeLLM({}),
         embedder=embedder,
+        embedder_alt=alt,
     )
 
 
@@ -240,7 +247,7 @@ async def test_search_page_returns_rendered_hits(
 ) -> None:
     await indexed(settings, pool, work_id)
     app = FastAPI()
-    mount_search(app, query_pool, FakeEmbedder(), tmp_path)
+    mount_search(app, query_pool, FakeEmbedder(), katex_dir=tmp_path)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as client:
         response = await client.get("/search/api/search", params={"q": "nonconstant"})
@@ -299,3 +306,41 @@ async def test_kinds_filter_paragraphs_and_units(
         query_pool, embedder, r"\mathbb{Z}_2[x]", kinds={"equation"}
     )
     assert equation.first_pos == 2  # the unit holding the matching equation
+
+
+ALT_MODEL = FakeEmbedder(model="alt-embedder")
+
+
+async def test_an_alternate_model_fills_its_own_vectors(
+    settings: Settings, pool: Pool, work_id: int
+) -> None:
+    await embed_stage(
+        RevisionId(work_id), ctx(pool, settings, FakeEmbedder(), alt=ALT_MODEL)
+    )
+    assert query(
+        settings,
+        "SELECT count(emb), count(emb_alt) FROM docs.paragraphs",
+    ) == [(len(PARAGRAPHS), len(PARAGRAPHS))]
+    assert query(
+        settings,
+        "SELECT key, value FROM docs.meta WHERE key LIKE 'embed_model%' ORDER BY key",
+    ) == [("embed_model", "fake-embedder"), ("embed_model_alt", "alt-embedder")]
+    async with pool.connection() as conn:
+        with pytest.raises(EmbedModelMismatchError, match="alt vectors"):
+            await check_embed_model(conn, "fake-embedder", ALT)
+
+
+async def test_search_reads_only_the_chosen_vectors(
+    settings: Settings, pool: Pool, query_pool: Pool, work_id: int
+) -> None:
+    await embed_stage(
+        RevisionId(work_id), ctx(pool, settings, FakeEmbedder(), alt=ALT_MODEL)
+    )
+    with psycopg.connect(settings.admin_dsn, autocommit=True) as conn:
+        conn.execute("UPDATE docs.paragraphs SET emb = NULL")
+    vector_only = {Channel.PARAGRAPH}
+    assert await search(query_pool, FakeEmbedder(), ASKED, channels=vector_only) == []
+    (hit, *_) = await search(
+        query_pool, ALT_MODEL, ASKED, channels=vector_only, vectors=ALT
+    )
+    assert hit.channels == {Channel.PARAGRAPH: 1}

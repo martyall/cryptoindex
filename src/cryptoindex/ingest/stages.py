@@ -29,6 +29,7 @@ class StageContext:
     parser: Parser
     llm: LLM
     embedder: Embedder
+    embedder_alt: Embedder | None = None  # D27: fills the ALT vectors
 
 
 StageFn = Callable[[RevisionId, StageContext], Awaitable[None]]

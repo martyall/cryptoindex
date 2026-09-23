@@ -11,10 +11,10 @@ from enum import StrEnum
 from typing import Literal, LiteralString
 from uuid import UUID
 
-from psycopg import AsyncConnection
+from psycopg import AsyncConnection, sql
 
 from cryptoindex.core.db import Pool
-from cryptoindex.core.embed import Embedder
+from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
 from cryptoindex.core.latex import normalize
 
 QUERY_INSTRUCTION = (
@@ -85,6 +85,7 @@ async def search(
     paper_ids: Sequence[UUID] | None = None,
     kinds: Collection[str] | None = None,
     exclude: Collection[str] = EXCLUDED_BY_DEFAULT,
+    vectors: VectorSet = PRIMARY,
 ) -> list[Hit]:
     """The `k` best units, or paragraphs belonging to none, for `q` over
     current, ready revisions, optionally only those of `paper_ids`. A score
@@ -96,14 +97,17 @@ async def search(
     `exclude` drops them; both take a paragraph's structural kind, a unit's
     anchor kind, or a unit's anchor term (D25). `exclude` wins, so a kind in
     both is dropped. A paragraph kept by kind still expands to its enclosing
-    unit, whatever that unit's kind."""
+    unit, whatever that unit's kind.
+
+    The vector channels read `vectors`, whose model `embedder` must be
+    (D27); the caller checks that against `docs.meta` once, at startup."""
     wanted = frozenset(channels)
     vector = None
     if wanted & {Channel.PARAGRAPH, Channel.GLOSS, Channel.QUESTION}:
-        vectors = await asyncio.to_thread(
+        embedded = await asyncio.to_thread(
             embedder.embed_queries, [q], QUERY_INSTRUCTION
         )
-        vector = vectors[0]
+        vector = embedded[0]
     papers = list(paper_ids) if paper_ids is not None else None
     limits: dict[str, object] = {
         "papers": papers,
@@ -121,10 +125,12 @@ async def search(
         if Channel.PARAGRAPH in wanted and vector is not None:
             paragraph_ranks[Channel.PARAGRAPH] = await _ids(
                 conn,
-                "SELECT p.id FROM docs.paragraphs p"
-                + _CURRENT_P
-                + " AND p.emb IS NOT NULL"
-                " ORDER BY p.emb <=> %(v)s::halfvec LIMIT %(n)s",
+                sql.SQL(
+                    "SELECT p.id FROM docs.paragraphs p"
+                    + _CURRENT_P
+                    + " AND p.{col} IS NOT NULL"
+                    " ORDER BY p.{col} <=> %(v)s::halfvec LIMIT %(n)s"
+                ).format(col=sql.Identifier(vectors.paragraph)),
                 {"v": vector, "n": CHANNEL_K, **limits},
             )
         if Channel.FULL_TEXT in wanted:
@@ -150,20 +156,25 @@ async def search(
         if Channel.GLOSS in wanted and vector is not None:
             unit_ranks[Channel.GLOSS] = await _ids(
                 conn,
-                "SELECT u.id FROM docs.units u"
-                + _CURRENT_U
-                + " AND u.emb_gloss IS NOT NULL"
-                " ORDER BY u.emb_gloss <=> %(v)s::halfvec LIMIT %(n)s",
+                sql.SQL(
+                    "SELECT u.id FROM docs.units u"
+                    + _CURRENT_U
+                    + " AND u.{col} IS NOT NULL"
+                    " ORDER BY u.{col} <=> %(v)s::halfvec LIMIT %(n)s"
+                ).format(col=sql.Identifier(vectors.gloss)),
                 {"v": vector, "n": CHANNEL_K, **limits},
             )
         if Channel.QUESTION in wanted and vector is not None:
             unit_ranks[Channel.QUESTION] = await _ids(
                 conn,
-                "SELECT u.id FROM docs.unit_questions q"
-                " JOIN docs.units u ON u.id = q.unit_id"
-                + _CURRENT_U
-                + " AND q.emb IS NOT NULL"
-                " GROUP BY u.id ORDER BY min(q.emb <=> %(v)s::halfvec) LIMIT %(n)s",
+                sql.SQL(
+                    "SELECT u.id FROM docs.unit_questions q"
+                    " JOIN docs.units u ON u.id = q.unit_id"
+                    + _CURRENT_U
+                    + " AND q.{col} IS NOT NULL"
+                    " GROUP BY u.id"
+                    " ORDER BY min(q.{col} <=> %(v)s::halfvec) LIMIT %(n)s"
+                ).format(col=sql.Identifier(vectors.question)),
                 {"v": vector, "n": CHANNEL_K, **limits},
             )
 
@@ -220,8 +231,10 @@ _CURRENT_U: LiteralString = (
 Item = tuple[Literal["unit", "paragraph"], int]
 
 
-async def _ids(conn: AsyncConnection, sql: LiteralString, params: dict) -> list[int]:
-    cur = await conn.execute(sql, params)
+async def _ids(
+    conn: AsyncConnection, query: LiteralString | sql.Composed, params: dict
+) -> list[int]:
+    cur = await conn.execute(query, params)
     return [row[0] for row in await cur.fetchall()]
 
 

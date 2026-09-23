@@ -1,6 +1,7 @@
 import hashlib
 import threading
-from typing import TYPE_CHECKING, Protocol
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal, Protocol
 
 import numpy as np
 import numpy.typing as npt
@@ -130,30 +131,50 @@ class Qwen3Embedder:
         return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
 
 
-def build_embedder(settings: Settings) -> Embedder:
+@dataclass(frozen=True, slots=True)
+class VectorSet:
+    """One embedding model's vectors (D27): the columns that hold them and the
+    `docs.meta` key naming the model that filled them. PRIMARY and ALT are the
+    only two; their column names are composed into SQL as identifiers."""
+
+    name: Literal["primary", "alt"]
+    meta_key: str
+    paragraph: str
+    gloss: str
+    question: str
+
+
+PRIMARY = VectorSet("primary", "embed_model", "emb", "emb_gloss", "emb")
+ALT = VectorSet("alt", "embed_model_alt", "emb_alt", "emb_gloss_alt", "emb_alt")
+VECTOR_SETS = {v.name: v for v in (PRIMARY, ALT)}
+
+
+def build_embedder(settings: Settings, model: str) -> Embedder:
     """Raises ConfigError for a model without a pinned revision."""
-    revision = EMBED_REVISIONS.get(settings.embed_model)
+    revision = EMBED_REVISIONS.get(model)
     if revision is None:
         raise ConfigError(
-            f"CI_EMBED_MODEL={settings.embed_model!r} has no pinned revision;"
+            f"embedding model {model!r} has no pinned revision;"
             f" known: {sorted(EMBED_REVISIONS)}"
         )
-    return Qwen3Embedder(
-        settings.embed_model, revision, settings.embed_dims, settings.embed_device
-    )
+    return Qwen3Embedder(model, revision, settings.embed_dims, settings.embed_device)
 
 
 class EmbedModelMismatchError(RuntimeError):
     """The index was built with a different embedding model (Invariant 6)."""
 
 
-async def check_embed_model(conn: AsyncConnection, model: str) -> None:
-    """Raise EmbedModelMismatchError if `docs.meta` records an embedding model
-    other than `model`. An index with no vectors yet records none."""
-    cur = await conn.execute("SELECT value FROM docs.meta WHERE key = 'embed_model'")
+async def check_embed_model(
+    conn: AsyncConnection, model: str, vectors: VectorSet = PRIMARY
+) -> None:
+    """Raise EmbedModelMismatchError if `docs.meta` records a model other than
+    `model` for `vectors`. A set with no vectors yet records none."""
+    cur = await conn.execute(
+        "SELECT value FROM docs.meta WHERE key = %s", (vectors.meta_key,)
+    )
     row = await cur.fetchone()
     if row is not None and row[0] != model:
         raise EmbedModelMismatchError(
-            f"the index was embedded with {row[0]}, but CI_EMBED_MODEL is {model};"
+            f"the {vectors.name} vectors were embedded with {row[0]}, not {model};"
             " re-embedding is a separate job (Invariant 6)"
         )

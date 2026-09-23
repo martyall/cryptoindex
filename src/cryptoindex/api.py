@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 
 from cryptoindex.core.config import Settings
 from cryptoindex.core.db import Pool
-from cryptoindex.core.embed import Embedder
+from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
 from cryptoindex.evaluation.search_page import mount_search
 from cryptoindex.ingest.importer import (
     ImportResult,
@@ -47,12 +47,14 @@ def create_app(
     settings: Settings,
     query_pool: Pool,
     embedder: Embedder,
+    vectors: VectorSet = PRIMARY,
 ) -> FastAPI:
     """`pool` is the ci_ingest role, used for uploads and status;
-    `query_pool` is ci_query, used for search (Invariant 7). `embedder` is
-    the pipeline's own, so the model is loaded once in this process."""
+    `query_pool` is ci_query, used for search (Invariant 7). Searches use
+    `vectors` and its model's embedder, the pipeline's own, so the model is
+    loaded once in this process (D27)."""
     app = FastAPI(title="cryptoindex", version="0.1.0")
-    mount_search(app, query_pool, embedder)
+    mount_search(app, query_pool, embedder, vectors)
 
     @app.get("/", include_in_schema=False)
     async def upload_page() -> FileResponse:

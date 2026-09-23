@@ -42,3 +42,13 @@ def test_all_problems_are_reported_together() -> None:
         "CI_MAX_ATTEMPTS='0' must be >= 1",
     ]:
         assert fragment in message
+
+
+def test_searching_the_alternate_vectors_needs_an_alternate_model() -> None:
+    assert load_settings(MINIMAL).search_vectors == "primary"
+    with pytest.raises(ConfigError, match="CI_SEARCH_VECTORS=alt needs"):
+        load_settings(MINIMAL | {"CI_SEARCH_VECTORS": "alt"})
+    with pytest.raises(ConfigError, match="CI_SEARCH_VECTORS='both'"):
+        load_settings(MINIMAL | {"CI_SEARCH_VECTORS": "both"})
+    s = load_settings(MINIMAL | {"CI_SEARCH_VECTORS": "alt", "CI_EMBED_MODEL_ALT": "m"})
+    assert (s.search_vectors, s.embed_model_alt) == ("alt", "m")

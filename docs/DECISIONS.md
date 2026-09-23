@@ -107,3 +107,10 @@ Approved by the human while indexing the Kimchi specification, which has 200 foo
 - **Footnotes and captions are still sent to the model** (`gloss.OPTIONAL`), so an argument that uses one can include it, and a caption can join the unit discussing its figure. Only the coverage rule changes: a reply is no longer rejected for leaving them out.
 - **They are not what a section breaks on.** Unlike a bibliography, they sit inside the text; breaking there would cut arguments in half and cost more calls, not fewer.
 - Skipping them by length or by reading them was rejected: that is a heuristic over text.
+
+### D27. A second embedding model's vectors, for comparison during development (2026-09-22)
+Decided by the human, to compare Qwen3-Embedding 0.6B and 8B on real searches (D3's comparison, which D24 postponed) without re-embedding each time. Amends Invariant 6 for the development period, and is to be removed once the choice is made.
+- **Two sets of vector columns:** the primary set (`paragraphs.emb`, `units.emb_gloss`, `unit_questions.emb`) and an alternate set (`emb_alt`, `emb_gloss_alt`, `emb_alt`), named by role, not by model. `docs.meta` records the model behind each (`embed_model`, `embed_model_alt`). Invariant 6's guarantee holds per set: a set holds one model's vectors, and a search embeds its query with that set's model and compares only that set.
+- **The embed stage fills both** when `CI_EMBED_MODEL_ALT` is set.
+- **Which set searches use is global, fixed at startup** (`CI_SEARCH_VECTORS=primary|alt`), never chosen per query, so there is no doubt which model produced a result. Comparing is a restart.
+- **Removal:** a migration dropping the three `_alt` columns and their indexes, and deleting `embed_model_alt` from `docs.meta`; `CI_EMBED_MODEL_ALT` and `CI_SEARCH_VECTORS` leave the settings.

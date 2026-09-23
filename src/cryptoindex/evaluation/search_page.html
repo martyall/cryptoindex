@@ -38,6 +38,7 @@
 <body>
 <header>
   <span class="title">Search QA</span>
+  <span id="model" class="muted" title="Fixed for the run by CI_SEARCH_VECTORS (D27)"></span>
   <input id="q" type="search" placeholder="Ask a question, name a result, or type notation" autofocus>
   <label title="Search the glosses and questions the model wrote at ingestion time"><input id="generated" type="checkbox" checked> gloss and question channels</label>
   <button id="go">Search</button>
@@ -126,6 +127,10 @@ async function run() {
     main.replaceChildren(element("p", { className: "empty", textContent: `Search failed: ${err.message}` }));
   }
 }
+
+fetch("api/info").then((r) => r.json()).then((i) => {
+  document.getElementById("model").textContent = `${i.model} (${i.vectors} vectors)`;
+}).catch(() => {});
 
 document.getElementById("go").onclick = run;
 document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });

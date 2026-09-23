@@ -58,7 +58,7 @@ def settings(database: Settings) -> Iterator[Settings]:
             "TRUNCATE docs.events, docs.unit_questions, docs.units,"
             " docs.segment_chunks, docs.paragraphs, docs.revisions, docs.papers,"
             " test_audit.stage_runs;"
-            " DELETE FROM docs.meta WHERE key = 'embed_model'"
+            " DELETE FROM docs.meta WHERE key LIKE 'embed_model%'"
         )
     yield database
 

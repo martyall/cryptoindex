@@ -15,7 +15,7 @@ from mdit_py_plugins.dollarmath import dollarmath_plugin
 from pydantic import BaseModel
 
 from cryptoindex.core.db import Pool
-from cryptoindex.core.embed import Embedder
+from cryptoindex.core.embed import PRIMARY, Embedder, VectorSet
 from cryptoindex.core.latex import formulas
 from cryptoindex.evaluation.parse_eval import KATEX_TOOL
 from cryptoindex.query.search import (
@@ -105,7 +105,11 @@ KATEX_DIR = KATEX_TOOL / "node_modules" / "katex" / "dist"
 
 
 def mount_search(
-    app: FastAPI, pool: Pool, embedder: Embedder, katex_dir: Path = KATEX_DIR
+    app: FastAPI,
+    pool: Pool,
+    embedder: Embedder,
+    vectors: VectorSet = PRIMARY,
+    katex_dir: Path = KATEX_DIR,
 ) -> None:
     """Serve the page at /search/ in `app`, the pipeline's own process, so
     searches embed queries with the model the pipeline already holds: one
@@ -117,6 +121,11 @@ def mount_search(
     @router.get("/", include_in_schema=False)
     async def page() -> FileResponse:
         return FileResponse(PAGE)
+
+    @router.get("/api/info")
+    async def info() -> dict[str, str]:
+        """Which model answers, for the whole run (D27)."""
+        return {"model": embedder.model, "vectors": vectors.name}
 
     @router.get("/api/search")
     async def run(
@@ -136,6 +145,7 @@ def mount_search(
             channels=ALL_CHANNELS if generated else ALL_CHANNELS - GENERATED,
             kinds=kinds or None,
             exclude=() if references else EXCLUDED_BY_DEFAULT,
+            vectors=vectors,
         )
         return [hit_view(h) for h in hits]
 

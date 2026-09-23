@@ -19,10 +19,11 @@ from collections.abc import Sequence
 from uuid import UUID
 
 import psycopg
-from psycopg import Connection
+from psycopg import Connection, sql
 from psycopg.rows import TupleRow
 
 from cryptoindex.core import config
+from cryptoindex.core.embed import VECTOR_SETS
 from cryptoindex.core.model import Stage
 
 STAGES = (Stage.PARSE, Stage.SEGMENT, Stage.EMBED)
@@ -67,21 +68,34 @@ def requeue(
 
 def _clear_vectors(conn: Connection[TupleRow], revision_ids: Sequence[int]) -> None:
     ids = list(revision_ids)
-    conn.execute(
-        "UPDATE docs.paragraphs SET emb = NULL WHERE revision_id = ANY(%s)", (ids,)
-    )
-    conn.execute(
-        "UPDATE docs.units SET emb_gloss = NULL WHERE revision_id = ANY(%s)", (ids,)
-    )
-    conn.execute(
-        "UPDATE docs.unit_questions q SET emb = NULL FROM docs.units u"
-        " WHERE u.id = q.unit_id AND u.revision_id = ANY(%s)",
-        (ids,),
-    )
-    left = conn.execute("SELECT count(emb) FROM docs.paragraphs").fetchone()
-    if left is not None and left[0] == 0:
-        # The next embedding records the model again, which may be another one.
-        conn.execute("DELETE FROM docs.meta WHERE key = 'embed_model'")
+    for vs in VECTOR_SETS.values():  # D27
+        conn.execute(
+            sql.SQL(
+                "UPDATE docs.paragraphs SET {col} = NULL WHERE revision_id = ANY(%s)"
+            ).format(col=sql.Identifier(vs.paragraph)),
+            (ids,),
+        )
+        conn.execute(
+            sql.SQL(
+                "UPDATE docs.units SET {col} = NULL WHERE revision_id = ANY(%s)"
+            ).format(col=sql.Identifier(vs.gloss)),
+            (ids,),
+        )
+        conn.execute(
+            sql.SQL(
+                "UPDATE docs.unit_questions q SET {col} = NULL FROM docs.units u"
+                " WHERE u.id = q.unit_id AND u.revision_id = ANY(%s)"
+            ).format(col=sql.Identifier(vs.question)),
+            (ids,),
+        )
+        left = conn.execute(
+            sql.SQL("SELECT count({col}) FROM docs.paragraphs").format(
+                col=sql.Identifier(vs.paragraph)
+            )
+        ).fetchone()
+        if left is not None and left[0] == 0:
+            # The next embedding records the model again, which may be another.
+            conn.execute("DELETE FROM docs.meta WHERE key = %s", (vs.meta_key,))
 
 
 def main() -> None:

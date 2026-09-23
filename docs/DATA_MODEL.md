@@ -53,6 +53,9 @@ One validated LLM reply per chunk: the paragraphs of one section, or a piece of 
 ## `docs.events`
 Append-only outbox: `kind` (`revision_ready`, `unit_changed`, `paper_revised`, `embed_model_changed`), `payload jsonb`, `created_at`. Plugins consume by cursor. Optionally mirrored via `NOTIFY docs_events`.
 
+## Alternate vectors (D27, development only)
+`paragraphs.emb_alt`, `units.emb_gloss_alt` and `unit_questions.emb_alt` hold a second embedding model's vectors (`docs.meta.embed_model_alt`), filled by the embed stage when `CI_EMBED_MODEL_ALT` is set, each with its own HNSW index (migration 008). `CI_SEARCH_VECTORS` picks the set searches use for the whole run. To be dropped once the model is chosen.
+
 ## Indexes
 - HNSW (`halfvec_cosine_ops`) on `paragraphs.emb`, `units.emb_gloss`, `unit_questions.emb`.
 - GIN on `paragraphs.tsv`; GIN trigram on `paragraphs.latex_norm` (`pg_trgm`).

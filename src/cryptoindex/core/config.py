@@ -7,6 +7,7 @@ from typing import Literal, TypeGuard, TypeVar, get_args
 
 LLMBackend = Literal["anthropic", "openai_format", "claude_code", "fake"]  # D9, D22
 ParserName = Literal["marker", "paddle"]
+SearchVectors = Literal["primary", "alt"]
 
 _Num = TypeVar("_Num", int, float)
 
@@ -30,6 +31,8 @@ class Settings:
     query_dsn: str
     data_dir: Path
     embed_model: str
+    embed_model_alt: str | None  # D27: a second model, for comparison
+    search_vectors: SearchVectors  # which set searches use, for the whole run
     embed_dims: int
     embed_device: str
     llm_backend: LLMBackend
@@ -93,6 +96,17 @@ def load_settings(env: Mapping[str, str]) -> Settings:
     else:
         errors.append(f"CI_LLM_BACKEND={raw_backend!r} not in {get_args(LLMBackend)}")
 
+    search_vectors: SearchVectors = "primary"
+    raw_vectors = opt("CI_SEARCH_VECTORS", search_vectors)
+    if raw_vectors == "alt" and not env.get("CI_EMBED_MODEL_ALT"):
+        errors.append("CI_SEARCH_VECTORS=alt needs CI_EMBED_MODEL_ALT")
+    if raw_vectors in get_args(SearchVectors):
+        search_vectors = "alt" if raw_vectors == "alt" else "primary"
+    else:
+        errors.append(
+            f"CI_SEARCH_VECTORS={raw_vectors!r} not in {get_args(SearchVectors)}"
+        )
+
     parser: ParserName = "paddle"  # D21
     raw_parser = opt("CI_PARSER", parser)
     if _is_parser(raw_parser):
@@ -106,6 +120,8 @@ def load_settings(env: Mapping[str, str]) -> Settings:
         query_dsn=req("CI_QUERY_DSN"),
         data_dir=Path(req("CI_DATA_DIR")),
         embed_model=opt("CI_EMBED_MODEL", "Qwen/Qwen3-Embedding-0.6B"),
+        embed_model_alt=env.get("CI_EMBED_MODEL_ALT") or None,
+        search_vectors=search_vectors,
         embed_dims=num("CI_EMBED_DIMS", "1024", int, 1),
         embed_device=opt("CI_EMBED_DEVICE", "mps"),
         llm_backend=llm_backend,
