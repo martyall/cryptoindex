@@ -66,19 +66,15 @@ async def search(pool, embedder, q: str, k: int = 10,
 ```python
 @dataclass(frozen=True)
 class Citation:
-    source_type: str   # 'paper' (core); plugins add more
-    source_id: str     # paper: paper_id
-    version: str       # paper: revision number
-    locator: str       # paper: 'p<position>' or block label, e.g. 'Theorem 3'
-    quote: str         # verbatim
+    source_type: str   # 'paper' (core); plugins add more (D12)
+    source_id: str     # paper: the cited paragraph's ID
 ```
 ```python
 class CitationSource(Protocol):
     source_type: str
-    def fetch(self, source_id: str, version: str, locator: str) -> str
-    def render(self, c: Citation) -> str   # '<document name> v2, Theorem 3'
+    def render(self, c: Citation) -> str   # 'Kimchi specification, p. 42, §7 …, Definition 7.5'
 ```
-Checker: quote must appear in `fetch(...)` after normalization (whitespace, LaTeX spacing, Unicode dashes/quotes); source must have been returned by a tool call in the same session; unknown `source_type` ⇒ unverifiable ⇒ dropped.
+A citation is a location, rendered from stored data only (D30). Checker: the cited source must have been returned by a tool in the same session, or the citation is removed and marked; an unknown `source_type` is removed the same way (D29).
 
 ## Agent
 

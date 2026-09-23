@@ -33,7 +33,7 @@ Ask a question in plain words; an agent searches the index, reads the relevant p
 4. **The answer and the citation checker** (D29, D30, D12), server-side, after the handler and outside it:
    - The model returns `{answer, citations: [{marker, paragraph_id}]}`: prose whose main points carry markers like `[1]`, and one citation per marker. Not every sentence needs one, and there are no quotes (D30).
    - A citation stays only if its paragraph was returned by a tool in this session; otherwise it is removed and its marker shown as removed. The answer itself is never dropped.
-   - Nothing generated at ingestion (glosses, questions) can be cited or quoted (Invariant 3): citations name paragraphs of the original text.
+   - Nothing generated at ingestion (glosses, questions) can be cited (Invariant 3): citations name paragraphs of the original text.
 
 5. **Human-findable citations.** Each citation that stays is rendered from stored data only: document name, PDF page (1-based), section path, and the paragraph's block label or its unit's anchor label when there is one. For example: *Kimchi specification, p. 42, §7 Polynomial commitment, Definition 7.5*.
 
